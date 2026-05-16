@@ -161,4 +161,14 @@ public class AssistantController : ControllerBase
         await _assistant.RecordInteractionAsync(input, ct);
         return NoContent();
     }
+
+    [HttpPost("chat")]
+    public async Task<IActionResult> Chat(AssistantChatRequest req, CancellationToken ct)
+    {
+        Guid? userId = Guid.TryParse(
+            User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+            out var id) ? id : null;
+        return Ok(new ApiEnvelope<AssistantChatResponse>(
+            await _assistant.ChatAsync(req, userId, ct)));
+    }
 }

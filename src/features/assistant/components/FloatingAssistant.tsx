@@ -1,11 +1,9 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  assistantWelcomeText,
-  AssistantQuickReply,
-} from '../lib/assistantFlow';
+import { FormEvent, useEffect, useRef, useState } from 'react';
+import { assistantWelcomeText } from '../lib/assistantFlow';
 import {
   advanceAssistant,
   AssistantEngineState,
+  AssistantLead,
   createInitialAssistantState,
   getQuickRepliesForStep,
 } from '../lib/localAssistantEngine';
@@ -14,17 +12,27 @@ import {
   createLeadFromAssistant,
   recordBotInteraction,
 } from '@shared/services/assistantApi';
+import { assistantApi, ChatMessage } from '@shared/api/endpoints';
 import { MessageBubble, AssistantMessage } from './MessageBubble';
 import { QuickReplies } from './QuickReplies';
 import './FloatingAssistant.css';
 
-type StoredAssistantSession = {
+type Mode = 'llm' | 'local';
+
+type Session = {
+  mode: Mode;
   engineState: AssistantEngineState;
   messages: AssistantMessage[];
   createdLeadId?: string;
 };
 
-const STORAGE_KEY = 'opendriverhub-assistant-session-v1';
+const STORAGE_KEY = 'opendriverhub-assistant-session-v2';
+
+const STARTERS = [
+  'Quero economizar nas compras',
+  'Como funciona o cashback?',
+  'O que tem de alimentação?',
+];
 
 const createMessage = (
   role: AssistantMessage['role'],
@@ -35,40 +43,37 @@ const createMessage = (
   text,
 });
 
-const createInitialSession = (): StoredAssistantSession => ({
+const createInitialSession = (): Session => ({
+  mode: 'llm',
   engineState: createInitialAssistantState(),
-  messages: [
-    createMessage('assistant', assistantWelcomeText),
-    createMessage('assistant', 'Para começar: como você quer usar o hub?'),
-  ],
+  messages: [createMessage('assistant', assistantWelcomeText)],
 });
 
-function loadInitialSession(): StoredAssistantSession {
+function loadInitialSession(): Session {
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    return stored
-      ? (JSON.parse(stored) as StoredAssistantSession)
-      : createInitialSession();
+    return stored ? (JSON.parse(stored) as Session) : createInitialSession();
   } catch {
     return createInitialSession();
   }
 }
 
+/** Lead leve para o handoff de WhatsApp quando estamos no modo LLM. */
+function leadFromConversation(messages: AssistantMessage[]): AssistantLead {
+  const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+  return {
+    goal: lastUser?.text,
+    score: 0,
+    temperature: 'morno',
+  };
+}
+
 export function FloatingAssistant() {
   const [isOpen, setIsOpen] = useState(false);
-  const [session, setSession] = useState<StoredAssistantSession>(() =>
-    loadInitialSession(),
-  );
+  const [session, setSession] = useState<Session>(() => loadInitialSession());
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const quickReplies = useMemo<AssistantQuickReply[]>(
-    () => getQuickRepliesForStep(session.engineState.step),
-    [session.engineState.step],
-  );
-
-  const isReady = session.engineState.step === 'ready';
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
@@ -78,23 +83,6 @@ export function FloatingAssistant() {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [session.messages, isTyping, isOpen]);
 
-  useEffect(() => {
-    if (session.engineState.step !== 'ready' || session.createdLeadId) return;
-    let cancelled = false;
-    void createLeadFromAssistant(session.engineState.lead)
-      .then((lead) => {
-        if (!cancelled) {
-          setSession((cur) =>
-            cur.createdLeadId ? cur : { ...cur, createdLeadId: lead.id },
-          );
-        }
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, [session.createdLeadId, session.engineState.lead, session.engineState.step]);
-
   const resetSession = () => {
     const initial = createInitialSession();
     setSession(initial);
@@ -103,52 +91,98 @@ export function FloatingAssistant() {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
   };
 
-  const answerUser = (value: string) => {
+  // Resposta pelo motor local de regras (fallback sem Groq).
+  const respondLocal = (cur: Session, text: string): Session => {
+    const result = advanceAssistant(cur.engineState, text);
+    const botMessages = result.responses.map((r) =>
+      createMessage('assistant', r),
+    );
+    void recordBotInteraction({
+      mensagemUsuario: text,
+      respostaBot: result.responses.join('\n'),
+      etapaFluxo: cur.engineState.step,
+      leadId: cur.createdLeadId,
+      lead: result.lead,
+    }).catch(() => undefined);
+    if (result.step === 'ready' && !cur.createdLeadId) {
+      void createLeadFromAssistant(result.lead).catch(() => undefined);
+    }
+    return {
+      ...cur,
+      mode: 'local',
+      engineState: { step: result.step, lead: result.lead },
+      messages: [...cur.messages, ...botMessages],
+    };
+  };
+
+  const answerUser = async (value: string) => {
     const trimmed = value.trim();
     if (!trimmed || isTyping) return;
     setInput('');
-    setSession((cur) => ({
-      ...cur,
-      messages: [...cur.messages, createMessage('user', trimmed)],
-    }));
+
+    const withUser: AssistantMessage[] = [
+      ...session.messages,
+      createMessage('user', trimmed),
+    ];
+    setSession((cur) => ({ ...cur, messages: withUser }));
     setIsTyping(true);
 
-    window.setTimeout(() => {
-      setSession((cur) => {
-        const result = advanceAssistant(cur.engineState, trimmed);
-        const botMessages = result.responses.map((r) =>
-          createMessage('assistant', r),
-        );
-        void recordBotInteraction({
-          mensagemUsuario: trimmed,
-          respostaBot: result.responses.join('\n'),
-          etapaFluxo: cur.engineState.step,
-          leadId: cur.createdLeadId,
-          lead: result.lead,
-        }).catch(() => undefined);
+    // Modo já degradado para local nesta sessão.
+    if (session.mode === 'local') {
+      window.setTimeout(() => {
+        setSession((cur) => respondLocal(cur, trimmed));
+        setIsTyping(false);
+      }, 420);
+      return;
+    }
 
-        return {
+    try {
+      const history: ChatMessage[] = withUser
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .map((m) => ({
+          role: m.role === 'assistant' ? 'assistant' : 'user',
+          content: m.text,
+        }));
+      const res = await assistantApi.chat(history);
+
+      if (res.fallback || !res.reply) {
+        // Sem Groq configurado → degrada para o motor local.
+        setSession((cur) => respondLocal(cur, trimmed));
+      } else {
+        setSession((cur) => ({
           ...cur,
-          engineState: { step: result.step, lead: result.lead },
-          messages: [...cur.messages, ...botMessages],
-        };
-      });
+          messages: [...cur.messages, createMessage('assistant', res.reply)],
+        }));
+      }
+    } catch {
+      setSession((cur) => respondLocal(cur, trimmed));
+    } finally {
       setIsTyping(false);
-    }, 520);
+    }
   };
 
   const submitMessage = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    answerUser(input);
+    void answerUser(input);
   };
 
   const openWhatsApp = () => {
+    const lead =
+      session.mode === 'local'
+        ? session.engineState.lead
+        : leadFromConversation(session.messages);
     window.open(
-      createWhatsAppLeadUrl(session.engineState.lead),
+      createWhatsAppLeadUrl(lead),
       '_blank',
       'noopener,noreferrer',
     );
   };
+
+  const showStarters = session.messages.filter((m) => m.role === 'user').length === 0;
+  const localQuick =
+    session.mode === 'local'
+      ? getQuickRepliesForStep(session.engineState.step)
+      : [];
 
   return (
     <>
@@ -168,7 +202,9 @@ export function FloatingAssistant() {
       >
         <header className="assistant-panel__header">
           <div>
-            <p className="assistant-panel__tag">IA local</p>
+            <p className="assistant-panel__tag">
+              {session.mode === 'local' ? 'Modo local' : 'Assistente IA'}
+            </p>
             <h2>Assistente OpenDriverHub</h2>
           </div>
           <div className="assistant-panel__actions">
@@ -201,16 +237,23 @@ export function FloatingAssistant() {
             </div>
           )}
 
-          {!isReady && !isTyping && (
-            <QuickReplies options={quickReplies} onSelect={answerUser} />
+          {!isTyping && showStarters && (
+            <QuickReplies
+              options={STARTERS.map((s) => ({ label: s, value: s }))}
+              onSelect={(v) => void answerUser(v)}
+            />
           )}
 
-          {isReady && !isTyping && (
+          {!isTyping && localQuick.length > 0 && (
+            <QuickReplies
+              options={localQuick}
+              onSelect={(v) => void answerUser(v)}
+            />
+          )}
+
+          {!isTyping && !showStarters && (
             <div className="assistant-handoff">
-              <p>
-                Próximo passo: enviar seu resumo para um atendente humano no
-                WhatsApp.
-              </p>
+              <p>Prefere falar com um atendente? Continue no WhatsApp.</p>
               <button type="button" onClick={openWhatsApp}>
                 Continuar pelo WhatsApp
               </button>
@@ -225,14 +268,9 @@ export function FloatingAssistant() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={isTyping}
-            placeholder={
-              isReady ? 'Resumo pronto para o WhatsApp' : 'Digite sua resposta...'
-            }
+            placeholder="Escreva sua mensagem..."
           />
-          <button
-            type="submit"
-            disabled={isTyping || input.trim().length === 0}
-          >
+          <button type="submit" disabled={isTyping || input.trim().length === 0}>
             Enviar
           </button>
         </form>

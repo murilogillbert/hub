@@ -36,6 +36,7 @@ builder.Services.AddSingleton(new UploadOptions(
     long.TryParse(cfg["Storage:MaxImageBytes"], out var mb) ? mb : 5 * 1024 * 1024));
 
 builder.Services.AddInfrastructure(connStr, jwt, paymentProvider);
+builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IHttpContextAccessorLike, HttpContextAccessorAdapter>();
 builder.Services.AddHostedService<PaymentReconciliationService>();

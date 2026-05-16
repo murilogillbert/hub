@@ -48,6 +48,13 @@ public class SettingsService : ISettingsService, ISettingsProvider
                 new("Email:GmailAppToken", "App Password / Token", true),
                 new("Email:FromName", "Nome do remetente", false),
             ]),
+        new("groq", "Assistente IA (Groq)",
+            "LLM que conduz a conversa do chatbot rumo à conversão. Sem chave, o bot usa o modo local (regras).",
+            "🤖",
+            [
+                new("Groq:ApiKey", "API Key (gsk_...)", true),
+                new("Groq:Model", "Modelo", false),
+            ]),
     ];
 
     private static readonly HashSet<string> AllowedKeys =

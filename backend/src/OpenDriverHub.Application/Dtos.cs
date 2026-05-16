@@ -63,6 +63,10 @@ public record BotInteractionInput(
     string MensagemUsuario, string RespostaBot, string EtapaFluxo,
     Guid? LeadId, AssistantLeadInput Lead);
 
+public record ChatMessage(string Role, string Content);
+public record AssistantChatRequest(List<ChatMessage> Messages);
+public record AssistantChatResponse(string Reply, bool Fallback);
+
 // ---------- Profile ----------
 public record UpdateProfileRequest(string Name, string Email, string? Phone);
 public record UpdateNotificationsRequest(bool WhatsApp, bool Email, bool Promo);

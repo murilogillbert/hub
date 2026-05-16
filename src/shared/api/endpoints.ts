@@ -273,9 +273,19 @@ export interface IntegrationGroup {
 }
 
 // ---- Assistant ----
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+export interface AssistantChatResponse {
+  reply: string;
+  fallback: boolean;
+}
 export const assistantApi = {
   createLead: (body: unknown) =>
     api.post<{ id: string }>('/assistant/leads', body),
   recordInteraction: (body: unknown) =>
     api.post<void>('/assistant/interactions', body),
+  chat: (messages: ChatMessage[]) =>
+    api.post<AssistantChatResponse>('/assistant/chat', { messages }),
 };

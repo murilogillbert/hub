@@ -91,6 +91,7 @@ public interface IAssistantService
     Task<AssistantLeadDto> CreateLeadAsync(Guid? userId, AssistantLeadInput input, CancellationToken ct);
     Task RecordInteractionAsync(BotInteractionInput input, CancellationToken ct);
     Task<List<AssistantLeadDto>> ListLeadsAsync(CancellationToken ct);
+    Task<AssistantChatResponse> ChatAsync(AssistantChatRequest req, Guid? userId, CancellationToken ct);
 }
 
 /// <summary>Resolve uma credencial: valor do banco (se houver) senão o .env/appsettings.</summary>
