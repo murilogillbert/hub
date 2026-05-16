@@ -79,11 +79,43 @@ p {
   line-height: 1.55;
 }
 
+/* ===== Base mobile-first / anti-overflow ===== */
+html {
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
 .container {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 var(--space-5);
+  padding: 0 var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 0 var(--space-5);
+  }
+}
+
+/* Tabelas largas roláveis no mobile (sem quebrar o layout) */
+.card:has(table) {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.history__table {
+  min-width: 600px;
+}
+
+/* Tipografia fluida — escala menor em telas pequenas */
+@media (max-width: 600px) {
+  :root {
+    --font-3xl: 26px;
+    --font-2xl: 21px;
+    --font-xl: 18px;
+    --font-lg: 16px;
+  }
 }
 
 .stack {
@@ -96,6 +128,7 @@ p {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
 .row-between {
@@ -103,6 +136,7 @@ p {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
 .grid {

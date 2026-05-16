@@ -118,3 +118,9 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 600px) {
+  .product-page__price-box {
+    grid-template-columns: 1fr;
+  }
+}

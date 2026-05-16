@@ -245,22 +245,91 @@
   overflow-y: auto;
 }
 
+/* ===== Mobile: sidebar interna vira topbar rolável ===== */
 @media (max-width: 900px) {
   .layout-internal {
     grid-template-columns: 1fr;
   }
   .layout-internal__sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
     flex-direction: row;
-    flex-wrap: wrap;
     align-items: center;
-    padding: var(--space-3);
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-right: none;
+    border-bottom: 1px solid rgba(214, 178, 94, 0.18);
+  }
+  .layout-internal__brand small {
+    display: none;
   }
   .layout-internal__nav {
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    flex: 1;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: var(--space-2);
+    scrollbar-width: none;
+  }
+  .layout-internal__nav::-webkit-scrollbar {
+    display: none;
+  }
+  .layout-internal__nav a {
+    white-space: nowrap;
+    padding: 8px 14px;
+    font-size: var(--font-xs);
   }
   .layout-internal__user {
     border-top: none;
     padding-top: 0;
+    flex-shrink: 0;
+  }
+  .layout-internal__user div {
+    display: none;
+  }
+  .layout-internal__user img,
+  .sidebar-user img {
+    width: 34px;
+    height: 34px;
+  }
+  .sidebar-user {
+    padding: var(--space-2);
+  }
+  .sidebar-user__edit {
+    display: none;
+  }
+  .layout-internal__main {
+    padding: var(--space-4);
+  }
+}
+
+/* ===== Mobile: header público ===== */
+@media (max-width: 720px) {
+  .layout-client__top {
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+  .layout-client__nav {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: var(--space-1);
+  }
+  .layout-client__nav::-webkit-scrollbar {
+    display: none;
+  }
+  .layout-client__nav a {
+    white-space: nowrap;
+  }
+  .layout-client__user {
+    margin-left: auto;
+  }
+  .layout-client__main {
+    padding: var(--space-5) 0;
   }
 }

@@ -143,3 +143,26 @@
     font-size: var(--font-2xl);
   }
 }
+
+@media (max-width: 600px) {
+  .home {
+    gap: var(--space-6);
+  }
+  .home__hero {
+    padding: var(--space-5) var(--space-4);
+  }
+  .home__hero-stats {
+    flex-direction: column;
+  }
+  .home__hero-stats > div {
+    width: 100%;
+  }
+  .home__search {
+    width: 100%;
+  }
+  .home__catalog > header,
+  .home__map-section > header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

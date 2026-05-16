@@ -113,3 +113,16 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 600px) {
+  .partner-page__stats {
+    grid-template-columns: 1fr;
+  }
+  .partner-page__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .partner-catalog__pricing {
+    flex-wrap: wrap;
+  }
+}
