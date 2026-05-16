@@ -195,7 +195,7 @@ export function PartnerRedeemPage() {
                     </dd>
                   </div>
                   <div>
-                    <dt>Cashback ao cliente</dt>
+                    <dt>Cashback do cliente (creditado na compra)</dt>
                     <dd className="totem__deduct">
                       − {formatCurrency(summary.customerCashback)}
                     </dd>
@@ -206,7 +206,10 @@ export function PartnerRedeemPage() {
                   </div>
                 </dl>
                 <p className="totem__subtitle">
-                  Repasse centralizado pelo OpenDriverHub.
+                  Apenas o cálculo do seu repasse — o cashback já foi creditado
+                  ao cliente no momento da compra. Nenhum valor é movimentado na
+                  conta do cliente neste resgate. Repasse centralizado pelo
+                  OpenDriverHub.
                 </p>
 
                 <button
