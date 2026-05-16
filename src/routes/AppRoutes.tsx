@@ -3,6 +3,7 @@ import { ClientLayout } from '@shared/components/Layouts/ClientLayout';
 import { PartnerLayout } from '@shared/components/Layouts/PartnerLayout';
 import { AdminLayout } from '@shared/components/Layouts/AdminLayout';
 import { RequireRole, RedirectIfAuthenticated } from '@shared/components/RouteGuards';
+import { StepUpGuard } from '@shared/components/StepUpGuard/StepUpGuard';
 
 import { HomePage } from '@features/client/pages/HomePage';
 import { ProductPage } from '@features/client/pages/ProductPage';
@@ -90,7 +91,14 @@ export function AppRoutes() {
           <Route index element={<Navigate to="catalogo" replace />} />
           <Route path="catalogo" element={<PartnerCatalogPage />} />
           <Route path="venda" element={<PartnerRedeemPage />} />
-          <Route path="metricas" element={<PartnerMetricsPage />} />
+          <Route
+            path="metricas"
+            element={
+              <StepUpGuard reason="As métricas contêm dados financeiros. Confirme sua senha para continuar.">
+                <PartnerMetricsPage />
+              </StepUpGuard>
+            }
+          />
         </Route>
       </Route>
 

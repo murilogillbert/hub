@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '@shared/hooks/useAuth';
 import { formatCurrency } from '@shared/utils/formatters';
@@ -12,8 +12,11 @@ interface ClientLayoutProps {
 export function ClientLayout({ children }: ClientLayoutProps) {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
 
   const handleLogout = () => {
+    closeMenu();
     logout();
     navigate('/');
   };
@@ -22,11 +25,23 @@ export function ClientLayout({ children }: ClientLayoutProps) {
     <div className="layout-client">
       <header className="layout-client__header">
         <div className="container layout-client__top">
-          <Link to="/" className="layout-client__brand">
+          <Link to="/" className="layout-client__brand" onClick={closeMenu}>
             <span className="layout-client__logo">◇</span>
             <span>OpenDriverHub</span>
           </Link>
-          <nav className="layout-client__nav">
+          <button
+            type="button"
+            className="layout-client__burger"
+            aria-label="Abrir menu"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((v) => !v)}
+          >
+            {menuOpen ? '✕' : '☰'}
+          </button>
+          <nav
+            className={`layout-client__nav ${menuOpen ? 'is-open' : ''}`}
+            onClick={closeMenu}
+          >
             <NavLink to="/" end>
               Início
             </NavLink>

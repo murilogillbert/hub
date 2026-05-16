@@ -1,0 +1,42 @@
+.stepup {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: var(--space-6) var(--space-4);
+}
+
+.stepup__card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-6);
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  text-align: center;
+}
+
+.stepup__icon {
+  font-size: 40px;
+}
+
+.stepup__card .input-field {
+  text-align: left;
+  margin-top: var(--space-2);
+}
+
+.stepup__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+@media (min-width: 600px) {
+  .stepup {
+    padding: var(--space-7) var(--space-5);
+  }
+}

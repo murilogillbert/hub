@@ -93,9 +93,15 @@
 }
 
 .qr-scanner__btn--primary {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
+  background: var(--color-gold);
+  color: var(--color-ink);
+  border-color: var(--color-gold);
+  font-weight: 800;
+}
+
+.qr-scanner__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .qr-scanner__error {
