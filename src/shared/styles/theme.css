@@ -1,31 +1,46 @@
 :root {
-  --color-bg: #f6f7fb;
+  /* ===== Paleta de marca (replicada do opendriver: ink/navy + gold) ===== */
+  --color-ink: #05070b;
+  --color-navy: #071525;
+  --color-navy-soft: #0d2238;
+  --color-gold: #d6b25e;
+  --color-gold-light: #f4df9a;
+  --color-bone: #f7f3ea;
+  --color-smoke: #e7e9ee;
+
+  /* ===== Superfícies / texto ===== */
+  --color-bg: #f7f3ea;
   --color-surface: #ffffff;
-  --color-surface-alt: #f1f3f9;
-  --color-border: #e3e6ef;
-  --color-text: #1a1d2b;
-  --color-text-muted: #6b7088;
-  --color-text-soft: #9197aa;
+  --color-surface-alt: #f1ece0;
+  --color-border: #e4ddc9;
+  --color-text: #05070b;
+  --color-text-muted: #5b6171;
+  --color-text-soft: #8b8f9c;
 
-  --color-primary: #4f46e5;
-  --color-primary-hover: #4338ca;
-  --color-primary-soft: #eef0ff;
+  /* ===== Primária = dourado (texto escuro em cima) ===== */
+  --color-primary: #d6b25e;
+  --color-primary-hover: #f4df9a;
+  --color-primary-soft: #f5ead0;
+  --color-on-primary: #05070b;
 
-  --color-accent: #10b981;
-  --color-accent-soft: #e4f8f0;
+  /* Cashback / sucesso (mantém verde pela semântica de dinheiro) */
+  --color-accent: #1f8f6b;
+  --color-accent-soft: #e2f1ea;
 
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
-  --color-info: #3b82f6;
+  --color-warning: #c98a2b;
+  --color-danger: #d6453f;
+  --color-info: #2f6d9c;
 
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
   --radius-pill: 999px;
 
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
+  --shadow-sm: 0 2px 10px rgba(5, 7, 11, 0.06);
+  --shadow-md: 0 18px 60px rgba(5, 7, 11, 0.1);
+  --shadow-lg: 0 28px 90px rgba(7, 21, 37, 0.2);
+  --shadow-gold: 0 22px 70px rgba(214, 178, 94, 0.24);
+  --shadow-navy: 0 28px 90px rgba(7, 21, 37, 0.32);
 
   --space-1: 4px;
   --space-2: 8px;
@@ -43,6 +58,10 @@
   --font-xl: 22px;
   --font-2xl: 28px;
   --font-3xl: 36px;
+
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, Segoe UI,
+    Roboto, sans-serif;
+  --font-display: 'Sora', 'Manrope', ui-sans-serif, system-ui, sans-serif;
 }
 
 h1,
@@ -50,8 +69,10 @@ h2,
 h3,
 h4 {
   color: var(--color-text);
-  font-weight: 600;
-  line-height: 1.2;
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
 }
 
 p {
@@ -102,10 +123,12 @@ p {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 10px;
+  padding: 3px 12px;
   border-radius: var(--radius-pill);
   font-size: var(--font-xs);
-  font-weight: 500;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   background: var(--color-surface-alt);
   color: var(--color-text-muted);
 }
@@ -117,15 +140,15 @@ p {
 
 .badge-primary {
   background: var(--color-primary-soft);
-  color: var(--color-primary);
+  color: #8a6d1f;
 }
 
 .badge-warning {
-  background: #fff4dd;
+  background: #f7ebd5;
   color: var(--color-warning);
 }
 
 .badge-danger {
-  background: #fde4e4;
+  background: #f6e0df;
   color: var(--color-danger);
 }

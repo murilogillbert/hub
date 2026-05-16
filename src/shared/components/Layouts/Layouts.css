@@ -7,8 +7,9 @@
 }
 
 .layout-client__header {
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  background: rgba(5, 7, 11, 0.92);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   position: sticky;
   top: 0;
   z-index: 50;
@@ -25,16 +26,18 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-weight: 800;
   font-size: var(--font-lg);
+  color: #ffffff;
 }
 
 .layout-client__logo {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--color-primary), #8b5cf6);
-  color: white;
+  background: linear-gradient(135deg, var(--color-gold), var(--color-gold-light));
+  color: var(--color-ink);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -47,21 +50,21 @@
 }
 
 .layout-client__nav a {
-  font-size: var(--font-md);
-  color: var(--color-text-muted);
-  padding: 6px 10px;
-  border-radius: var(--radius-md);
-  font-weight: 500;
+  font-size: var(--font-xs);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
 }
 
 .layout-client__nav a:hover {
-  color: var(--color-primary);
-  background: var(--color-primary-soft);
+  color: var(--color-gold);
 }
 
 .layout-client__nav a.active {
-  color: var(--color-primary);
-  background: var(--color-primary-soft);
+  color: var(--color-gold);
 }
 
 .layout-client__user {
@@ -78,22 +81,45 @@
 }
 
 .layout-client__logout {
-  font-size: var(--font-sm);
-  color: var(--color-text-muted);
+  font-size: var(--font-xs);
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+}
+
+.layout-client__logout:hover {
+  color: var(--color-gold);
 }
 
 .layout-client__login {
-  padding: 8px 14px;
-  border-radius: var(--radius-md);
-  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  font-weight: 800;
+  font-size: var(--font-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.layout-client__login:hover {
+  color: var(--color-gold);
 }
 
 .layout-client__signup {
-  padding: 8px 14px;
-  border-radius: var(--radius-md);
-  background: var(--color-primary);
-  color: white;
-  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: var(--radius-pill);
+  background: var(--color-gold);
+  color: var(--color-ink);
+  font-weight: 800;
+  font-size: var(--font-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  box-shadow: var(--shadow-gold);
+}
+
+.layout-client__signup:hover {
+  background: var(--color-gold-light);
 }
 
 .layout-client__main {
@@ -116,16 +142,17 @@
 }
 
 .layout-internal__sidebar {
-  background: #11131c;
-  color: #f1f3f9;
+  background: linear-gradient(180deg, #05070b 0%, #071525 100%);
+  color: #f7f3ea;
   display: flex;
   flex-direction: column;
   padding: var(--space-5);
   gap: var(--space-5);
+  border-right: 1px solid rgba(214, 178, 94, 0.12);
 }
 
 .layout-internal--admin .layout-internal__sidebar {
-  background: linear-gradient(180deg, #11131c 0%, #1f1538 100%);
+  background: linear-gradient(180deg, #05070b 0%, #0d2238 100%);
 }
 
 .layout-internal__brand {
@@ -145,12 +172,17 @@
   font-size: var(--font-xs);
 }
 
+.layout-internal__brand strong {
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
 .layout-internal__logo {
   width: 36px;
   height: 36px;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--color-primary), #8b5cf6);
-  color: white;
+  background: linear-gradient(135deg, var(--color-gold), var(--color-gold-light));
+  color: var(--color-ink);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -165,20 +197,21 @@
 
 .layout-internal__nav a {
   color: rgba(255, 255, 255, 0.72);
-  padding: 10px 14px;
-  border-radius: var(--radius-md);
-  font-size: var(--font-md);
-  font-weight: 500;
+  padding: 11px 16px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-sm);
+  font-weight: 700;
 }
 
 .layout-internal__nav a:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: white;
+  background: rgba(214, 178, 94, 0.1);
+  color: var(--color-gold);
 }
 
 .layout-internal__nav a.active {
-  background: var(--color-primary);
-  color: white;
+  background: var(--color-gold);
+  color: var(--color-ink);
+  font-weight: 800;
 }
 
 .layout-internal__user {
