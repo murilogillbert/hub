@@ -38,6 +38,12 @@ public enum PaymentMethod
     DebitCard = 2,
 }
 
+public enum CategoryType
+{
+    Product = 0,
+    Store = 1,
+}
+
 public enum LeadTemperature
 {
     Frio = 0,

@@ -15,6 +15,7 @@ export function AdminCategoriesPage() {
     queryFn: () => adminApi.categories(),
   });
   const [name, setName] = useState('');
+  const [type, setType] = useState<'product' | 'store'>('product');
   const [error, setError] = useState<string | null>(null);
 
   const invalidate = () => {
@@ -24,7 +25,7 @@ export function AdminCategoriesPage() {
   };
 
   const createMut = useMutation({
-    mutationFn: (n: string) => adminApi.createCategory(n),
+    mutationFn: (n: string) => adminApi.createCategory(n, type),
     onSuccess: () => {
       setName('');
       setError(null);
@@ -70,6 +71,21 @@ export function AdminCategoriesPage() {
             onChange={(e) => setName(e.target.value)}
             placeholder="Ex.: Pet Shop"
           />
+          <div className="input-field" style={{ maxWidth: 200 }}>
+            <label className="input-field__label">Tipo</label>
+            <div className="input-field__box">
+              <select
+                className="input-field__el"
+                value={type}
+                onChange={(e) =>
+                  setType(e.target.value as 'product' | 'store')
+                }
+              >
+                <option value="product">Categoria de produto</option>
+                <option value="store">Categoria de loja (segmento)</option>
+              </select>
+            </div>
+          </div>
           <Button type="submit" disabled={createMut.isPending || !name.trim()}>
             Adicionar
           </Button>
@@ -88,6 +104,7 @@ export function AdminCategoriesPage() {
             <thead>
               <tr>
                 <th>Categoria</th>
+                <th>Tipo</th>
                 <th>Status</th>
                 <th />
               </tr>
@@ -105,6 +122,11 @@ export function AdminCategoriesPage() {
                           updateMut.mutate({ ...c, name: v });
                       }}
                     />
+                  </td>
+                  <td>
+                    <span className="badge badge-primary">
+                      {c.type === 'store' ? 'Loja' : 'Produto'}
+                    </span>
                   </td>
                   <td>
                     <span

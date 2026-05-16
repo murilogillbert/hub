@@ -50,6 +50,7 @@ public class Category
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = string.Empty;
+    public CategoryType Type { get; set; } = CategoryType.Product;
     public bool Active { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

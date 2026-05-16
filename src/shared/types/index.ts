@@ -46,6 +46,7 @@ export interface PartnerStore {
 export interface Category {
   id: string;
   name: string;
+  type: 'product' | 'store';
   active: boolean;
 }
 

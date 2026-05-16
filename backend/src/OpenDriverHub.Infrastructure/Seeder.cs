@@ -20,13 +20,22 @@ public static class Seeder
         if (!seedDemo) return;
         if (await db.Partners.AnyAsync(ct)) return;
 
-        // ----- Categorias (geridas pelo Admin) -----
-        var catNames = new[]
+        // ----- Categorias geridas pelo Admin -----
+        var prodCats = new[]
         {
             "Alimentação", "Cafeteria", "Entretenimento", "Educação",
             "Tecnologia", "Beleza", "Saúde", "Serviços",
         };
-        db.Categories.AddRange(catNames.Select(n => new Category { Name = n }));
+        var storeCats = new[]
+        {
+            "Cafeteria", "Restaurante", "Lanchonete", "Cinema",
+            "Academia", "Salão de Beleza", "Loja Digital", "Educação",
+            "Petshop", "Farmácia",
+        };
+        db.Categories.AddRange(prodCats.Select(n =>
+            new Category { Name = n, Type = CategoryType.Product }));
+        db.Categories.AddRange(storeCats.Select(n =>
+            new Category { Name = n, Type = CategoryType.Store }));
 
         var pCafe = new Partner { Name = "Estação do Café", Segment = "Cafeteria", FeePercent = 10, LogoUrl = "https://api.dicebear.com/9.x/icons/svg?seed=cafe&backgroundType=gradientLinear", JoinedAt = new DateTime(2025, 8, 12) };
         var pCine = new Partner { Name = "CineHub", Segment = "Entretenimento", FeePercent = 12, LogoUrl = "https://api.dicebear.com/9.x/icons/svg?seed=cinema&backgroundType=gradientLinear", JoinedAt = new DateTime(2025, 9, 2) };

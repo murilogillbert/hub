@@ -108,7 +108,8 @@ public class CatalogService : ICatalogService
 
     public async Task<CatalogFiltersDto> GetFiltersAsync(CancellationToken ct)
     {
-        var cats = await _db.Categories.Where(c => c.Active)
+        var cats = await _db.Categories
+            .Where(c => c.Active && c.Type == Domain.CategoryType.Product)
             .OrderBy(c => c.Name).Select(c => c.Name).ToListAsync(ct);
         var stores = await _db.Stores.ToListAsync(ct);
         var cities = stores.Select(s => s.City).Where(c => !string.IsNullOrWhiteSpace(c))
@@ -122,10 +123,13 @@ public class CatalogService : ICatalogService
             Math.Floor(minP), Math.Ceiling(maxP));
     }
 
-    public async Task<List<CategoryDto>> GetActiveCategoriesAsync(CancellationToken ct)
-        => (await _db.Categories.Where(c => c.Active)
+    public async Task<List<CategoryDto>> GetActiveCategoriesAsync(string type, CancellationToken ct)
+    {
+        var t = Mappings.ParseCategoryType(type);
+        return (await _db.Categories.Where(c => c.Active && c.Type == t)
                 .OrderBy(c => c.Name).ToListAsync(ct))
             .Select(c => c.ToDto()).ToList();
+    }
 
     public async Task<ProductDto> GetProductAsync(Guid id, CancellationToken ct)
     {

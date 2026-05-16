@@ -25,7 +25,7 @@ public class AppDbContext : DbContext
     {
         b.Entity<Category>(e =>
         {
-            e.HasIndex(x => x.Name).IsUnique();
+            e.HasIndex(x => new { x.Name, x.Type }).IsUnique();
             e.Property(x => x.Name).HasMaxLength(80).IsRequired();
         });
         b.Entity<PartnerStore>(e =>

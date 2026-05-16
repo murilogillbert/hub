@@ -161,7 +161,8 @@ export const catalogApi = {
     return api.get<CatalogResult>(`/catalog?${qs.toString()}`);
   },
   filters: () => api.get<CatalogFilters>('/catalog/filters'),
-  categories: () => api.get<Category[]>('/categories'),
+  categories: (type: 'product' | 'store' = 'product') =>
+    api.get<Category[]>(`/categories?type=${type}`),
   stores: (partnerId?: string) =>
     api.get<PartnerStore[]>(
       `/stores${partnerId ? `?partnerId=${partnerId}` : ''}`,
@@ -303,8 +304,11 @@ export const adminApi = {
   updateIntegration: (key: string, value: string | null) =>
     api.put<IntegrationGroup[]>('/admin/integrations', { key, value }),
   categories: () => api.get<Category[]>('/admin/categories'),
-  createCategory: (name: string, active = true) =>
-    api.post<Category>('/admin/categories', { name, active }),
+  createCategory: (
+    name: string,
+    type: 'product' | 'store' = 'product',
+    active = true,
+  ) => api.post<Category>('/admin/categories', { name, type, active }),
   updateCategory: (id: string, name: string, active: boolean) =>
     api.put<Category>(`/admin/categories/${id}`, { name, active }),
   deleteCategory: (id: string) =>

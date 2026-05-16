@@ -69,9 +69,10 @@ public class CatalogController : ControllerBase
         => Ok(new ApiEnvelope<CatalogFiltersDto>(await _catalog.GetFiltersAsync(ct)));
 
     [HttpGet("categories")]
-    public async Task<IActionResult> Categories(CancellationToken ct)
+    public async Task<IActionResult> Categories(
+        [FromQuery] string type = "product", CancellationToken ct = default)
         => Ok(new ApiEnvelope<List<CategoryDto>>(
-            await _catalog.GetActiveCategoriesAsync(ct)));
+            await _catalog.GetActiveCategoriesAsync(type, ct)));
 
     [HttpGet("stores")]
     public async Task<IActionResult> Stores([FromQuery] Guid? partnerId, CancellationToken ct)

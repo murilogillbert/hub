@@ -25,7 +25,13 @@ public static class Mappings
     public static StoreDto ToDto(this PartnerStore s) => new(
         s.Id, s.PartnerId, s.Name, s.Address, s.City, s.State, s.Lat, s.Lng, s.Category);
 
-    public static CategoryDto ToDto(this Category c) => new(c.Id, c.Name, c.Active);
+    public static CategoryDto ToDto(this Category c) =>
+        new(c.Id, c.Name, c.Type.ToString().ToLowerInvariant(), c.Active);
+
+    public static CategoryType ParseCategoryType(string? s) =>
+        string.Equals(s, "store", StringComparison.OrdinalIgnoreCase)
+            ? CategoryType.Store
+            : CategoryType.Product;
 
     public static OrderDto ToDto(this Order o) => new(
         o.Id, o.Code, o.ProductId, o.Product?.Title ?? "", o.PartnerId,

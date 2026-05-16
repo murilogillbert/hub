@@ -137,9 +137,12 @@ namespace OpenDriverHub.Infrastructure.Migrations
                         .HasMaxLength(80)
                         .HasColumnType("nvarchar(80)");
 
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
+                    b.HasIndex("Name", "Type")
                         .IsUnique();
 
                     b.ToTable("Categories");

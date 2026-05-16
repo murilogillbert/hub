@@ -1,14 +1,20 @@
 import { FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@shared/components/Button/Button';
 import { Input } from '@shared/components/Input/Input';
 import { useAuth } from '@shared/hooks/useAuth';
 import { routeForRole } from '@shared/context/AuthContext';
+import { catalogApi } from '@shared/api/endpoints';
 import './AuthPages.css';
 
 export function RegisterPartnerPage() {
   const navigate = useNavigate();
   const { registerPartner } = useAuth();
+  const storeCats = useQuery({
+    queryKey: ['categories', 'store'],
+    queryFn: () => catalogApi.categories('store'),
+  });
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -86,13 +92,26 @@ export function RegisterPartnerPage() {
             onChange={update('storeName')}
             required
           />
-          <Input
-            label="Segmento"
-            value={form.segment}
-            onChange={update('segment')}
-            placeholder="Ex.: Alimentação, Cafeteria, Entretenimento"
-            required
-          />
+          <div className="input-field">
+            <label className="input-field__label">Segmento da loja</label>
+            <div className="input-field__box">
+              <select
+                className="input-field__el"
+                value={form.segment}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, segment: e.target.value }))
+                }
+                required
+              >
+                <option value="">Selecione o segmento...</option>
+                {(storeCats.data ?? []).map((c) => (
+                  <option key={c.id} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           <Input
             label="Senha"
             type="password"

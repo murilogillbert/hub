@@ -34,8 +34,8 @@ public record StoreDto(
     string City, string State, double Lat, double Lng, string Category);
 
 // Categorias (geridas pelo Admin)
-public record CategoryDto(Guid Id, string Name, bool Active);
-public record CategoryUpsertRequest(string Name, bool Active);
+public record CategoryDto(Guid Id, string Name, string Type, bool Active);
+public record CategoryUpsertRequest(string Name, bool Active, string Type = "product");
 
 // Catálogo e-commerce: filtros + paginação
 public record CatalogQuery(

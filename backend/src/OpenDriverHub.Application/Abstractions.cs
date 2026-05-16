@@ -60,7 +60,7 @@ public interface ICatalogService
     Task<PartnerDto> GetPartnerAsync(Guid id, CancellationToken ct);
     Task<CatalogPage> SearchAsync(CatalogQuery query, CancellationToken ct);
     Task<CatalogFiltersDto> GetFiltersAsync(CancellationToken ct);
-    Task<List<CategoryDto>> GetActiveCategoriesAsync(CancellationToken ct);
+    Task<List<CategoryDto>> GetActiveCategoriesAsync(string type, CancellationToken ct);
 }
 
 public interface ICategoryService
