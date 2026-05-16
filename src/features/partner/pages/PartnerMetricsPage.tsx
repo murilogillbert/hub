@@ -19,9 +19,10 @@ export function PartnerMetricsPage() {
     <div className="partner-page">
       <header className="partner-page__header">
         <div>
-          <h2>Métricas e repasse</h2>
+          <h2>Métricas e valores a receber</h2>
           <p className="text-muted">
-            Vendas, ticket médio, cashback, conversão de resgate e repasse.
+            Vendas, ticket médio, cashback e o que o OpenDriverHub tem a te
+            repassar (repasse centralizado).
           </p>
         </div>
       </header>
@@ -45,14 +46,14 @@ export function PartnerMetricsPage() {
                 hint={`${m.uniqueCustomers} cliente(s) único(s)`}
               />
               <StatCard
-                label="A repassar"
+                label="A receber"
                 value={formatCurrency(m.pendingTransfer)}
-                hint="vouchers pagos aguardando resgate"
+                hint="vendas pagas aguardando resgate"
               />
               <StatCard
-                label="Já repassado"
+                label="Recebido"
                 value={formatCurrency(m.paidTransfer)}
-                hint="vouchers resgatados"
+                hint="já creditado a você"
               />
               <StatCard
                 label="Cashback concedido"

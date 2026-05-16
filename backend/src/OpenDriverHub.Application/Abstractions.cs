@@ -33,7 +33,7 @@ public interface ICurrentUser
 public interface IPaymentGateway
 {
     string Provider { get; }
-    Task<PaymentStatusSnapshot> ProcessAsync(Order order, PaymentMethod method, CardInput? card, CancellationToken ct);
+    Task<PaymentStatusSnapshot> ProcessAsync(Order order, decimal amount, PaymentMethod method, CardInput? card, CancellationToken ct);
     Task<PaymentStatusSnapshot?> SyncAsync(Order order, CancellationToken ct);
 }
 

@@ -19,6 +19,11 @@ public class OrderService : IOrderService
         var customer = await _db.Users.FindAsync([customerId], ct)
             ?? throw new AppException("Usuário não encontrado.", 401);
 
+        // Cliente pode abater o saldo de cashback no valor a pagar.
+        var cashbackUsed = req.UseCashback
+            ? Math.Min(Math.Round(customer.CashbackBalance, 2), product.Price)
+            : 0m;
+
         var order = new Order
         {
             Code = GenerateCode(),
@@ -26,6 +31,7 @@ public class OrderService : IOrderService
             PartnerId = product.PartnerId,
             CustomerId = customerId,
             PaidPrice = product.Price,
+            CashbackUsed = cashbackUsed,
             CashbackEarned = CommissionRules.CashbackFor(product.Price, product.CashbackPercent),
             Status = OrderStatus.PendingPayment,
         };

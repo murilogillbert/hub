@@ -201,10 +201,13 @@ export function PartnerRedeemPage() {
                     </dd>
                   </div>
                   <div className="totem__net">
-                    <dt>Você recebe</dt>
+                    <dt>Você tem a receber</dt>
                     <dd>{formatCurrency(summary.partnerNet)}</dd>
                   </div>
                 </dl>
+                <p className="totem__subtitle">
+                  Repasse centralizado pelo OpenDriverHub.
+                </p>
 
                 <button
                   className="totem__primary totem__primary--big"
@@ -224,9 +227,9 @@ export function PartnerRedeemPage() {
                 <span className="totem__feedback-icon">✓</span>
                 <h1 className="totem__title">Resgate concluído</h1>
                 <p>
-                  Cashback de{' '}
-                  <strong>{formatCurrency(summary.customerCashback)}</strong>{' '}
-                  creditado ao cliente.
+                  Entregue o produto ao cliente.{' '}
+                  <strong>{formatCurrency(summary.partnerNet)}</strong> entram
+                  no seu valor a receber.
                 </p>
                 <button
                   className="totem__primary totem__primary--big"

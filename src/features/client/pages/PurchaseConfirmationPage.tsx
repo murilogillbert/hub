@@ -33,8 +33,9 @@ export function PurchaseConfirmationPage() {
       <span className="confirmation__success">✓ Pagamento aprovado</span>
       <h1>Seu voucher está pronto 🎉</h1>
       <p className="text-muted">
-        Apresente o QR code abaixo no parceiro para resgatar seu produto. Após o resgate o cashback
-        de <strong>{formatCurrency(state.cashback)}</strong> será adicionado ao seu saldo.
+        Apresente o QR code abaixo no parceiro para resgatar seu produto. O
+        cashback de <strong>{formatCurrency(state.cashback)}</strong> já foi
+        creditado na sua conta e pode ser usado na próxima compra.
       </p>
 
       <div className="confirmation__voucher">

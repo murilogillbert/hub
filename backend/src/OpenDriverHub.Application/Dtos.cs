@@ -34,7 +34,7 @@ public record NearbyStoreDto(
     double Lat, double Lng, string Category, double DistanceKm);
 
 // ---------- Orders / Payments ----------
-public record CreateOrderRequest(Guid ProductId);
+public record CreateOrderRequest(Guid ProductId, bool UseCashback = false);
 public record OrderDto(
     Guid Id, string Code, Guid ProductId, string ProductTitle, Guid PartnerId,
     string PartnerName, Guid CustomerId, string CustomerName, decimal PaidPrice,

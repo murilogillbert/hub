@@ -47,6 +47,7 @@ export function CheckoutPage() {
   const product = productQuery.data;
 
   const [method, setMethod] = useState<Method>('pix');
+  const [useCashbackOpt, setUseCashbackOpt] = useState(false);
   const [card, setCard] = useState({ number: '', holder: '', expiry: '', cvv: '' });
   const [phase, setPhase] = useState<Phase>('form');
   const [snapshot, setSnapshot] = useState<PaymentSnapshot | null>(null);
@@ -75,6 +76,11 @@ export function CheckoutPage() {
   }
 
   const cashback = (product.price * product.cashbackPercent) / 100;
+  const balance = user?.cashbackBalance ?? 0;
+  const cashbackApplied = useCashbackOpt
+    ? Math.min(Math.round(balance * 100) / 100, product.price)
+    : 0;
+  const total = Math.max(0, product.price - cashbackApplied);
 
   const goToConfirmation = (snap: PaymentSnapshot) => {
     navigate('/compra/confirmacao', {
@@ -103,7 +109,7 @@ export function CheckoutPage() {
     e.preventDefault();
     setError(null);
     try {
-      const order = await ordersApi.create(product.id);
+      const order = await ordersApi.create(product.id, useCashbackOpt);
       orderIdRef.current = order.id;
 
       if (method === 'pix') {
@@ -149,7 +155,17 @@ export function CheckoutPage() {
           Checkout integrado ao gateway de pagamento.
         </p>
 
-        {phase === 'form' && (
+        {phase === 'form' && total <= 0 && (
+          <div className="checkout__state checkout__state--ok">
+            <span className="checkout__check">✓</span>
+            <strong>
+              Seu cashback cobre todo o valor. É só concluir — nenhum pagamento
+              extra necessário.
+            </strong>
+          </div>
+        )}
+
+        {phase === 'form' && total > 0 && (
           <>
             <div className="checkout__methods">
               {METHODS.map((m) => (
@@ -277,35 +293,53 @@ export function CheckoutPage() {
           </div>
         </div>
 
+        {phase === 'form' && balance > 0 && (
+          <label className="checkout__usecash">
+            <input
+              type="checkbox"
+              checked={useCashbackOpt}
+              onChange={(e) => setUseCashbackOpt(e.target.checked)}
+            />
+            <span>
+              Usar meu cashback ({formatCurrency(balance)}) para abater este
+              pagamento
+            </span>
+          </label>
+        )}
+
         <dl className="checkout__summary">
           <div>
             <dt>Subtotal</dt>
             <dd>{formatCurrency(product.price)}</dd>
           </div>
+          {cashbackApplied > 0 && (
+            <div>
+              <dt>Cashback aplicado</dt>
+              <dd className="checkout__cashback">
+                −{formatCurrency(cashbackApplied)}
+              </dd>
+            </div>
+          )}
           <div>
             <dt>Cashback que você ganhará</dt>
             <dd className="checkout__cashback">+{formatCurrency(cashback)}</dd>
           </div>
-          {user && user.cashbackBalance > 0 && (
-            <div>
-              <dt>Saldo de cashback disponível</dt>
-              <dd>{formatCurrency(user.cashbackBalance)}</dd>
-            </div>
-          )}
           <div className="checkout__total">
             <dt>Total a pagar</dt>
-            <dd>{formatCurrency(product.price)}</dd>
+            <dd>{formatCurrency(total)}</dd>
           </div>
         </dl>
         <small className="text-soft">
-          Cashback ({formatPercent(product.cashbackPercent)}) creditado após o
-          resgate no parceiro.
+          Cashback ({formatPercent(product.cashbackPercent)}) é creditado na
+          sua conta assim que o pagamento é confirmado.
         </small>
         {phase === 'form' && (
           <Button type="submit" size="lg" fullWidth>
-            {method === 'pix'
-              ? `Gerar Pix de ${formatCurrency(product.price)}`
-              : `Pagar ${formatCurrency(product.price)}`}
+            {total <= 0
+              ? 'Concluir com cashback'
+              : method === 'pix'
+                ? `Gerar Pix de ${formatCurrency(total)}`
+                : `Pagar ${formatCurrency(total)}`}
           </Button>
         )}
         <Link to={`/produto/${product.id}`} className="checkout__cancel">

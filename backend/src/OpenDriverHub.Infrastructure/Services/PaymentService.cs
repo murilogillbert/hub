@@ -16,7 +16,7 @@ public class PaymentService : IPaymentService
 
     public async Task<PaymentStatusSnapshot> ProcessAsync(Guid customerId, ProcessPaymentRequest req, CancellationToken ct)
     {
-        var order = await _db.Orders.Include(o => o.Product)
+        var order = await _db.Orders.Include(o => o.Product).Include(o => o.Customer)
             .FirstOrDefaultAsync(o => o.Id == req.OrderId && o.CustomerId == customerId, ct)
             ?? throw new AppException("Pedido não encontrado.", 404);
         if (order.Status != OrderStatus.PendingPayment)
@@ -24,7 +24,23 @@ public class PaymentService : IPaymentService
 
         var method = Mappings.ParseMethod(req.Method);
         order.PaymentMethod = method;
-        var snap = await _gateway.ProcessAsync(order, method, req.Card, ct);
+
+        // Valor cobrado = preço − cashback abatido (mín. 0).
+        var chargeAmount = Math.Max(0m, order.PaidPrice - order.CashbackUsed);
+
+        PaymentStatusSnapshot snap;
+        if (chargeAmount <= 0m)
+        {
+            // Cashback cobre 100% — aprovação imediata, sem gateway.
+            snap = new PaymentStatusSnapshot(
+                order.Id, PaymentCodes.Hex(6), PaymentCodes.Reference(order.Id),
+                "approved", "paid_with_cashback", PaymentCodes.Voucher(),
+                order.Status.ToString(), null);
+        }
+        else
+        {
+            snap = await _gateway.ProcessAsync(order, chargeAmount, method, req.Card, ct);
+        }
 
         order.PaymentReference = snap.PaymentReference;
         order.ExternalPaymentId = snap.PaymentId;
@@ -36,7 +52,7 @@ public class PaymentService : IPaymentService
             ExternalReference = snap.PaymentReference,
             ExternalPaymentId = snap.PaymentId,
             Method = method,
-            Amount = order.PaidPrice,
+            Amount = chargeAmount,
             Status = ParseStatus(snap.PaymentStatus),
             StatusDetail = snap.StatusDetail,
             LastSyncedAt = DateTime.UtcNow,
@@ -131,15 +147,30 @@ public class PaymentService : IPaymentService
 
     private async Task ApproveAsync(Order order, string? voucher, CancellationToken ct)
     {
-        if (order.Status == OrderStatus.Paid) return;
+        if (order.Status == OrderStatus.Paid || order.Status == OrderStatus.Redeemed)
+            return;
         order.Status = OrderStatus.Paid;
         order.PaidAt = DateTime.UtcNow;
         order.VoucherCode ??= voucher ?? PaymentCodes.Voucher();
+
+        // Carteira de cashback: abate o usado e credita o ganho na compra.
+        var customer = order.Customer
+            ?? await _db.Users.FindAsync([order.CustomerId], ct);
+        if (customer is not null)
+        {
+            if (order.CashbackUsed > 0)
+                customer.CashbackBalance =
+                    Math.Max(0m, customer.CashbackBalance - order.CashbackUsed);
+            customer.CashbackBalance += order.CashbackEarned;
+        }
+
         _db.Notifications.Add(new Notification
         {
             UserId = order.CustomerId,
             Title = "Pagamento confirmado",
-            Message = $"Seu voucher do pedido {order.Code} está liberado.",
+            Message =
+                $"Voucher do pedido {order.Code} liberado. "
+                + $"Cashback de R$ {order.CashbackEarned:0.00} creditado na sua conta.",
         });
         await Task.CompletedTask;
     }

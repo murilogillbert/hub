@@ -17,7 +17,7 @@ public class MockPaymentGateway : IPaymentGateway
     public string Provider => "mock";
     private const string RejectedTestCard = "5031433215406351";
 
-    public Task<PaymentStatusSnapshot> ProcessAsync(Order order, PaymentMethod method, CardInput? card, CancellationToken ct)
+    public Task<PaymentStatusSnapshot> ProcessAsync(Order order, decimal amount, PaymentMethod method, CardInput? card, CancellationToken ct)
     {
         var reference = PaymentCodes.Reference(order.Id);
         var paymentId = PaymentCodes.Hex(6);
@@ -26,7 +26,7 @@ public class MockPaymentGateway : IPaymentGateway
         {
             var pix = new PixPayload(
                 reference,
-                $"00020126580014BR.GOV.BCB.PIX0136{reference}5204000053039865406{order.PaidPrice:0.00}5802BR5921OPENDRIVERHUB LTDA6009SAO PAULO62070503***6304{PaymentCodes.Hex(2)}",
+                $"00020126580014BR.GOV.BCB.PIX0136{reference}5204000053039865406{amount:0.00}5802BR5921OPENDRIVERHUB LTDA6009SAO PAULO62070503***6304{PaymentCodes.Hex(2)}",
                 $"https://mock.local/pix/{paymentId}",
                 DateTime.UtcNow.AddMinutes(30));
             return Task.FromResult(new PaymentStatusSnapshot(
@@ -71,14 +71,14 @@ public class MercadoPagoGateway : IPaymentGateway
 
     public MercadoPagoGateway(ISettingsProvider settings) => _settings = settings;
 
-    public async Task<PaymentStatusSnapshot> ProcessAsync(Order order, PaymentMethod method, CardInput? card, CancellationToken ct)
+    public async Task<PaymentStatusSnapshot> ProcessAsync(Order order, decimal amount, PaymentMethod method, CardInput? card, CancellationToken ct)
     {
         var token = await _settings.GetAsync("MercadoPago:AccessToken", ct);
         if (string.IsNullOrWhiteSpace(token))
             throw new AppException(
                 "Mercado Pago não configurado. Defina o Access Token em Admin → Integrações.",
                 503);
-        return await _fallback.ProcessAsync(order, method, card, ct);
+        return await _fallback.ProcessAsync(order, amount, method, card, ct);
     }
 
     public Task<PaymentStatusSnapshot?> SyncAsync(Order order, CancellationToken ct)

@@ -182,14 +182,14 @@ public class PartnerService : IPartnerService
 
             order.Status = OrderStatus.Redeemed;
             order.RedeemedAt = DateTime.UtcNow;
-            order.Customer!.CashbackBalance += cashback;
+            // O cashback já foi creditado na aprovação do pagamento (compra).
             if (order.Product!.Stock > 0) order.Product.Stock -= 1;
 
             _db.Notifications.Add(new Notification
             {
                 UserId = order.CustomerId,
-                Title = "Cashback creditado",
-                Message = $"Você ganhou R$ {cashback:0.00} de cashback no resgate de {order.Product.Title}.",
+                Title = "Voucher resgatado",
+                Message = $"Seu voucher de {order.Product.Title} foi resgatado com sucesso.",
             });
             _db.AuditLogs.Add(new AuditLog
             {

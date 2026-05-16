@@ -164,8 +164,8 @@ export interface PaymentSnapshot {
   pix: PixPayload | null;
 }
 export const ordersApi = {
-  create: (productId: string) =>
-    api.post<Order>('/orders', { productId }),
+  create: (productId: string, useCashback = false) =>
+    api.post<Order>('/orders', { productId, useCashback }),
   myOrders: (status?: string) =>
     api.get<Order[]>(`/me/orders${status ? `?status=${status}` : ''}`),
   myOrder: (id: string) => api.get<Order>(`/me/orders/${id}`),
