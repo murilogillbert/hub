@@ -1,0 +1,94 @@
+using Microsoft.EntityFrameworkCore;
+using OpenDriverHub.Domain;
+
+namespace OpenDriverHub.Infrastructure;
+
+public class AppDbContext : DbContext
+{
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Partner> Partners => Set<Partner>();
+    public DbSet<PartnerStore> Stores => Set<PartnerStore>();
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<PaymentTransaction> Payments => Set<PaymentTransaction>();
+    public DbSet<AssistantLead> Leads => Set<AssistantLead>();
+    public DbSet<BotInteraction> BotInteractions => Set<BotInteraction>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<IntegrationSetting> IntegrationSettings => Set<IntegrationSetting>();
+    public DbSet<PaymentEvent> PaymentEvents => Set<PaymentEvent>();
+
+    protected override void OnModelCreating(ModelBuilder b)
+    {
+        b.Entity<IntegrationSetting>(e =>
+        {
+            e.HasIndex(x => x.Key).IsUnique();
+            e.Property(x => x.Key).HasMaxLength(120).IsRequired();
+            e.Property(x => x.Value).HasMaxLength(1024);
+        });
+
+        b.Entity<User>(e =>
+        {
+            e.HasIndex(x => x.Email).IsUnique();
+            e.Property(x => x.Name).HasMaxLength(160).IsRequired();
+            e.Property(x => x.Email).HasMaxLength(180).IsRequired();
+            e.Property(x => x.CashbackBalance).HasPrecision(12, 2);
+        });
+
+        b.Entity<Partner>(e =>
+        {
+            e.Property(x => x.Name).HasMaxLength(160).IsRequired();
+            e.Property(x => x.FeePercent).HasPrecision(5, 2);
+        });
+
+        b.Entity<PartnerStore>(e =>
+        {
+            e.HasOne(x => x.Partner).WithMany(p => p.Stores)
+                .HasForeignKey(x => x.PartnerId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        b.Entity<Product>(e =>
+        {
+            e.HasIndex(x => x.PartnerId);
+            e.Property(x => x.Title).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Price).HasPrecision(12, 2);
+            e.Property(x => x.CashbackPercent).HasPrecision(5, 2);
+            e.HasOne(x => x.Partner).WithMany(p => p.Products)
+                .HasForeignKey(x => x.PartnerId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        b.Entity<Order>(e =>
+        {
+            e.HasIndex(x => x.Code).IsUnique();
+            e.HasIndex(x => new { x.CustomerId, x.Status });
+            e.HasIndex(x => x.PartnerId);
+            e.Property(x => x.Code).HasMaxLength(40).IsRequired();
+            e.Property(x => x.PaidPrice).HasPrecision(12, 2);
+            e.Property(x => x.CashbackEarned).HasPrecision(12, 2);
+            e.Property(x => x.CashbackUsed).HasPrecision(12, 2);
+            e.Property(x => x.RowVersion).IsRowVersion();
+            e.HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.Partner).WithMany().HasForeignKey(x => x.PartnerId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.Customer).WithMany().HasForeignKey(x => x.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        b.Entity<PaymentTransaction>(e =>
+        {
+            e.HasIndex(x => x.ExternalPaymentId);
+            e.Property(x => x.Amount).HasPrecision(12, 2);
+            e.HasOne(x => x.Order).WithMany(o => o.Payments)
+                .HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        b.Entity<BotInteraction>(e =>
+        {
+            e.HasOne(x => x.Lead).WithMany(l => l.Interactions)
+                .HasForeignKey(x => x.LeadId).OnDelete(DeleteBehavior.SetNull);
+        });
+    }
+}

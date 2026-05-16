@@ -1,0 +1,115 @@
+.partner-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.partner-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.partner-page__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+}
+
+.partner-page__charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+/* Catalog */
+.partner-catalog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.partner-catalog__item {
+  display: grid;
+  grid-template-columns: 220px 1fr auto;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.partner-catalog__media img {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+}
+
+.partner-catalog__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.partner-catalog__info h3 {
+  font-size: var(--font-lg);
+}
+
+.partner-catalog__pricing {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius-md);
+}
+
+.partner-catalog__pricing > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.partner-catalog__pricing strong {
+  font-size: var(--font-md);
+}
+
+.partner-catalog__qr {
+  display: flex;
+  justify-content: center;
+}
+
+.partner-catalog__upload {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px 16px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+  font-size: var(--font-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.partner-catalog__upload:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.partner-catalog__thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+@media (max-width: 1100px) {
+  .partner-page__stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .partner-page__charts {
+    grid-template-columns: 1fr;
+  }
+  .partner-catalog__item {
+    grid-template-columns: 1fr;
+  }
+}

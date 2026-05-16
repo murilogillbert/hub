@@ -1,0 +1,104 @@
+.qr-scanner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.qr-scanner__region {
+  width: 100%;
+  min-height: 280px;
+  background: #0a0a14;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  position: relative;
+}
+
+.qr-scanner__placeholder {
+  position: absolute;
+  inset: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-2);
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+  padding: var(--space-4);
+}
+
+.qr-scanner__placeholder small {
+  color: rgba(255, 255, 255, 0.6);
+  max-width: 280px;
+}
+
+.qr-scanner__icon {
+  font-size: 40px;
+}
+
+/* ---- Modo totem (tablet/celular) ---- */
+.qr-scanner--lg {
+  padding: var(--space-5);
+  gap: var(--space-5);
+}
+
+.qr-scanner--lg .qr-scanner__region {
+  min-height: 360px;
+}
+
+.qr-scanner--lg .qr-scanner__icon {
+  font-size: 64px;
+}
+
+.qr-scanner--lg .qr-scanner__placeholder span:not(.qr-scanner__icon) {
+  font-size: var(--font-lg);
+  font-weight: 600;
+}
+
+.qr-scanner--lg .qr-scanner__placeholder small {
+  font-size: var(--font-md);
+  max-width: 340px;
+}
+
+.qr-scanner--lg .qr-scanner__actions {
+  justify-content: stretch;
+}
+
+.qr-scanner--lg .qr-scanner__btn {
+  flex: 1;
+  padding: 18px 24px;
+  font-size: var(--font-lg);
+  border-radius: var(--radius-md);
+}
+
+.qr-scanner__actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.qr-scanner__btn {
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: var(--font-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.qr-scanner__btn--primary {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.qr-scanner__error {
+  color: var(--color-danger);
+  font-size: var(--font-sm);
+}

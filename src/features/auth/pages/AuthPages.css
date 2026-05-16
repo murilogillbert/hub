@@ -1,0 +1,91 @@
+.auth-page {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-6) 0;
+}
+
+.auth-page__card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  width: 100%;
+  max-width: 460px;
+  box-shadow: var(--shadow-md);
+}
+
+.auth-page__card h2 {
+  margin-bottom: var(--space-2);
+}
+
+.auth-page__alt {
+  text-align: center;
+  margin-top: var(--space-4);
+  font-size: var(--font-sm);
+  color: var(--color-text-muted);
+}
+
+.auth-page__alt a {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.auth-page__back {
+  display: inline-block;
+  margin-bottom: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-sm);
+}
+
+.auth-page__back:hover {
+  color: var(--color-primary);
+}
+
+/* ---- Seletor Cliente | Parceiro ---- */
+.auth-choice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+
+.auth-choice__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s, transform 0.05s;
+}
+
+.auth-choice__card:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.auth-choice__card:active {
+  transform: scale(0.99);
+}
+
+.auth-choice__icon {
+  font-size: 44px;
+}
+
+.auth-choice__card strong {
+  font-size: var(--font-lg);
+}
+
+.auth-choice__card small {
+  color: var(--color-text-muted);
+  font-size: var(--font-sm);
+}
+
+@media (max-width: 520px) {
+  .auth-choice {
+    grid-template-columns: 1fr;
+  }
+}

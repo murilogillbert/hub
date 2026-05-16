@@ -1,0 +1,276 @@
+/* Totem de resgate — layout kiosk touch-first (tablet/celular em retrato) */
+
+.totem {
+  min-height: calc(100vh - 2 * var(--space-6));
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.totem__shell {
+  width: 100%;
+  max-width: 560px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.totem__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.totem__logo {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--color-primary), #8b5cf6);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: var(--font-lg);
+}
+
+.totem__brand strong {
+  display: block;
+  font-size: var(--font-md);
+}
+
+.totem__brand small {
+  color: var(--color-text-muted);
+  font-size: var(--font-sm);
+}
+
+.totem__stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  text-align: center;
+}
+
+.totem__title {
+  font-size: var(--font-2xl);
+}
+
+.totem__subtitle {
+  color: var(--color-text-muted);
+  font-size: var(--font-md);
+  margin-top: calc(-1 * var(--space-2));
+}
+
+/* ---- Home: escolhas grandes ---- */
+.totem__choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+}
+
+.totem__choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-5);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  transition: border-color 0.15s, background 0.15s, transform 0.05s;
+}
+
+.totem__choice:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.totem__choice:active {
+  transform: scale(0.99);
+}
+
+.totem__choice-icon {
+  font-size: 48px;
+}
+
+.totem__choice strong {
+  font-size: var(--font-xl);
+}
+
+.totem__choice small {
+  color: var(--color-text-muted);
+  font-size: var(--font-sm);
+  max-width: 320px;
+}
+
+/* ---- Manual: input + botão ---- */
+.totem__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.totem__input {
+  width: 100%;
+  text-align: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--font-xl);
+  letter-spacing: 3px;
+  padding: 20px var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+  outline: none;
+}
+
+.totem__input:focus {
+  border-color: var(--color-primary);
+  background: var(--color-surface);
+}
+
+/* ---- Botões grandes (touch >= 56px) ---- */
+.totem__primary {
+  width: 100%;
+  min-height: 60px;
+  padding: 18px 24px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: white;
+  font-size: var(--font-lg);
+  font-weight: 700;
+  transition: background 0.15s, transform 0.05s;
+}
+
+.totem__primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.totem__primary:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.totem__primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.totem__primary--big {
+  min-height: 72px;
+  font-size: var(--font-xl);
+}
+
+.totem__back {
+  align-self: center;
+  padding: var(--space-3) var(--space-5);
+  color: var(--color-text-muted);
+  font-size: var(--font-md);
+  font-weight: 600;
+}
+
+.totem__back:hover {
+  color: var(--color-primary);
+}
+
+/* ---- Resultado ---- */
+.totem__product {
+  background: var(--color-primary-soft);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.totem__product strong {
+  display: block;
+  font-size: var(--font-lg);
+}
+
+.totem__product small {
+  color: var(--color-text-muted);
+  font-size: var(--font-sm);
+}
+
+.totem__breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  text-align: left;
+}
+
+.totem__breakdown > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-md);
+  color: var(--color-text-muted);
+}
+
+.totem__breakdown dd {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.totem__deduct {
+  color: var(--color-danger) !important;
+}
+
+.totem__net {
+  padding-top: var(--space-3);
+  border-top: 2px solid var(--color-border);
+  font-size: var(--font-lg) !important;
+  color: var(--color-text) !important;
+}
+
+.totem__net dd {
+  font-size: var(--font-2xl);
+  color: var(--color-accent) !important;
+}
+
+.totem__feedback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-4);
+}
+
+.totem__feedback p {
+  font-size: var(--font-md);
+  color: var(--color-text-muted);
+}
+
+.totem__feedback-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 40px;
+  font-weight: 800;
+  color: white;
+}
+
+.totem__feedback--ok .totem__feedback-icon {
+  background: var(--color-accent);
+}
+
+.totem__feedback--error .totem__feedback-icon {
+  background: var(--color-danger);
+}
+
+@media (max-width: 600px) {
+  .totem {
+    min-height: calc(100vh - 2 * var(--space-4));
+  }
+  .totem__shell {
+    padding: var(--space-5) var(--space-4);
+    border-radius: var(--radius-md);
+  }
+  .totem__title {
+    font-size: var(--font-xl);
+  }
+}

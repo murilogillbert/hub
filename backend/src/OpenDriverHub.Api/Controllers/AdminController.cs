@@ -1,0 +1,76 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using OpenDriverHub.Api.Infra;
+using OpenDriverHub.Application;
+
+namespace OpenDriverHub.Api.Controllers;
+
+[ApiController]
+[Authorize(Policy = "Admin")]
+[Route("api/v1/admin")]
+public class AdminController : ControllerBase
+{
+    private readonly IAdminService _admin;
+    private readonly IAssistantService _assistant;
+    private readonly ISettingsService _settings;
+
+    public AdminController(
+        IAdminService admin,
+        IAssistantService assistant,
+        ISettingsService settings)
+    {
+        _admin = admin; _assistant = assistant; _settings = settings;
+    }
+
+    [HttpGet("integrations")]
+    public async Task<IActionResult> Integrations(CancellationToken ct)
+        => Ok(new ApiEnvelope<List<IntegrationGroupDto>>(
+            await _settings.GetGroupsAsync(ct)));
+
+    [HttpPut("integrations")]
+    public async Task<IActionResult> UpdateIntegration(
+        UpdateSettingRequest req, CancellationToken ct)
+    {
+        await _settings.UpdateAsync(User.UserId(), req, ct);
+        return Ok(new ApiEnvelope<List<IntegrationGroupDto>>(
+            await _settings.GetGroupsAsync(ct)));
+    }
+
+    [HttpGet("metrics")]
+    public async Task<IActionResult> Metrics(CancellationToken ct)
+        => Ok(new ApiEnvelope<AdminMetricsDto>(await _admin.MetricsAsync(ct)));
+
+    [HttpGet("sales")]
+    public async Task<IActionResult> Sales([FromQuery] Guid? partnerId,
+        [FromQuery] string? status, [FromQuery] string? q, CancellationToken ct)
+        => Ok(new ApiEnvelope<List<OrderDto>>(
+            await _admin.SalesAsync(partnerId, status, q, ct)));
+
+    [HttpGet("partners")]
+    public async Task<IActionResult> Partners(CancellationToken ct)
+        => Ok(new ApiEnvelope<List<PartnerDto>>(await _admin.PartnersAsync(ct)));
+
+    [HttpPost("partners")]
+    public async Task<IActionResult> CreatePartner(PartnerUpsertRequest req, CancellationToken ct)
+        => Ok(new ApiEnvelope<PartnerDto>(await _admin.CreatePartnerAsync(req, ct)));
+
+    [HttpPut("partners/{id:guid}")]
+    public async Task<IActionResult> UpdatePartner(Guid id, PartnerUpsertRequest req, CancellationToken ct)
+        => Ok(new ApiEnvelope<PartnerDto>(await _admin.UpdatePartnerAsync(id, req, ct)));
+
+    [HttpDelete("partners/{id:guid}")]
+    public async Task<IActionResult> DeletePartner(Guid id, CancellationToken ct)
+    {
+        await _admin.DeletePartnerAsync(id, ct);
+        return NoContent();
+    }
+
+    [HttpGet("users")]
+    public async Task<IActionResult> Users([FromQuery] string? q, CancellationToken ct)
+        => Ok(new ApiEnvelope<List<UserDto>>(await _admin.UsersAsync(q, ct)));
+
+    [HttpGet("leads")]
+    public async Task<IActionResult> Leads(CancellationToken ct)
+        => Ok(new ApiEnvelope<List<AssistantLeadDto>>(
+            await _assistant.ListLeadsAsync(ct)));
+}

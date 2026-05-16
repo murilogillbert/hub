@@ -1,0 +1,26 @@
+# --- Node / Vite ---
+node_modules
+dist
+dist-ssr
+*.local
+*.log
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+
+# --- .NET ---
+backend/**/bin/
+backend/**/obj/
+backend/**/wwwroot/uploads/
+
+# --- Segredos / ambiente ---
+.env
+.env.*
+!.env.example
+
+# --- Editores / SO ---
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+.claude

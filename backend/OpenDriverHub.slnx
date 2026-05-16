@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OpenDriverHub.Api/OpenDriverHub.Api.csproj" />
+    <Project Path="src/OpenDriverHub.Application/OpenDriverHub.Application.csproj" />
+    <Project Path="src/OpenDriverHub.Domain/OpenDriverHub.Domain.csproj" />
+    <Project Path="src/OpenDriverHub.Infrastructure/OpenDriverHub.Infrastructure.csproj" />
+  </Folder>
+</Solution>
