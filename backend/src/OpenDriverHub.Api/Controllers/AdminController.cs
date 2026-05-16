@@ -91,6 +91,11 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> Users([FromQuery] string? q, CancellationToken ct)
         => Ok(new ApiEnvelope<List<UserDto>>(await _admin.UsersAsync(q, ct)));
 
+    [HttpPut("users/{id:guid}")]
+    public async Task<IActionResult> UpdateUser(
+        Guid id, AdminUserUpdateRequest req, CancellationToken ct)
+        => Ok(new ApiEnvelope<UserDto>(await _admin.UpdateUserAsync(id, req, ct)));
+
     [HttpGet("leads")]
     public async Task<IActionResult> Leads(CancellationToken ct)
         => Ok(new ApiEnvelope<List<AssistantLeadDto>>(

@@ -1,3 +1,9 @@
+.catalog-showcase__exit {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-6) 0 var(--space-4);
+}
+
 .partner-page {
   display: flex;
   flex-direction: column;

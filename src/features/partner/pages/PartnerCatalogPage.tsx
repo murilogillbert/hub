@@ -9,10 +9,12 @@ import { formatCurrency, formatPercent } from '@shared/utils/formatters';
 import {
   partnerApi,
   catalogApi,
+  authApi,
   ProductUpsert,
   uploadsApi,
 } from '@shared/api/endpoints';
 import { resolveImageUrl } from '@shared/api/client';
+import { useAuth } from '@shared/hooks/useAuth';
 import { Product } from '@shared/types';
 import './PartnerPages.css';
 
@@ -39,10 +41,45 @@ export function PartnerCatalogPage() {
   });
   const products = productsQuery.data ?? [];
 
+  const { user } = useAuth();
   const [editing, setEditing] = useState<Product | null>(null);
   const [form, setForm] = useState<ProductUpsert | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // Modo vitrine (somente visualização) — persiste no sessionStorage.
+  const [showcase, setShowcase] = useState(
+    () => sessionStorage.getItem('odh.showcase') === '1',
+  );
+  const [exitOpen, setExitOpen] = useState(false);
+  const [pwd, setPwd] = useState('');
+  const [pwdErr, setPwdErr] = useState<string | null>(null);
+  const [pwdBusy, setPwdBusy] = useState(false);
+
+  const enterShowcase = () => {
+    sessionStorage.setItem('odh.showcase', '1');
+    setForm(null);
+    setEditing(null);
+    setShowcase(true);
+  };
+
+  const confirmExit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setPwdErr(null);
+    setPwdBusy(true);
+    try {
+      await authApi.login(user.email, pwd); // valida sem alterar a sessão
+      sessionStorage.removeItem('odh.showcase');
+      setShowcase(false);
+      setExitOpen(false);
+      setPwd('');
+    } catch {
+      setPwdErr('Senha incorreta.');
+    } finally {
+      setPwdBusy(false);
+    }
+  };
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['partner-products'] });
@@ -103,13 +140,24 @@ export function PartnerCatalogPage() {
         <div>
           <h2>Catálogo do parceiro</h2>
           <p className="text-muted">
-            CRUD completo. Cada item tem QR de aquisição rápida para o balcão.
+            {showcase
+              ? 'Modo vitrine ativo — somente visualização.'
+              : 'CRUD completo. Cada item tem QR de aquisição rápida para o balcão.'}
           </p>
         </div>
-        <Button onClick={openCreate}>+ Novo produto</Button>
+        {showcase ? (
+          <span className="badge badge-primary">👁️ Modo vitrine</span>
+        ) : (
+          <div className="row">
+            <Button variant="secondary" onClick={enterShowcase}>
+              👁️ Modo vitrine
+            </Button>
+            <Button onClick={openCreate}>+ Novo produto</Button>
+          </div>
+        )}
       </header>
 
-      {form && (
+      {!showcase && form && (
         <Card>
           <h3>{editing ? 'Editar produto' : 'Novo produto'}</h3>
           <div className="stack" style={{ marginTop: 'var(--space-3)' }}>
@@ -273,22 +321,24 @@ export function PartnerCatalogPage() {
                     <strong>{p.stock}</strong>
                   </div>
                 </div>
-                <div className="row">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => openEdit(p)}
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => deleteMut.mutate(p.id)}
-                  >
-                    Remover
-                  </Button>
-                </div>
+                {!showcase && (
+                  <div className="row">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => openEdit(p)}
+                    >
+                      Editar
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteMut.mutate(p.id)}
+                    >
+                      Remover
+                    </Button>
+                  </div>
+                )}
               </div>
               <div className="partner-catalog__qr">
                 <QrCode
@@ -301,6 +351,68 @@ export function PartnerCatalogPage() {
           ))}
         </div>
       </QueryState>
+
+      {showcase && (
+        <div className="catalog-showcase__exit">
+          <Button variant="secondary" onClick={() => setExitOpen(true)}>
+            🔒 Sair do modo vitrine
+          </Button>
+        </div>
+      )}
+
+      {exitOpen && (
+        <div
+          className="sidebar-user__overlay"
+          onClick={() => !pwdBusy && setExitOpen(false)}
+        >
+          <form
+            className="sidebar-user__modal"
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={confirmExit}
+          >
+            <div className="sidebar-user__modal-head">
+              <h3>Sair do modo vitrine</h3>
+              <button
+                type="button"
+                className="sidebar-user__close"
+                onClick={() => setExitOpen(false)}
+                aria-label="Fechar"
+              >
+                ×
+              </button>
+            </div>
+            <div className="stack">
+              <p className="text-muted">
+                Confirme sua senha para voltar ao modo de edição.
+              </p>
+              <Input
+                label={`Senha de ${user?.email ?? ''}`}
+                type="password"
+                value={pwd}
+                onChange={(e) => setPwd(e.target.value)}
+                autoFocus
+                required
+              />
+              {pwdErr && (
+                <small className="input-field__error">{pwdErr}</small>
+              )}
+              <div className="row">
+                <Button type="submit" disabled={pwdBusy || !pwd}>
+                  {pwdBusy ? 'Verificando...' : 'Confirmar e sair'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setExitOpen(false)}
+                  disabled={pwdBusy}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

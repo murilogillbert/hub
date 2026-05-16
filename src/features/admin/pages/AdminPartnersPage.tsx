@@ -4,8 +4,8 @@ import { Card } from '@shared/components/Card/Card';
 import { Button } from '@shared/components/Button/Button';
 import { Input } from '@shared/components/Input/Input';
 import { QueryState } from '@shared/components/QueryState/QueryState';
-import { formatDate, formatPercent } from '@shared/utils/formatters';
-import { adminApi } from '@shared/api/endpoints';
+import { formatPercent } from '@shared/utils/formatters';
+import { adminApi, catalogApi } from '@shared/api/endpoints';
 import { Partner } from '@shared/types';
 import './AdminPages.css';
 
@@ -15,6 +15,11 @@ interface PartnerForm {
   logoUrl: string;
   feePercent: number;
   active: boolean;
+  cnpj: string;
+  city: string;
+  state: string;
+  lat: number;
+  lng: number;
 }
 const EMPTY: PartnerForm = {
   name: '',
@@ -22,6 +27,11 @@ const EMPTY: PartnerForm = {
   logoUrl: '',
   feePercent: 10,
   active: true,
+  cnpj: '',
+  city: '',
+  state: '',
+  lat: 0,
+  lng: 0,
 };
 
 export function AdminPartnersPage() {
@@ -29,6 +39,10 @@ export function AdminPartnersPage() {
   const partnersQuery = useQuery({
     queryKey: ['admin-partners'],
     queryFn: () => adminApi.partners(),
+  });
+  const segmentsQuery = useQuery({
+    queryKey: ['categories', 'store'],
+    queryFn: () => catalogApi.categories('store'),
   });
   const partners = partnersQuery.data ?? [];
 
@@ -58,6 +72,11 @@ export function AdminPartnersPage() {
         logoUrl: p.logoUrl,
         feePercent: p.feePercent,
         active: !p.active,
+        cnpj: p.cnpj,
+        city: p.city,
+        state: p.state,
+        lat: p.lat,
+        lng: p.lng,
       }),
     onSuccess: invalidate,
   });
@@ -70,6 +89,11 @@ export function AdminPartnersPage() {
       logoUrl: p.logoUrl,
       feePercent: p.feePercent,
       active: p.active,
+      cnpj: p.cnpj ?? '',
+      city: p.city ?? '',
+      state: p.state ?? '',
+      lat: p.lat ?? 0,
+      lng: p.lng ?? 0,
     });
   };
 
@@ -111,16 +135,61 @@ export function AdminPartnersPage() {
                 value={form.name}
                 onChange={(e) => set('name', e.target.value)}
               />
-              <Input
-                label="Segmento"
-                value={form.segment}
-                onChange={(e) => set('segment', e.target.value)}
-              />
+              <div className="input-field">
+                <label className="input-field__label">Segmento</label>
+                <div className="input-field__box">
+                  <select
+                    className="input-field__el"
+                    value={form.segment}
+                    onChange={(e) => set('segment', e.target.value)}
+                  >
+                    <option value="">Selecione...</option>
+                    {(segmentsQuery.data ?? []).map((c) => (
+                      <option key={c.id} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
               <Input
                 label="Taxa (%)"
                 type="number"
                 value={String(form.feePercent)}
                 onChange={(e) => set('feePercent', Number(e.target.value))}
+              />
+            </div>
+            <Input
+              label="CNPJ"
+              value={form.cnpj}
+              onChange={(e) => set('cnpj', e.target.value)}
+              placeholder="00.000.000/0000-00"
+            />
+            <div className="row">
+              <Input
+                label="Cidade"
+                value={form.city}
+                onChange={(e) => set('city', e.target.value)}
+              />
+              <Input
+                label="Estado"
+                value={form.state}
+                onChange={(e) => set('state', e.target.value)}
+                placeholder="UF"
+              />
+            </div>
+            <div className="row">
+              <Input
+                label="Latitude"
+                type="number"
+                value={String(form.lat)}
+                onChange={(e) => set('lat', Number(e.target.value))}
+              />
+              <Input
+                label="Longitude"
+                type="number"
+                value={String(form.lng)}
+                onChange={(e) => set('lng', Number(e.target.value))}
               />
             </div>
             <Input
@@ -155,8 +224,9 @@ export function AdminPartnersPage() {
               <tr>
                 <th>Parceiro</th>
                 <th>Segmento</th>
+                <th>CNPJ</th>
+                <th>Local</th>
                 <th>Taxa</th>
-                <th>Desde</th>
                 <th>Status</th>
                 <th></th>
               </tr>
@@ -171,8 +241,11 @@ export function AdminPartnersPage() {
                     </div>
                   </td>
                   <td>{p.segment}</td>
+                  <td>{p.cnpj || '—'}</td>
+                  <td>
+                    {p.city ? `${p.city}/${p.state}` : 'Digital'}
+                  </td>
                   <td>{formatPercent(p.feePercent)}</td>
-                  <td>{formatDate(p.joinedAt)}</td>
                   <td>
                     <span
                       className={`badge ${p.active ? 'badge-accent' : 'badge-danger'}`}

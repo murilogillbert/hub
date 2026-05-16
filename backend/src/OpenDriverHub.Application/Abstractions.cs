@@ -126,4 +126,5 @@ public interface IAdminService
     Task<PartnerDto> UpdatePartnerAsync(Guid id, PartnerUpsertRequest req, CancellationToken ct);
     Task DeletePartnerAsync(Guid id, CancellationToken ct);
     Task<List<UserDto>> UsersAsync(string? q, CancellationToken ct);
+    Task<UserDto> UpdateUserAsync(Guid id, AdminUserUpdateRequest req, CancellationToken ct);
 }

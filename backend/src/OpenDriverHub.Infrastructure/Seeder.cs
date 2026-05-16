@@ -37,12 +37,12 @@ public static class Seeder
         db.Categories.AddRange(storeCats.Select(n =>
             new Category { Name = n, Type = CategoryType.Store }));
 
-        var pCafe = new Partner { Name = "Estação do Café", Segment = "Cafeteria", FeePercent = 10, LogoUrl = "https://api.dicebear.com/9.x/icons/svg?seed=cafe&backgroundType=gradientLinear", JoinedAt = new DateTime(2025, 8, 12) };
-        var pCine = new Partner { Name = "CineHub", Segment = "Entretenimento", FeePercent = 12, LogoUrl = "https://api.dicebear.com/9.x/icons/svg?seed=cinema&backgroundType=gradientLinear", JoinedAt = new DateTime(2025, 9, 2) };
-        var pBurger = new Partner { Name = "BurgerLab", Segment = "Alimentação", FeePercent = 15, LogoUrl = "https://api.dicebear.com/9.x/icons/svg?seed=burger&backgroundType=gradientLinear", JoinedAt = new DateTime(2025, 10, 21) };
-        var pTech = new Partner { Name = "EduDigital", Segment = "Educação", FeePercent = 8, LogoUrl = "https://api.dicebear.com/9.x/icons/svg?seed=tech&backgroundType=gradientLinear", JoinedAt = new DateTime(2026, 1, 8) };
-        var pBeauty = new Partner { Name = "Studio Belle", Segment = "Beleza", FeePercent = 12, LogoUrl = "https://api.dicebear.com/9.x/icons/svg?seed=belle&backgroundType=gradientLinear", JoinedAt = new DateTime(2025, 11, 3) };
-        var pFit = new Partner { Name = "VidaFit", Segment = "Saúde", FeePercent = 10, LogoUrl = "https://api.dicebear.com/9.x/icons/svg?seed=fit&backgroundType=gradientLinear", JoinedAt = new DateTime(2025, 12, 1) };
+        var pCafe = new Partner { Name = "Estação do Café", Segment = "Cafeteria", FeePercent = 10, LogoUrl = "https://api.dicebear.com/9.x/icons/svg?seed=cafe&backgroundType=gradientLinear", JoinedAt = new DateTime(2025, 8, 12), Cnpj = "12.345.678/0001-90", City = "São Paulo", State = "SP", Lat = -23.5505, Lng = -46.6333 };
+        var pCine = new Partner { Name = "CineHub", Segment = "Cinema", FeePercent = 12, LogoUrl = "https://api.dicebear.com/9.x/icons/svg?seed=cinema&backgroundType=gradientLinear", JoinedAt = new DateTime(2025, 9, 2), Cnpj = "23.456.789/0001-01", City = "Belo Horizonte", State = "MG", Lat = -19.9386, Lng = -43.9352 };
+        var pBurger = new Partner { Name = "BurgerLab", Segment = "Restaurante", FeePercent = 15, LogoUrl = "https://api.dicebear.com/9.x/icons/svg?seed=burger&backgroundType=gradientLinear", JoinedAt = new DateTime(2025, 10, 21), Cnpj = "34.567.890/0001-12", City = "São Paulo", State = "SP", Lat = -23.5469, Lng = -46.6911 };
+        var pTech = new Partner { Name = "EduDigital", Segment = "Loja Digital", FeePercent = 8, LogoUrl = "https://api.dicebear.com/9.x/icons/svg?seed=tech&backgroundType=gradientLinear", JoinedAt = new DateTime(2026, 1, 8), Cnpj = "45.678.901/0001-23", City = "", State = "", Lat = 0, Lng = 0 };
+        var pBeauty = new Partner { Name = "Studio Belle", Segment = "Salão de Beleza", FeePercent = 12, LogoUrl = "https://api.dicebear.com/9.x/icons/svg?seed=belle&backgroundType=gradientLinear", JoinedAt = new DateTime(2025, 11, 3), Cnpj = "56.789.012/0001-34", City = "São Paulo", State = "SP", Lat = -23.5650, Lng = -46.6800 };
+        var pFit = new Partner { Name = "VidaFit", Segment = "Academia", FeePercent = 10, LogoUrl = "https://api.dicebear.com/9.x/icons/svg?seed=fit&backgroundType=gradientLinear", JoinedAt = new DateTime(2025, 12, 1), Cnpj = "67.890.123/0001-45", City = "Rio de Janeiro", State = "RJ", Lat = -23.0010, Lng = -43.3650 };
         db.Partners.AddRange(pCafe, pCine, pBurger, pTech, pBeauty, pFit);
 
         // ----- Lojas físicas com cidade/estado (pTech é 100% digital: sem loja) -----

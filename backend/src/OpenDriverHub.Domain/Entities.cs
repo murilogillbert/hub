@@ -24,6 +24,11 @@ public class Partner
     public string Name { get; set; } = string.Empty;
     public string Segment { get; set; } = string.Empty;
     public string LogoUrl { get; set; } = string.Empty;
+    public string Cnpj { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string State { get; set; } = string.Empty;
+    public double Lat { get; set; }
+    public double Lng { get; set; }
     public bool Active { get; set; } = true;
     public decimal FeePercent { get; set; } = 10m;
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;

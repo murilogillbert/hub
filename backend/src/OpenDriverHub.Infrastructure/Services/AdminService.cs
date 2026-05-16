@@ -126,6 +126,11 @@ public class AdminService : IAdminService
                 : req.LogoUrl,
             FeePercent = req.FeePercent,
             Active = req.Active,
+            Cnpj = req.Cnpj?.Trim() ?? "",
+            City = req.City?.Trim() ?? "",
+            State = req.State?.Trim() ?? "",
+            Lat = req.Lat ?? 0,
+            Lng = req.Lng ?? 0,
         };
         _db.Partners.Add(p);
         await _db.SaveChangesAsync(ct);
@@ -141,6 +146,11 @@ public class AdminService : IAdminService
         p.LogoUrl = req.LogoUrl;
         p.FeePercent = req.FeePercent;
         p.Active = req.Active;
+        if (req.Cnpj is not null) p.Cnpj = req.Cnpj.Trim();
+        if (req.City is not null) p.City = req.City.Trim();
+        if (req.State is not null) p.State = req.State.Trim();
+        if (req.Lat is { } lat) p.Lat = lat;
+        if (req.Lng is { } lng) p.Lng = lng;
         await _db.SaveChangesAsync(ct);
         return p.ToDto();
     }
@@ -160,5 +170,56 @@ public class AdminService : IAdminService
             query = query.Where(u => u.Name.Contains(q) || u.Email.Contains(q));
         var list = await query.OrderBy(u => u.Name).Take(300).ToListAsync(ct);
         return list.Select(u => u.ToDto()).ToList();
+    }
+
+    public async Task<UserDto> UpdateUserAsync(
+        Guid id, AdminUserUpdateRequest req, CancellationToken ct)
+    {
+        var user = await _db.Users.FindAsync([id], ct)
+            ?? throw new AppException("Usuário não encontrado.", 404);
+
+        var email = req.Email.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(req.Name))
+            throw new AppException("Nome é obrigatório.", 400);
+        if (string.IsNullOrWhiteSpace(email))
+            throw new AppException("E-mail é obrigatório.", 400);
+        if (await _db.Users.AnyAsync(u => u.Email == email && u.Id != id, ct))
+            throw new AppException("E-mail já está em uso.", 409);
+        if (!Enum.TryParse<UserRole>(req.Role, true, out var role))
+            throw new AppException("Perfil inválido.", 400);
+
+        // Vínculo de parceiro: obrigatório quando o papel é Partner.
+        Guid? partnerId = req.PartnerId;
+        if (role == UserRole.Partner)
+        {
+            if (partnerId is null)
+                throw new AppException(
+                    "Usuário parceiro precisa estar vinculado a um parceiro.", 400);
+            if (!await _db.Partners.AnyAsync(p => p.Id == partnerId, ct))
+                throw new AppException("Parceiro vinculado não encontrado.", 404);
+        }
+        else
+        {
+            partnerId = null; // cliente/admin não têm parceiro
+        }
+
+        user.Name = req.Name.Trim();
+        user.Email = email;
+        user.Phone = req.Phone;
+        user.Role = role;
+        user.CashbackBalance = Math.Round(req.CashbackBalance, 2);
+        user.PartnerId = partnerId;
+
+        _db.AuditLogs.Add(new AuditLog
+        {
+            Action = "admin.user.update",
+            EntityType = "User",
+            EntityId = id.ToString(),
+            PayloadJson = System.Text.Json.JsonSerializer.Serialize(
+                new { user.Email, Role = role.ToString() }),
+        });
+
+        await _db.SaveChangesAsync(ct);
+        return user.ToDto();
     }
 }

@@ -7,7 +7,7 @@ public static class Mappings
 {
     public static UserDto ToDto(this User u) => new(
         u.Id, u.Name, u.Email, u.Role.ToString().ToLowerInvariant(),
-        u.CashbackBalance, u.AvatarUrl, u.PartnerId);
+        u.CashbackBalance, u.AvatarUrl, u.PartnerId, u.Phone);
 
     public static ProductDto ToDto(
         this Product p,
@@ -20,7 +20,8 @@ public static class Mappings
         cities ?? new(), states ?? new());
 
     public static PartnerDto ToDto(this Partner p) => new(
-        p.Id, p.Name, p.Segment, p.LogoUrl, p.Active, p.FeePercent, p.JoinedAt);
+        p.Id, p.Name, p.Segment, p.LogoUrl, p.Active, p.FeePercent, p.JoinedAt,
+        p.Cnpj, p.City, p.State, p.Lat, p.Lng);
 
     public static StoreDto ToDto(this PartnerStore s) => new(
         s.Id, s.PartnerId, s.Name, s.Address, s.City, s.State, s.Lat, s.Lng, s.Category);

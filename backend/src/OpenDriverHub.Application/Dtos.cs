@@ -13,8 +13,11 @@ public record LoginRequest(string Email, string Password);
 public record RefreshRequest(string RefreshToken);
 public record UserDto(
     Guid Id, string Name, string Email, string Role, decimal CashbackBalance,
-    string? AvatarUrl, Guid? PartnerId);
+    string? AvatarUrl, Guid? PartnerId, string? Phone);
 public record AuthResponse(string Token, string RefreshToken, UserDto User);
+public record AdminUserUpdateRequest(
+    string Name, string Email, string? Phone, string Role,
+    decimal CashbackBalance, Guid? PartnerId);
 
 // ---------- Catalog ----------
 public record ProductDto(
@@ -27,8 +30,11 @@ public record ProductUpsertRequest(
     string Kind, string ImageUrl, string Category, int Stock);
 public record PartnerDto(
     Guid Id, string Name, string Segment, string LogoUrl, bool Active,
-    decimal FeePercent, DateTime JoinedAt);
-public record PartnerUpsertRequest(string Name, string Segment, string LogoUrl, decimal FeePercent, bool Active);
+    decimal FeePercent, DateTime JoinedAt,
+    string Cnpj, string City, string State, double Lat, double Lng);
+public record PartnerUpsertRequest(
+    string Name, string Segment, string LogoUrl, decimal FeePercent, bool Active,
+    string? Cnpj, string? City, string? State, double? Lat, double? Lng);
 public record StoreDto(
     Guid Id, Guid PartnerId, string Name, string Address,
     string City, string State, double Lat, double Lng, string Category);

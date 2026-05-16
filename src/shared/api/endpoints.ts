@@ -268,6 +268,27 @@ export const partnerApi = {
 };
 
 // ---- Admin ----
+export interface PartnerUpsert {
+  name: string;
+  segment: string;
+  logoUrl: string;
+  feePercent: number;
+  active: boolean;
+  cnpj?: string;
+  city?: string;
+  state?: string;
+  lat?: number;
+  lng?: number;
+}
+export interface AdminUserUpdate {
+  name: string;
+  email: string;
+  phone?: string;
+  role: 'client' | 'partner' | 'admin';
+  cashbackBalance: number;
+  partnerId?: string | null;
+}
+
 export const adminApi = {
   metrics: () => api.get<AdminMetrics>('/admin/metrics'),
   sales: (params?: { partnerId?: string; status?: string; q?: string }) => {
@@ -279,26 +300,15 @@ export const adminApi = {
     return api.get<Order[]>(`/admin/sales${s ? `?${s}` : ''}`);
   },
   partners: () => api.get<Partner[]>('/admin/partners'),
-  createPartner: (body: {
-    name: string;
-    segment: string;
-    logoUrl: string;
-    feePercent: number;
-    active: boolean;
-  }) => api.post<Partner>('/admin/partners', body),
-  updatePartner: (
-    id: string,
-    body: {
-      name: string;
-      segment: string;
-      logoUrl: string;
-      feePercent: number;
-      active: boolean;
-    },
-  ) => api.put<Partner>(`/admin/partners/${id}`, body),
+  createPartner: (body: PartnerUpsert) =>
+    api.post<Partner>('/admin/partners', body),
+  updatePartner: (id: string, body: PartnerUpsert) =>
+    api.put<Partner>(`/admin/partners/${id}`, body),
   deletePartner: (id: string) => api.del<void>(`/admin/partners/${id}`),
   users: (q?: string) =>
     api.get<User[]>(`/admin/users${q ? `?q=${q}` : ''}`),
+  updateUser: (id: string, body: AdminUserUpdate) =>
+    api.put<User>(`/admin/users/${id}`, body),
   leads: () => api.get<LeadDto[]>('/admin/leads'),
   integrations: () => api.get<IntegrationGroup[]>('/admin/integrations'),
   updateIntegration: (key: string, value: string | null) =>

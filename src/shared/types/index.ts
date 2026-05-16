@@ -58,6 +58,11 @@ export interface Partner {
   active: boolean;
   feePercent: number;
   joinedAt: string;
+  cnpj: string;
+  city: string;
+  state: string;
+  lat: number;
+  lng: number;
 }
 
 export type OrderStatus = 'paid' | 'pending' | 'redeemed' | 'cancelled';
