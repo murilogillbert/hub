@@ -6,6 +6,7 @@ import { RequireRole, RedirectIfAuthenticated } from '@shared/components/RouteGu
 import { StepUpGuard } from '@shared/components/StepUpGuard/StepUpGuard';
 
 import { HomePage } from '@features/client/pages/HomePage';
+import { CatalogPage } from '@features/client/pages/CatalogPage';
 import { ProductPage } from '@features/client/pages/ProductPage';
 import { CheckoutPage } from '@features/client/pages/CheckoutPage';
 import { PurchaseConfirmationPage } from '@features/client/pages/PurchaseConfirmationPage';
@@ -27,6 +28,7 @@ import { AdminSalesPage } from '@features/admin/pages/AdminSalesPage';
 import { AdminPartnersPage } from '@features/admin/pages/AdminPartnersPage';
 import { AdminUsersPage } from '@features/admin/pages/AdminUsersPage';
 import { AdminIntegrationsPage } from '@features/admin/pages/AdminIntegrationsPage';
+import { AdminCategoriesPage } from '@features/admin/pages/AdminCategoriesPage';
 
 export function AppRoutes() {
   return (
@@ -34,7 +36,7 @@ export function AppRoutes() {
       {/* Client area + auth (header/footer público) */}
       <Route element={<ClientLayout />}>
         <Route path="/" element={<HomePage />} />
-        <Route path="/produtos" element={<HomePage />} />
+        <Route path="/produtos" element={<CatalogPage />} />
 
         {/* Auth: 1 tela de login, cadastro com seletor + 2 telas */}
         <Route
@@ -109,6 +111,7 @@ export function AppRoutes() {
           <Route path="vendas" element={<AdminSalesPage />} />
           <Route path="parceiros" element={<AdminPartnersPage />} />
           <Route path="usuarios" element={<AdminUsersPage />} />
+          <Route path="categorias" element={<AdminCategoriesPage />} />
           <Route path="integracoes" element={<AdminIntegrationsPage />} />
         </Route>
       </Route>

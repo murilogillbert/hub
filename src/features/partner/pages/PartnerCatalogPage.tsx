@@ -6,7 +6,12 @@ import { Button } from '@shared/components/Button/Button';
 import { Input } from '@shared/components/Input/Input';
 import { QueryState } from '@shared/components/QueryState/QueryState';
 import { formatCurrency, formatPercent } from '@shared/utils/formatters';
-import { partnerApi, ProductUpsert, uploadsApi } from '@shared/api/endpoints';
+import {
+  partnerApi,
+  catalogApi,
+  ProductUpsert,
+  uploadsApi,
+} from '@shared/api/endpoints';
 import { resolveImageUrl } from '@shared/api/client';
 import { Product } from '@shared/types';
 import './PartnerPages.css';
@@ -27,6 +32,10 @@ export function PartnerCatalogPage() {
   const productsQuery = useQuery({
     queryKey: ['partner-products'],
     queryFn: () => partnerApi.products(),
+  });
+  const categoriesQuery = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => catalogApi.categories(),
   });
   const products = productsQuery.data ?? [];
 
@@ -137,11 +146,23 @@ export function PartnerCatalogPage() {
               />
             </div>
             <div className="row">
-              <Input
-                label="Categoria"
-                value={form.category}
-                onChange={(e) => set('category', e.target.value)}
-              />
+              <div className="input-field">
+                <label className="input-field__label">Categoria</label>
+                <div className="input-field__box">
+                  <select
+                    className="input-field__el"
+                    value={form.category}
+                    onChange={(e) => set('category', e.target.value)}
+                  >
+                    <option value="">Selecione...</option>
+                    {(categoriesQuery.data ?? []).map((c) => (
+                      <option key={c.id} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
               <div className="input-field">
                 <label className="input-field__label">Tipo</label>
                 <div className="input-field__box">

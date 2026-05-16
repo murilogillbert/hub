@@ -19,9 +19,20 @@ public class AppDbContext : DbContext
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<IntegrationSetting> IntegrationSettings => Set<IntegrationSetting>();
     public DbSet<PaymentEvent> PaymentEvents => Set<PaymentEvent>();
+    public DbSet<Category> Categories => Set<Category>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
+        b.Entity<Category>(e =>
+        {
+            e.HasIndex(x => x.Name).IsUnique();
+            e.Property(x => x.Name).HasMaxLength(80).IsRequired();
+        });
+        b.Entity<PartnerStore>(e =>
+        {
+            e.Property(x => x.City).HasMaxLength(120);
+            e.Property(x => x.State).HasMaxLength(40);
+        });
         b.Entity<IntegrationSetting>(e =>
         {
             e.HasIndex(x => x.Key).IsUnique();

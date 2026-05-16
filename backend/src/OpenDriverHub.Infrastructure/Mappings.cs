@@ -9,16 +9,23 @@ public static class Mappings
         u.Id, u.Name, u.Email, u.Role.ToString().ToLowerInvariant(),
         u.CashbackBalance, u.AvatarUrl, u.PartnerId);
 
-    public static ProductDto ToDto(this Product p) => new(
+    public static ProductDto ToDto(
+        this Product p,
+        List<string>? cities = null,
+        List<string>? states = null) => new(
         p.Id, p.PartnerId, p.Partner?.Name ?? "", p.Title, p.Description,
         p.Price, p.CashbackPercent, p.Kind.ToString().ToLowerInvariant(),
-        p.ImageUrl, p.Category, p.Rating, p.Stock);
+        p.ImageUrl, p.Category, p.Rating, p.Stock,
+        p.Kind == ProductKind.Digital,
+        cities ?? new(), states ?? new());
 
     public static PartnerDto ToDto(this Partner p) => new(
         p.Id, p.Name, p.Segment, p.LogoUrl, p.Active, p.FeePercent, p.JoinedAt);
 
     public static StoreDto ToDto(this PartnerStore s) => new(
-        s.Id, s.PartnerId, s.Name, s.Address, s.Lat, s.Lng, s.Category);
+        s.Id, s.PartnerId, s.Name, s.Address, s.City, s.State, s.Lat, s.Lng, s.Category);
+
+    public static CategoryDto ToDto(this Category c) => new(c.Id, c.Name, c.Active);
 
     public static OrderDto ToDto(this Order o) => new(
         o.Id, o.Code, o.ProductId, o.Product?.Title ?? "", o.PartnerId,

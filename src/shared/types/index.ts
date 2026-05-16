@@ -26,6 +26,9 @@ export interface Product {
   category: string;
   rating: number;
   stock: number;
+  digital: boolean;
+  cities: string[];
+  states: string[];
 }
 
 export interface PartnerStore {
@@ -33,9 +36,17 @@ export interface PartnerStore {
   partnerId: string;
   name: string;
   address: string;
+  city: string;
+  state: string;
   lat: number;
   lng: number;
   category: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  active: boolean;
 }
 
 export interface Partner {

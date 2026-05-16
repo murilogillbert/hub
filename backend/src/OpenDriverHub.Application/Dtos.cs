@@ -20,7 +20,8 @@ public record AuthResponse(string Token, string RefreshToken, UserDto User);
 public record ProductDto(
     Guid Id, Guid PartnerId, string PartnerName, string Title, string Description,
     decimal Price, decimal CashbackPercent, string Kind, string ImageUrl,
-    string Category, double Rating, int Stock);
+    string Category, double Rating, int Stock,
+    bool Digital, List<string> Cities, List<string> States);
 public record ProductUpsertRequest(
     string Title, string Description, decimal Price, decimal CashbackPercent,
     string Kind, string ImageUrl, string Category, int Stock);
@@ -28,7 +29,24 @@ public record PartnerDto(
     Guid Id, string Name, string Segment, string LogoUrl, bool Active,
     decimal FeePercent, DateTime JoinedAt);
 public record PartnerUpsertRequest(string Name, string Segment, string LogoUrl, decimal FeePercent, bool Active);
-public record StoreDto(Guid Id, Guid PartnerId, string Name, string Address, double Lat, double Lng, string Category);
+public record StoreDto(
+    Guid Id, Guid PartnerId, string Name, string Address,
+    string City, string State, double Lat, double Lng, string Category);
+
+// Categorias (geridas pelo Admin)
+public record CategoryDto(Guid Id, string Name, bool Active);
+public record CategoryUpsertRequest(string Name, bool Active);
+
+// Catálogo e-commerce: filtros + paginação
+public record CatalogQuery(
+    string? Category, string? Q, string? City, string? State,
+    decimal? MinPrice, decimal? MaxPrice, string? Sort,
+    int Page, int PageSize);
+public record CatalogPage(
+    List<ProductDto> Items, int Total, int Page, int PageSize, int TotalPages);
+public record CatalogFiltersDto(
+    List<string> Categories, List<string> Cities, List<string> States,
+    decimal MinPrice, decimal MaxPrice);
 public record NearbyStoreDto(
     Guid Id, Guid PartnerId, string Name, string Address,
     double Lat, double Lng, string Category, double DistanceKm);

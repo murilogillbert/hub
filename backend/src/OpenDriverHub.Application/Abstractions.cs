@@ -58,6 +58,17 @@ public interface ICatalogService
         double lat, double lng, double radiusKm, int limit, CancellationToken ct);
     Task<List<PartnerDto>> GetPartnersAsync(CancellationToken ct);
     Task<PartnerDto> GetPartnerAsync(Guid id, CancellationToken ct);
+    Task<CatalogPage> SearchAsync(CatalogQuery query, CancellationToken ct);
+    Task<CatalogFiltersDto> GetFiltersAsync(CancellationToken ct);
+    Task<List<CategoryDto>> GetActiveCategoriesAsync(CancellationToken ct);
+}
+
+public interface ICategoryService
+{
+    Task<List<CategoryDto>> ListAsync(CancellationToken ct);
+    Task<CategoryDto> CreateAsync(CategoryUpsertRequest req, CancellationToken ct);
+    Task<CategoryDto> UpdateAsync(Guid id, CategoryUpsertRequest req, CancellationToken ct);
+    Task DeleteAsync(Guid id, CancellationToken ct);
 }
 
 public interface IPartnerService

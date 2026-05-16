@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IAssistantService, AssistantService>();
         services.AddScoped<IAdminService, AdminService>();
+        services.AddScoped<ICategoryService, CategoryService>();
 
         services.AddScoped<SettingsService>();
         services.AddScoped<ISettingsService>(sp => sp.GetRequiredService<SettingsService>());

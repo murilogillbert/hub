@@ -13,13 +13,35 @@ public class AdminController : ControllerBase
     private readonly IAdminService _admin;
     private readonly IAssistantService _assistant;
     private readonly ISettingsService _settings;
+    private readonly ICategoryService _categories;
 
     public AdminController(
         IAdminService admin,
         IAssistantService assistant,
-        ISettingsService settings)
+        ISettingsService settings,
+        ICategoryService categories)
     {
         _admin = admin; _assistant = assistant; _settings = settings;
+        _categories = categories;
+    }
+
+    [HttpGet("categories")]
+    public async Task<IActionResult> Categories(CancellationToken ct)
+        => Ok(new ApiEnvelope<List<CategoryDto>>(await _categories.ListAsync(ct)));
+
+    [HttpPost("categories")]
+    public async Task<IActionResult> CreateCategory(CategoryUpsertRequest req, CancellationToken ct)
+        => Ok(new ApiEnvelope<CategoryDto>(await _categories.CreateAsync(req, ct)));
+
+    [HttpPut("categories/{id:guid}")]
+    public async Task<IActionResult> UpdateCategory(Guid id, CategoryUpsertRequest req, CancellationToken ct)
+        => Ok(new ApiEnvelope<CategoryDto>(await _categories.UpdateAsync(id, req, ct)));
+
+    [HttpDelete("categories/{id:guid}")]
+    public async Task<IActionResult> DeleteCategory(Guid id, CancellationToken ct)
+    {
+        await _categories.DeleteAsync(id, ct);
+        return NoContent();
     }
 
     [HttpGet("integrations")]

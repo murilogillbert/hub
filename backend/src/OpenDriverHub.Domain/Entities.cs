@@ -38,9 +38,20 @@ public class PartnerStore
     public Partner? Partner { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string State { get; set; } = string.Empty;
     public double Lat { get; set; }
     public double Lng { get; set; }
     public string Category { get; set; } = string.Empty;
+}
+
+/// <summary>Categoria de produto — definida e gerida pelo Admin.</summary>
+public class Category
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Name { get; set; } = string.Empty;
+    public bool Active { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
 public class Product

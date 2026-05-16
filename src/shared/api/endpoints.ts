@@ -1,5 +1,38 @@
 import { api, SERVER_ORIGIN, tokenStore } from './client';
-import { Product, PartnerStore, Partner, Order, User } from '@shared/types';
+import {
+  Product,
+  PartnerStore,
+  Partner,
+  Order,
+  User,
+  Category,
+} from '@shared/types';
+
+export interface CatalogQuery {
+  category?: string;
+  q?: string;
+  city?: string;
+  state?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sort?: 'relevance' | 'price_asc' | 'price_desc' | 'rating';
+  page?: number;
+  pageSize?: number;
+}
+export interface CatalogResult {
+  items: Product[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+export interface CatalogFilters {
+  categories: string[];
+  cities: string[];
+  states: string[];
+  minPrice: number;
+  maxPrice: number;
+}
 
 export interface SeriesPoint {
   label: string;
@@ -113,6 +146,22 @@ export const catalogApi = {
     return api.get<Product[]>(`/products${s ? `?${s}` : ''}`);
   },
   product: (id: string) => api.get<Product>(`/products/${id}`),
+  search: (params: CatalogQuery) => {
+    const qs = new URLSearchParams();
+    if (params.category && params.category !== 'Todos')
+      qs.set('category', params.category);
+    if (params.q) qs.set('q', params.q);
+    if (params.city) qs.set('city', params.city);
+    if (params.state) qs.set('state', params.state);
+    if (params.minPrice != null) qs.set('minPrice', String(params.minPrice));
+    if (params.maxPrice != null) qs.set('maxPrice', String(params.maxPrice));
+    if (params.sort) qs.set('sort', params.sort);
+    qs.set('page', String(params.page ?? 1));
+    qs.set('pageSize', String(params.pageSize ?? 20));
+    return api.get<CatalogResult>(`/catalog?${qs.toString()}`);
+  },
+  filters: () => api.get<CatalogFilters>('/catalog/filters'),
+  categories: () => api.get<Category[]>('/categories'),
   stores: (partnerId?: string) =>
     api.get<PartnerStore[]>(
       `/stores${partnerId ? `?partnerId=${partnerId}` : ''}`,
@@ -253,6 +302,13 @@ export const adminApi = {
   integrations: () => api.get<IntegrationGroup[]>('/admin/integrations'),
   updateIntegration: (key: string, value: string | null) =>
     api.put<IntegrationGroup[]>('/admin/integrations', { key, value }),
+  categories: () => api.get<Category[]>('/admin/categories'),
+  createCategory: (name: string, active = true) =>
+    api.post<Category>('/admin/categories', { name, active }),
+  updateCategory: (id: string, name: string, active: boolean) =>
+    api.put<Category>(`/admin/categories/${id}`, { name, active }),
+  deleteCategory: (id: string) =>
+    api.del<void>(`/admin/categories/${id}`),
 };
 
 export interface IntegrationField {

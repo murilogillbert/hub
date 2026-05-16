@@ -53,6 +53,26 @@ public class CatalogController : ControllerBase
     public async Task<IActionResult> Product(Guid id, CancellationToken ct)
         => Ok(new ApiEnvelope<ProductDto>(await _catalog.GetProductAsync(id, ct)));
 
+    [HttpGet("catalog")]
+    public async Task<IActionResult> Catalog(
+        [FromQuery] string? category, [FromQuery] string? q,
+        [FromQuery] string? city, [FromQuery] string? state,
+        [FromQuery] decimal? minPrice, [FromQuery] decimal? maxPrice,
+        [FromQuery] string? sort, [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20, CancellationToken ct = default)
+        => Ok(new ApiEnvelope<CatalogPage>(await _catalog.SearchAsync(
+            new CatalogQuery(category, q, city, state, minPrice, maxPrice,
+                sort, page, pageSize), ct)));
+
+    [HttpGet("catalog/filters")]
+    public async Task<IActionResult> CatalogFilters(CancellationToken ct)
+        => Ok(new ApiEnvelope<CatalogFiltersDto>(await _catalog.GetFiltersAsync(ct)));
+
+    [HttpGet("categories")]
+    public async Task<IActionResult> Categories(CancellationToken ct)
+        => Ok(new ApiEnvelope<List<CategoryDto>>(
+            await _catalog.GetActiveCategoriesAsync(ct)));
+
     [HttpGet("stores")]
     public async Task<IActionResult> Stores([FromQuery] Guid? partnerId, CancellationToken ct)
         => Ok(new ApiEnvelope<List<StoreDto>>(await _catalog.GetStoresAsync(partnerId, ct)));
