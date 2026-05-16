@@ -241,6 +241,16 @@ export interface ProductUpsert {
   category: string;
   stock: number;
 }
+export interface StoreUpsert {
+  partnerId?: string;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  lat: number;
+  lng: number;
+  category: string;
+}
 export interface RedeemResult {
   orderId: string;
   productTitle: string;
@@ -260,6 +270,12 @@ export const partnerApi = {
     api.put<Product>(`/partner/products/${id}`, body),
   deleteProduct: (id: string) => api.del<void>(`/partner/products/${id}`),
   metrics: () => api.get<PartnerMetrics>('/partner/metrics'),
+  stores: () => api.get<PartnerStore[]>('/partner/stores'),
+  createStore: (body: StoreUpsert) =>
+    api.post<PartnerStore>('/partner/stores', body),
+  updateStore: (id: string, body: StoreUpsert) =>
+    api.put<PartnerStore>(`/partner/stores/${id}`, body),
+  deleteStore: (id: string) => api.del<void>(`/partner/stores/${id}`),
   redeem: (code: string, confirm: boolean) =>
     api.post<RedeemResult>(
       `/partner/redeem?confirm=${confirm}`,
@@ -305,6 +321,15 @@ export const adminApi = {
   updatePartner: (id: string, body: PartnerUpsert) =>
     api.put<Partner>(`/admin/partners/${id}`, body),
   deletePartner: (id: string) => api.del<void>(`/admin/partners/${id}`),
+  stores: (partnerId?: string) =>
+    api.get<PartnerStore[]>(
+      `/admin/stores${partnerId ? `?partnerId=${partnerId}` : ''}`,
+    ),
+  createStore: (body: StoreUpsert) =>
+    api.post<PartnerStore>('/admin/stores', body),
+  updateStore: (id: string, body: StoreUpsert) =>
+    api.put<PartnerStore>(`/admin/stores/${id}`, body),
+  deleteStore: (id: string) => api.del<void>(`/admin/stores/${id}`),
   users: (q?: string) =>
     api.get<User[]>(`/admin/users${q ? `?q=${q}` : ''}`),
   updateUser: (id: string, body: AdminUserUpdate) =>

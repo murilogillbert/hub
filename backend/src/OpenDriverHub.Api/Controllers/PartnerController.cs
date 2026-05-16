@@ -11,7 +11,11 @@ namespace OpenDriverHub.Api.Controllers;
 public class PartnerController : ControllerBase
 {
     private readonly IPartnerService _partner;
-    public PartnerController(IPartnerService partner) => _partner = partner;
+    private readonly IStoreService _stores;
+    public PartnerController(IPartnerService partner, IStoreService stores)
+    {
+        _partner = partner; _stores = stores;
+    }
 
     [HttpGet("products")]
     public async Task<IActionResult> Products(CancellationToken ct)
@@ -32,6 +36,28 @@ public class PartnerController : ControllerBase
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await _partner.DeleteProductAsync(User.PartnerId(), id, ct);
+        return NoContent();
+    }
+
+    [HttpGet("stores")]
+    public async Task<IActionResult> Stores(CancellationToken ct)
+        => Ok(new ApiEnvelope<List<StoreDto>>(
+            await _stores.ListForPartnerAsync(User.PartnerId(), ct)));
+
+    [HttpPost("stores")]
+    public async Task<IActionResult> CreateStore(StoreUpsertRequest req, CancellationToken ct)
+        => Ok(new ApiEnvelope<StoreDto>(
+            await _stores.CreateForPartnerAsync(User.PartnerId(), req, ct)));
+
+    [HttpPut("stores/{id:guid}")]
+    public async Task<IActionResult> UpdateStore(Guid id, StoreUpsertRequest req, CancellationToken ct)
+        => Ok(new ApiEnvelope<StoreDto>(
+            await _stores.UpdateForPartnerAsync(User.PartnerId(), id, req, ct)));
+
+    [HttpDelete("stores/{id:guid}")]
+    public async Task<IActionResult> DeleteStore(Guid id, CancellationToken ct)
+    {
+        await _stores.DeleteForPartnerAsync(User.PartnerId(), id, ct);
         return NoContent();
     }
 

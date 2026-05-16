@@ -22,10 +22,12 @@ import { RegisterPartnerPage } from '@features/auth/pages/RegisterPartnerPage';
 import { PartnerCatalogPage } from '@features/partner/pages/PartnerCatalogPage';
 import { PartnerRedeemPage } from '@features/partner/pages/PartnerRedeemPage';
 import { PartnerMetricsPage } from '@features/partner/pages/PartnerMetricsPage';
+import { PartnerStoresPage } from '@features/partner/pages/PartnerStoresPage';
 
 import { AdminDashboardPage } from '@features/admin/pages/AdminDashboardPage';
 import { AdminSalesPage } from '@features/admin/pages/AdminSalesPage';
 import { AdminPartnersPage } from '@features/admin/pages/AdminPartnersPage';
+import { AdminStoresPage } from '@features/admin/pages/AdminStoresPage';
 import { AdminUsersPage } from '@features/admin/pages/AdminUsersPage';
 import { AdminIntegrationsPage } from '@features/admin/pages/AdminIntegrationsPage';
 import { AdminCategoriesPage } from '@features/admin/pages/AdminCategoriesPage';
@@ -92,6 +94,7 @@ export function AppRoutes() {
         <Route path="/parceiro" element={<PartnerLayout />}>
           <Route index element={<Navigate to="catalogo" replace />} />
           <Route path="catalogo" element={<PartnerCatalogPage />} />
+          <Route path="unidades" element={<PartnerStoresPage />} />
           <Route path="venda" element={<PartnerRedeemPage />} />
           <Route
             path="metricas"
@@ -110,6 +113,7 @@ export function AppRoutes() {
           <Route index element={<AdminDashboardPage />} />
           <Route path="vendas" element={<AdminSalesPage />} />
           <Route path="parceiros" element={<AdminPartnersPage />} />
+          <Route path="unidades" element={<AdminStoresPage />} />
           <Route path="usuarios" element={<AdminUsersPage />} />
           <Route path="categorias" element={<AdminCategoriesPage />} />
           <Route path="integracoes" element={<AdminIntegrationsPage />} />

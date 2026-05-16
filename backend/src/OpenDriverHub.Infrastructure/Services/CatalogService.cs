@@ -141,7 +141,10 @@ public class CatalogService : ICatalogService
 
     public async Task<List<StoreDto>> GetStoresAsync(Guid? partnerId, CancellationToken ct)
     {
-        var query = _db.Stores.AsQueryable();
+        var query = _db.Stores.Where(s =>
+            s.Lat >= -90 && s.Lat <= 90 &&
+            s.Lng >= -180 && s.Lng <= 180 &&
+            !(s.Lat == 0 && s.Lng == 0));
         if (partnerId is { } pid) query = query.Where(s => s.PartnerId == pid);
         var list = await query.ToListAsync(ct);
         return list.Select(s => s.ToDto()).ToList();
@@ -150,7 +153,10 @@ public class CatalogService : ICatalogService
     public async Task<List<NearbyStoreDto>> GetNearbyStoresAsync(
         double lat, double lng, double radiusKm, int limit, CancellationToken ct)
     {
-        var stores = await _db.Stores.ToListAsync(ct);
+        var stores = await _db.Stores.Where(s =>
+            s.Lat >= -90 && s.Lat <= 90 &&
+            s.Lng >= -180 && s.Lng <= 180 &&
+            !(s.Lat == 0 && s.Lng == 0)).ToListAsync(ct);
         return stores
             .Select(s => new NearbyStoreDto(
                 s.Id, s.PartnerId, s.Name, s.Address, s.Lat, s.Lng, s.Category,

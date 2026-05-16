@@ -38,6 +38,9 @@ public record PartnerUpsertRequest(
 public record StoreDto(
     Guid Id, Guid PartnerId, string Name, string Address,
     string City, string State, double Lat, double Lng, string Category);
+public record StoreUpsertRequest(
+    Guid? PartnerId, string Name, string Address,
+    string City, string State, double Lat, double Lng, string Category);
 
 // Categorias (geridas pelo Admin)
 public record CategoryDto(Guid Id, string Name, string Type, bool Active);

@@ -35,6 +35,7 @@ export function PartnerLayout() {
           <NavLink to="/parceiro/catalogo" end>
             🧾 Catálogo
           </NavLink>
+          <NavLink to="/parceiro/unidades">Unidades</NavLink>
           <NavLink to="/parceiro/venda">📷 Resgate / Venda</NavLink>
           <NavLink to="/parceiro/metricas">📊 Métricas</NavLink>
         </nav>

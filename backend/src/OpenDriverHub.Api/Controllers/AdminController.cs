@@ -14,15 +14,17 @@ public class AdminController : ControllerBase
     private readonly IAssistantService _assistant;
     private readonly ISettingsService _settings;
     private readonly ICategoryService _categories;
+    private readonly IStoreService _stores;
 
     public AdminController(
         IAdminService admin,
         IAssistantService assistant,
         ISettingsService settings,
-        ICategoryService categories)
+        ICategoryService categories,
+        IStoreService stores)
     {
         _admin = admin; _assistant = assistant; _settings = settings;
-        _categories = categories;
+        _categories = categories; _stores = stores;
     }
 
     [HttpGet("categories")]
@@ -84,6 +86,28 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> DeletePartner(Guid id, CancellationToken ct)
     {
         await _admin.DeletePartnerAsync(id, ct);
+        return NoContent();
+    }
+
+    [HttpGet("stores")]
+    public async Task<IActionResult> Stores([FromQuery] Guid? partnerId, CancellationToken ct)
+        => Ok(new ApiEnvelope<List<StoreDto>>(
+            await _stores.ListForAdminAsync(partnerId, ct)));
+
+    [HttpPost("stores")]
+    public async Task<IActionResult> CreateStore(StoreUpsertRequest req, CancellationToken ct)
+        => Ok(new ApiEnvelope<StoreDto>(
+            await _stores.CreateForAdminAsync(req, ct)));
+
+    [HttpPut("stores/{id:guid}")]
+    public async Task<IActionResult> UpdateStore(Guid id, StoreUpsertRequest req, CancellationToken ct)
+        => Ok(new ApiEnvelope<StoreDto>(
+            await _stores.UpdateForAdminAsync(id, req, ct)));
+
+    [HttpDelete("stores/{id:guid}")]
+    public async Task<IActionResult> DeleteStore(Guid id, CancellationToken ct)
+    {
+        await _stores.DeleteForAdminAsync(id, ct);
         return NoContent();
     }
 

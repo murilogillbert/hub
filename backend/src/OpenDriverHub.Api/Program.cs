@@ -110,9 +110,9 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
-    // Seed demo só em Development por padrão; sobreponível via Seed:Enabled.
+    // Seed demo só roda quando Seed:Enabled=true; dados reais devem vir do admin/parceiro.
     var seedDemo = cfg.GetValue<bool?>("Seed:Enabled")
-        ?? builder.Environment.IsDevelopment();
+        ?? false;
     await Seeder.SeedAsync(db, hasher, seedDemo);
 }
 

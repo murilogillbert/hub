@@ -71,6 +71,18 @@ public interface ICategoryService
     Task DeleteAsync(Guid id, CancellationToken ct);
 }
 
+public interface IStoreService
+{
+    Task<List<StoreDto>> ListForAdminAsync(Guid? partnerId, CancellationToken ct);
+    Task<List<StoreDto>> ListForPartnerAsync(Guid partnerId, CancellationToken ct);
+    Task<StoreDto> CreateForAdminAsync(StoreUpsertRequest req, CancellationToken ct);
+    Task<StoreDto> CreateForPartnerAsync(Guid partnerId, StoreUpsertRequest req, CancellationToken ct);
+    Task<StoreDto> UpdateForAdminAsync(Guid id, StoreUpsertRequest req, CancellationToken ct);
+    Task<StoreDto> UpdateForPartnerAsync(Guid partnerId, Guid id, StoreUpsertRequest req, CancellationToken ct);
+    Task DeleteForAdminAsync(Guid id, CancellationToken ct);
+    Task DeleteForPartnerAsync(Guid partnerId, Guid id, CancellationToken ct);
+}
+
 public interface IPartnerService
 {
     Task<List<ProductDto>> MyProductsAsync(Guid partnerId, CancellationToken ct);
