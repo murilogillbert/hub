@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { SidebarUser } from '@shared/components/SidebarUser/SidebarUser';
+import { Logo } from '@shared/components/Logo/Logo';
 import './Layouts.css';
 
 export function PartnerLayout() {
@@ -12,11 +13,7 @@ export function PartnerLayout() {
       <aside className="layout-internal__sidebar">
         <div className="layout-internal__bar">
           <div className="layout-internal__brand">
-            <span className="layout-internal__logo">◇</span>
-            <div>
-              <strong>OpenDriverHub</strong>
-              <small>Painel do parceiro</small>
-            </div>
+            <Logo subtitle="Painel do parceiro" size={34} />
           </div>
           <button
             type="button"

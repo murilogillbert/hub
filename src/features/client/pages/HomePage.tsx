@@ -129,11 +129,11 @@ export function HomePage() {
             <Link to="/cadastro">
               <Button size="lg">Criar conta grátis</Button>
             </Link>
-            <a href="#catalogo">
+            <Link to="/catalogo">
               <Button size="lg" variant="secondary">
                 Ver catálogo
               </Button>
-            </a>
+            </Link>
           </div>
         </div>
         <div className="home__hero-stats">

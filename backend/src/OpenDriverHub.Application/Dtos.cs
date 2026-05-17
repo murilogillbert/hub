@@ -42,10 +42,12 @@ public record PartnerUpsertRequest(
     string? Cnpj, string? City, string? State, double? Lat, double? Lng);
 public record StoreDto(
     Guid Id, Guid PartnerId, string Name, string Address,
-    string City, string State, double Lat, double Lng, string Category);
+    string City, string State, double Lat, double Lng, string Category,
+    string ImageUrl);
 public record StoreUpsertRequest(
     Guid? PartnerId, string Name, string Address,
-    string City, string State, double Lat, double Lng, string Category);
+    string City, string State, double Lat, double Lng, string Category,
+    string? ImageUrl = null);
 
 // Categorias (geridas pelo Admin)
 public record CategoryDto(Guid Id, string Name, string Type, bool Active);
@@ -65,7 +67,8 @@ public record CatalogFiltersDto(
     decimal MinPrice, decimal MaxPrice);
 public record NearbyStoreDto(
     Guid Id, Guid PartnerId, string Name, string Address,
-    string City, string State, double Lat, double Lng, string Category, double DistanceKm);
+    string City, string State, double Lat, double Lng, string Category,
+    string ImageUrl, double DistanceKm);
 
 // ---------- Orders / Payments ----------
 public record CreateOrderRequest(Guid ProductId, bool UseCashback = false);
@@ -109,7 +112,8 @@ public record AssistantChatRequest(List<ChatMessage> Messages);
 public record AssistantChatResponse(string Reply, bool Fallback);
 
 // ---------- Profile ----------
-public record UpdateProfileRequest(string Name, string Email, string? Phone);
+public record UpdateProfileRequest(
+    string Name, string Email, string? Phone, string? AvatarUrl = null);
 public record UpdateNotificationsRequest(bool WhatsApp, bool Email, bool Promo);
 public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 public record NotificationDto(

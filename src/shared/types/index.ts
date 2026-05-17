@@ -41,6 +41,7 @@ export interface PartnerStore {
   lat: number;
   lng: number;
   category: string;
+  imageUrl?: string;
 }
 
 export interface Category {

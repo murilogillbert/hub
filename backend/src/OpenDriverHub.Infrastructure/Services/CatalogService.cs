@@ -167,7 +167,8 @@ public class CatalogService : ICatalogService
             !(s.Lat == 0 && s.Lng == 0)).ToListAsync(ct);
         return stores
             .Select(s => new NearbyStoreDto(
-                s.Id, s.PartnerId, s.Name, s.Address, s.City, s.State, s.Lat, s.Lng, s.Category,
+                s.Id, s.PartnerId, s.Name, s.Address, s.City, s.State, s.Lat, s.Lng,
+                s.Category, s.ImageUrl,
                 GeoUtils.DistanceKm(lat, lng, s.Lat, s.Lng)))
             .Where(s => s.DistanceKm <= radiusKm)
             .OrderBy(s => s.DistanceKm)

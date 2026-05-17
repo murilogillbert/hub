@@ -4,6 +4,7 @@ import { Button } from '@shared/components/Button/Button';
 import { Input } from '@shared/components/Input/Input';
 import { useAuth } from '@shared/hooks/useAuth';
 import { routeForRole } from '@shared/context/AuthContext';
+import { Logo } from '@shared/components/Logo/Logo';
 import './AuthPages.css';
 
 export function LoginPage() {
@@ -41,6 +42,9 @@ export function LoginPage() {
   return (
     <div className="auth-page">
       <div className="auth-page__card">
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-4)' }}>
+          <Logo size={56} />
+        </div>
         <h2>Entrar</h2>
         <p className="text-muted">
           Use seu e-mail e senha. Você é direcionado automaticamente para a sua

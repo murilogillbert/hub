@@ -48,6 +48,7 @@ public class PartnerStore
     public double Lat { get; set; }
     public double Lng { get; set; }
     public string Category { get; set; } = string.Empty;
+    public string ImageUrl { get; set; } = string.Empty;
 }
 
 /// <summary>Categoria de produto — definida e gerida pelo Admin.</summary>

@@ -1,0 +1,27 @@
+.odh-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.odh-logo__img {
+  object-fit: contain;
+  display: block;
+}
+
+.odh-logo__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.odh-logo__text strong {
+  font-family: var(--font-display, inherit);
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.odh-logo__text small {
+  font-size: 0.72rem;
+  opacity: 0.7;
+}

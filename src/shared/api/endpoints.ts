@@ -151,8 +151,12 @@ export const authApi = {
     lng?: number;
   }) => api.postPublic<AuthResponse>('/auth/register/partner', body),
   me: () => api.get<User>('/auth/me'),
-  updateProfile: (body: { name: string; email: string; phone?: string }) =>
-    api.put<User>('/me/profile', body),
+  updateProfile: (body: {
+    name: string;
+    email: string;
+    phone?: string;
+    avatarUrl?: string;
+  }) => api.put<User>('/me/profile', body),
   updateNotifications: (body: {
     whatsApp: boolean;
     email: boolean;
@@ -281,6 +285,7 @@ export interface StoreUpsert {
   lat: number;
   lng: number;
   category: string;
+  imageUrl?: string;
 }
 export interface RedeemResult {
   orderId: string;

@@ -6,7 +6,8 @@ import { Button } from '@shared/components/Button/Button';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { formatCurrency } from '@shared/utils/formatters';
 import { isValidPhone, maskPhone } from '@shared/utils/masks';
-import { authApi } from '@shared/api/endpoints';
+import { authApi, uploadsApi } from '@shared/api/endpoints';
+import { resolveImageUrl } from '@shared/api/client';
 import './ClientArea.css';
 
 export function ProfilePage() {
@@ -22,7 +23,27 @@ export function ProfilePage() {
     newPassword: '',
     confirmPassword: '',
   });
+  const [avatarBusy, setAvatarBusy] = useState(false);
   const phoneError = phone && !isValidPhone(phone) ? 'Telefone incompleto.' : undefined;
+
+  const uploadAvatar = async (file: File) => {
+    setAvatarBusy(true);
+    try {
+      const url = await uploadsApi.image(file);
+      const updated = await authApi.updateProfile({
+        name,
+        email,
+        phone,
+        avatarUrl: url,
+      });
+      setUser(updated);
+      toast.success('Foto atualizada.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Falha ao enviar a foto.');
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
 
   const saveProfile = async () => {
     if (phoneError) return;
@@ -85,13 +106,34 @@ export function ProfilePage() {
       <div className="profile">
         <Card>
           <div className="profile__top">
-            <img src={user?.avatarUrl} alt={user?.name} className="profile__avatar" />
+            <img
+              src={resolveImageUrl(user?.avatarUrl) || user?.avatarUrl}
+              alt={user?.name}
+              className="profile__avatar"
+            />
             <div>
               <strong>{user?.name}</strong>
               <small className="text-muted">{user?.email}</small>
               <span className="badge badge-accent" style={{ marginTop: 8 }}>
                 Saldo: {formatCurrency(user?.cashbackBalance ?? 0)}
               </span>
+              <label
+                className="btn btn--secondary btn--sm"
+                style={{ marginTop: 10, cursor: 'pointer', width: 'fit-content' }}
+              >
+                {avatarBusy ? 'Enviando...' : '📷 Trocar foto'}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  style={{ display: 'none' }}
+                  disabled={avatarBusy}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadAvatar(f);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
             </div>
           </div>
         </Card>

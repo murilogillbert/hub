@@ -6,7 +6,7 @@ using OpenDriverHub.Application;
 namespace OpenDriverHub.Api.Controllers;
 
 [ApiController]
-[Authorize(Policy = "Partner")] // Parceiro ou Admin
+[Authorize] // Qualquer usuário autenticado (avatar de cliente, imagens de parceiro/admin)
 [Route("api/v1/uploads")]
 public class UploadsController : ControllerBase
 {

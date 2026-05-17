@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { SidebarUser } from '@shared/components/SidebarUser/SidebarUser';
+import { Logo } from '@shared/components/Logo/Logo';
 import './Layouts.css';
 
 export function AdminLayout() {
@@ -12,11 +13,7 @@ export function AdminLayout() {
       <aside className="layout-internal__sidebar">
         <div className="layout-internal__bar">
           <div className="layout-internal__brand">
-            <span className="layout-internal__logo">◇</span>
-            <div>
-              <strong>OpenDriverHub</strong>
-              <small>Administração</small>
-            </div>
+            <Logo subtitle="Administração" size={34} />
           </div>
           <button
             type="button"

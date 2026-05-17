@@ -4,6 +4,7 @@ import { useAuth } from '@shared/hooks/useAuth';
 import { formatCurrency } from '@shared/utils/formatters';
 import { FloatingAssistant } from '@features/assistant/components/FloatingAssistant';
 import { NotificationsBell } from '@shared/components/NotificationsBell/NotificationsBell';
+import { Logo } from '@shared/components/Logo/Logo';
 import './Layouts.css';
 
 interface ClientLayoutProps {
@@ -27,8 +28,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
       <header className="layout-client__header">
         <div className="container layout-client__top">
           <Link to="/" className="layout-client__brand" onClick={closeMenu}>
-            <span className="layout-client__logo">◇</span>
-            <span>OpenDriverHub</span>
+            <Logo size={34} />
           </Link>
           <button
             type="button"

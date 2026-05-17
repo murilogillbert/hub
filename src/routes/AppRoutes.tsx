@@ -42,6 +42,7 @@ export function AppRoutes() {
       <Route element={<ClientLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/produtos" element={<CatalogPage />} />
+        <Route path="/catalogo" element={<CatalogPage />} />
 
         {/* Auth: 1 tela de login, cadastro com seletor + 2 telas */}
         <Route

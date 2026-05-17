@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { PartnerStore } from '@shared/types';
+import { resolveImageUrl } from '@shared/api/client';
 import './StoreMap.css';
 
 const markerIcon = L.icon({
@@ -53,14 +54,42 @@ export function StoreMap({
           <Marker key={store.id} position={[store.lat, store.lng]} icon={markerIcon}>
             <Popup>
               <div className="store-map__popup">
+                {store.imageUrl && (
+                  <img
+                    className="store-map__popup-img"
+                    src={resolveImageUrl(store.imageUrl)}
+                    alt={store.name}
+                  />
+                )}
                 <strong>{store.name}</strong>
                 <small>{store.address}</small>
                 <small>{store.city}/{store.state} · {store.category}</small>
-                {onStoreSelect && (
-                  <button type="button" onClick={() => onStoreSelect(store)}>
-                    {selectLabel}
-                  </button>
-                )}
+                <div className="store-map__popup-actions">
+                  {onStoreSelect ? (
+                    <button
+                      type="button"
+                      className="store-map__btn store-map__btn--primary"
+                      onClick={() => onStoreSelect(store)}
+                    >
+                      {selectLabel}
+                    </button>
+                  ) : (
+                    <a
+                      className="store-map__btn store-map__btn--primary"
+                      href="/catalogo"
+                    >
+                      Ver catálogo
+                    </a>
+                  )}
+                  <a
+                    className="store-map__btn"
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Como chegar
+                  </a>
+                </div>
               </div>
             </Popup>
           </Marker>

@@ -24,7 +24,8 @@ public static class Mappings
         p.Cnpj, p.City, p.State, p.Lat, p.Lng);
 
     public static StoreDto ToDto(this PartnerStore s) => new(
-        s.Id, s.PartnerId, s.Name, s.Address, s.City, s.State, s.Lat, s.Lng, s.Category);
+        s.Id, s.PartnerId, s.Name, s.Address, s.City, s.State, s.Lat, s.Lng,
+        s.Category, s.ImageUrl);
 
     public static CategoryDto ToDto(this Category c) =>
         new(c.Id, c.Name, c.Type.ToString().ToLowerInvariant(), c.Active);

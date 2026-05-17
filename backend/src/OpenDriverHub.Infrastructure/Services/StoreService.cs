@@ -128,5 +128,6 @@ public class StoreService : IStoreService
         store.Lat = req.Lat;
         store.Lng = req.Lng;
         store.Category = category;
+        store.ImageUrl = (req.ImageUrl ?? "").Trim();
     }
 }

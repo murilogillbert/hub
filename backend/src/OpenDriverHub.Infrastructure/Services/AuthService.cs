@@ -114,6 +114,8 @@ public class AuthService : IAuthService
         user.Name = req.Name.Trim();
         user.Email = req.Email.Trim().ToLowerInvariant();
         user.Phone = req.Phone;
+        if (!string.IsNullOrWhiteSpace(req.AvatarUrl))
+            user.AvatarUrl = req.AvatarUrl.Trim();
         await _db.SaveChangesAsync(ct);
         return user.ToDto();
     }

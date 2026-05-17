@@ -5,7 +5,14 @@ import { Button } from '@shared/components/Button/Button';
 import { Input } from '@shared/components/Input/Input';
 import { QueryState } from '@shared/components/QueryState/QueryState';
 import { StoreMap } from '@shared/components/StoreMap/StoreMap';
-import { adminApi, catalogApi, partnerApi, StoreUpsert } from '@shared/api/endpoints';
+import {
+  adminApi,
+  catalogApi,
+  partnerApi,
+  uploadsApi,
+  StoreUpsert,
+} from '@shared/api/endpoints';
+import { resolveImageUrl } from '@shared/api/client';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { coordinateError, maskCoordinate } from '@shared/utils/masks';
 import { Partner, PartnerStore } from '@shared/types';
@@ -20,6 +27,7 @@ interface StoreForm {
   lat: string;
   lng: string;
   category: string;
+  imageUrl: string;
 }
 
 interface StoresManagerProps {
@@ -36,6 +44,7 @@ const EMPTY: StoreForm = {
   lat: '',
   lng: '',
   category: '',
+  imageUrl: '',
 };
 
 const hasCoords = (lat: number, lng: number) =>
@@ -51,6 +60,7 @@ function toForm(store: PartnerStore): StoreForm {
     lat: String(store.lat),
     lng: String(store.lng),
     category: store.category,
+    imageUrl: store.imageUrl ?? '',
   };
 }
 
@@ -179,9 +189,26 @@ export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
       lat: Number(form.lat),
       lng: Number(form.lng),
       category: form.category.trim(),
+      imageUrl: form.imageUrl || undefined,
     };
     if (editing) updateMut.mutate({ id: editing.id, body });
     else createMut.mutate(body);
+  };
+
+  const [imgBusy, setImgBusy] = useState(false);
+  const uploadImage = async (file: File) => {
+    setImgBusy(true);
+    try {
+      const url = await uploadsApi.image(file);
+      set('imageUrl', url);
+      setMessage('Imagem enviada.');
+    } catch (e) {
+      const m = e instanceof Error ? e.message : 'Falha ao enviar a imagem.';
+      setMessage(m);
+      toast.error(m);
+    } finally {
+      setImgBusy(false);
+    }
   };
 
   const geocode = async () => {
@@ -378,6 +405,50 @@ export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
                 error={lngError}
                 required
               />
+            </div>
+
+            <div className="input-field">
+              <label className="input-field__label">Imagem da unidade</label>
+              <div className="row" style={{ alignItems: 'center', gap: 12 }}>
+                <label
+                  className="btn btn--secondary btn--sm"
+                  style={{ cursor: 'pointer' }}
+                >
+                  {imgBusy ? 'Enviando...' : '📷 Enviar imagem'}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    style={{ display: 'none' }}
+                    disabled={imgBusy}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) uploadImage(f);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+                {form.imageUrl && (
+                  <>
+                    <img
+                      src={resolveImageUrl(form.imageUrl)}
+                      alt="Prévia"
+                      style={{
+                        width: 64,
+                        height: 64,
+                        objectFit: 'cover',
+                        borderRadius: 8,
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => set('imageUrl', '')}
+                    >
+                      Remover
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
 
             <div className="row">
