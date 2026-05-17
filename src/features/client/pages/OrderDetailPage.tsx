@@ -128,9 +128,45 @@ export function OrderDetailPage() {
               </ol>
             </Card>
 
-            {order.status === 'redeemed' && (
-              <ReviewForm productId={order.productId} />
-            )}
+            <Card>
+              <h3>Itens do pedido</h3>
+              <table className="history__table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Parceiro</th>
+                    <th>Qtd</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {order.items.map((it) => (
+                    <tr key={it.id}>
+                      <td>{it.productTitle}</td>
+                      <td>{it.partnerName}</td>
+                      <td>{it.quantity}</td>
+                      <td>{formatCurrency(it.lineTotal)}</td>
+                      <td>
+                        <span
+                          className={`badge ${
+                            it.redeemed ? 'badge-accent' : 'badge-primary'
+                          }`}
+                        >
+                          {it.redeemed ? 'Resgatado' : 'A resgatar'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
+
+            {order.items
+              .filter((it) => it.redeemed)
+              .map((it) => (
+                <ReviewForm key={it.id} productId={it.productId} />
+              ))}
 
             <Card className="order-detail__stores">
               <div className="row-between">

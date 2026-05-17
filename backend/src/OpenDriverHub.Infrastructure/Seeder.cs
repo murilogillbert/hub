@@ -144,10 +144,19 @@ public static class Seeder
         var admin = new User { Name = "Admin OpenDriverHub", Email = "admin@demo.com", PasswordHash = pwd, Role = UserRole.Admin, AvatarUrl = "https://api.dicebear.com/9.x/avataaars/svg?seed=admin" };
         db.Users.AddRange(cliente, pedro, parceiro, admin);
 
+        static OrderItem Item(Product p, Partner partner, decimal cashback, DateTime? redeemedAt = null)
+            => new()
+            {
+                Product = p, ProductId = p.Id, Partner = partner, PartnerId = partner.Id,
+                ProductTitle = p.Title, ImageUrl = p.ImageUrl, Category = p.Category,
+                UnitPrice = p.Price, Quantity = 1, CashbackPercent = p.CashbackPercent,
+                LineTotal = p.Price, CashbackEarned = cashback, RedeemedAt = redeemedAt,
+            };
+
         db.Orders.AddRange(
-            new Order { Code = OrderService.GenerateCode(), Product = prodCombo, Partner = pCafe, Customer = cliente, PaidPrice = 18.9m, CashbackEarned = 0.95m, Status = OrderStatus.Paid, PaymentMethod = PaymentMethod.Pix, PaidAt = DateTime.UtcNow.AddDays(-3), VoucherCode = PaymentCodes.Voucher(), CreatedAt = DateTime.UtcNow.AddDays(-3) },
-            new Order { Code = OrderService.GenerateCode(), Product = prodBurger, Partner = pBurger, Customer = cliente, PaidPrice = 39.5m, CashbackEarned = 3.95m, CashbackUsed = 2.0m, Status = OrderStatus.Redeemed, PaymentMethod = PaymentMethod.CreditCard, PaidAt = DateTime.UtcNow.AddDays(-7), RedeemedAt = DateTime.UtcNow.AddDays(-6), VoucherCode = PaymentCodes.Voucher(), CreatedAt = DateTime.UtcNow.AddDays(-7) },
-            new Order { Code = OrderService.GenerateCode(), Product = prodCine, Partner = pCine, Customer = pedro, PaidPrice = 49.9m, CashbackEarned = 3.99m, Status = OrderStatus.Paid, PaymentMethod = PaymentMethod.Pix, PaidAt = DateTime.UtcNow.AddDays(-1), VoucherCode = PaymentCodes.Voucher(), CreatedAt = DateTime.UtcNow.AddDays(-1) });
+            new Order { Code = OrderService.GenerateCode(), Customer = cliente, PaidPrice = 18.9m, CashbackEarned = 0.95m, Status = OrderStatus.Paid, PaymentMethod = PaymentMethod.Pix, PaidAt = DateTime.UtcNow.AddDays(-3), VoucherCode = PaymentCodes.Voucher(), CreatedAt = DateTime.UtcNow.AddDays(-3), Items = { Item(prodCombo, pCafe, 0.95m) } },
+            new Order { Code = OrderService.GenerateCode(), Customer = cliente, PaidPrice = 39.5m, CashbackEarned = 3.95m, CashbackUsed = 2.0m, Status = OrderStatus.Redeemed, PaymentMethod = PaymentMethod.CreditCard, PaidAt = DateTime.UtcNow.AddDays(-7), RedeemedAt = DateTime.UtcNow.AddDays(-6), VoucherCode = PaymentCodes.Voucher(), CreatedAt = DateTime.UtcNow.AddDays(-7), Items = { Item(prodBurger, pBurger, 3.95m, DateTime.UtcNow.AddDays(-6)) } },
+            new Order { Code = OrderService.GenerateCode(), Customer = pedro, PaidPrice = 49.9m, CashbackEarned = 3.99m, Status = OrderStatus.Paid, PaymentMethod = PaymentMethod.Pix, PaidAt = DateTime.UtcNow.AddDays(-1), VoucherCode = PaymentCodes.Voucher(), CreatedAt = DateTime.UtcNow.AddDays(-1), Items = { Item(prodCine, pCine, 3.99m) } });
 
         await db.SaveChangesAsync(ct);
     }

@@ -67,39 +67,49 @@ public class PartnerService : IPartnerService
 
     public async Task<PartnerMetricsDto> MetricsAsync(Guid partnerId, CancellationToken ct)
     {
-        var all = await _db.Orders
-            .Include(o => o.Product)
-            .Where(o => o.PartnerId == partnerId)
-            .ToListAsync(ct);
         var partner = await _db.Partners.FindAsync([partnerId], ct);
         var fee = partner?.FeePercent ?? 10m;
 
-        // Receita considera pedidos pagos/resgatados (exclui pendentes e cancelados).
-        var valid = all.Where(o => o.Status is OrderStatus.Paid or OrderStatus.Redeemed).ToList();
-        var revenue = valid.Sum(o => o.PaidPrice);
+        // Itens deste parceiro (pedido multi-parceiro: agregamos por item).
+        var items = await _db.OrderItems
+            .Include(i => i.Order)
+            .Where(i => i.PartnerId == partnerId)
+            .ToListAsync(ct);
 
-        var pendingCount = all.Count(o => o.Status == OrderStatus.PendingPayment);
-        var paidCount = all.Count(o => o.Status == OrderStatus.Paid);
-        var redeemedCount = all.Count(o => o.Status == OrderStatus.Redeemed);
+        bool IsValid(OrderItem i) =>
+            i.Order!.Status is OrderStatus.Paid or OrderStatus.Redeemed;
+        var valid = items.Where(IsValid).ToList();
+        var revenue = valid.Sum(i => i.LineTotal);
 
-        // Repasse: líquido dos vouchers já resgatados; "a repassar" = restante da receita.
-        var paidTransfer = all.Where(o => o.Status == OrderStatus.Redeemed)
-            .Sum(o => CommissionRules.PartnerNet(o.PaidPrice,
-                CommissionRules.PlatformFeeFor(o.PaidPrice, fee), o.CashbackEarned));
-        var pendingTransfer = all.Where(o => o.Status == OrderStatus.Paid)
-            .Sum(o => CommissionRules.PartnerNet(o.PaidPrice,
-                CommissionRules.PlatformFeeFor(o.PaidPrice, fee), o.CashbackEarned));
+        decimal NetOf(OrderItem i) => CommissionRules.PartnerNet(
+            i.LineTotal, CommissionRules.PlatformFeeFor(i.LineTotal, fee),
+            i.CashbackEarned);
 
-        var avgTicket = valid.Count > 0 ? Math.Round(revenue / valid.Count, 2) : 0m;
-        var cashbackGranted = valid.Sum(o => o.CashbackEarned);
-        var uniqueCustomers = valid.Select(o => o.CustomerId).Distinct().Count();
+        // Repasse: itens já resgatados = a receber; pagos não resgatados = pendente.
+        var paidTransfer = valid.Where(i => i.RedeemedAt != null).Sum(NetOf);
+        var pendingTransfer = valid.Where(i => i.RedeemedAt == null).Sum(NetOf);
+
+        // Pedidos (distintos) que contêm itens deste parceiro.
+        var orders = items.Select(i => i.Order!).DistinctBy(o => o.Id).ToList();
+        var pendingCount = orders.Count(o => o.Status == OrderStatus.PendingPayment);
+        var paidOrders = orders.Where(o => o.Status is OrderStatus.Paid or OrderStatus.Redeemed)
+            .ToList();
+        // "Resgatado" = pedido em que todos os itens deste parceiro foram resgatados.
+        var redeemedCount = paidOrders.Count(o =>
+            items.Where(i => i.OrderId == o.Id).All(i => i.RedeemedAt != null));
+        var paidCount = paidOrders.Count - redeemedCount;
+
+        var validOrderCount = paidOrders.Count;
+        var avgTicket = validOrderCount > 0 ? Math.Round(revenue / validOrderCount, 2) : 0m;
+        var cashbackGranted = valid.Sum(i => i.CashbackEarned);
+        var uniqueCustomers = valid.Select(i => i.Order!.CustomerId).Distinct().Count();
         var redemptionRate = paidCount + redeemedCount > 0
             ? Math.Round(100m * redeemedCount / (paidCount + redeemedCount), 1)
             : 0m;
 
         var byHour = Enumerable.Range(0, 24)
             .Select(h => new SeriesPoint($"{h:00}h",
-                valid.Count(o => o.CreatedAt.ToLocalTime().Hour == h)))
+                valid.Count(i => i.Order!.CreatedAt.ToLocalTime().Hour == h)))
             .Where(s => s.Value > 0)
             .ToList();
 
@@ -107,26 +117,28 @@ public class PartnerService : IPartnerService
             .Select(i => DateTime.UtcNow.Date.AddDays(-6 + i))
             .Select(d => new SeriesPoint(
                 d.ToString("dd/MM"),
-                valid.Where(o => o.CreatedAt.Date == d).Sum(o => o.PaidPrice)))
+                valid.Where(i => i.Order!.CreatedAt.Date == d).Sum(i => i.LineTotal)))
             .ToList();
 
         var topProducts = valid
-            .GroupBy(o => o.Product?.Title ?? "—")
-            .Select(g => new NamedValue(g.Key, g.Sum(o => o.PaidPrice), g.Count()))
+            .GroupBy(i => i.ProductTitle.Length == 0 ? "—" : i.ProductTitle)
+            .Select(g => new NamedValue(g.Key, g.Sum(i => i.LineTotal),
+                g.Sum(i => i.Quantity)))
             .OrderByDescending(n => n.Value).Take(5).ToList();
 
         var byCategory = valid
-            .GroupBy(o => o.Product?.Category ?? "—")
-            .Select(g => new NamedValue(g.Key, g.Sum(o => o.PaidPrice), g.Count()))
+            .GroupBy(i => i.Category.Length == 0 ? "—" : i.Category)
+            .Select(g => new NamedValue(g.Key, g.Sum(i => i.LineTotal),
+                g.Sum(i => i.Quantity)))
             .OrderByDescending(n => n.Value).ToList();
 
         var byMethod = valid
-            .GroupBy(o => MethodLabel(o.PaymentMethod))
-            .Select(g => new NamedValue(g.Key, g.Sum(o => o.PaidPrice), g.Count()))
+            .GroupBy(i => MethodLabel(i.Order!.PaymentMethod))
+            .Select(g => new NamedValue(g.Key, g.Sum(i => i.LineTotal), g.Count()))
             .OrderByDescending(n => n.Value).ToList();
 
         return new PartnerMetricsDto(
-            Math.Round(revenue, 2), valid.Count,
+            Math.Round(revenue, 2), validOrderCount,
             Math.Round(pendingTransfer, 2), Math.Round(paidTransfer, 2),
             avgTicket, Math.Round(cashbackGranted, 2), uniqueCustomers,
             pendingCount, paidCount, redeemedCount, redemptionRate,
@@ -145,66 +157,96 @@ public class PartnerService : IPartnerService
     {
         var normalized = code.Replace("-", "").Trim().ToUpperInvariant();
 
-        // Validação fora de transação (leitura).
-        var preview = await _db.Orders.Include(o => o.Product).Include(o => o.Customer)
-            .FirstOrDefaultAsync(o => o.PartnerId == partnerId
-                && o.Code.ToUpper() == normalized, ct)
-            ?? throw new AppException("Código não encontrado para esta loja.", 404);
+        var order = await _db.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.Items)
+                .FirstOrDefaultAsync(o => o.Code.ToUpper() == normalized, ct)
+            ?? throw new AppException("Código não encontrado.", 404);
 
-        if (preview.Status == OrderStatus.Redeemed)
-            throw new AppException("Voucher já resgatado.", 409);
-        if (preview.Status != OrderStatus.Paid)
+        if (order.Status == OrderStatus.PendingPayment)
             throw new AppException("Voucher não está pago/liberado.", 409);
+        if (order.Status == OrderStatus.Cancelled)
+            throw new AppException("Pedido cancelado.", 409);
+
+        // Só os itens DESTA loja (pedido pode ter vários parceiros).
+        var myItems = order.Items.Where(i => i.PartnerId == partnerId).ToList();
+        if (myItems.Count == 0)
+            throw new AppException(
+                "Este voucher não contém itens da sua loja.", 409);
+        var pending = myItems.Where(i => i.RedeemedAt == null).ToList();
+        if (pending.Count == 0)
+            throw new AppException(
+                "Os itens da sua loja neste voucher já foram resgatados.", 409);
 
         var partner = await _db.Partners.FindAsync([partnerId], ct)
             ?? throw new AppException("Parceiro não encontrado.", 404);
         var fee = partner.FeePercent;
-        var platformFee = CommissionRules.PlatformFeeFor(preview.PaidPrice, fee);
-        var cashback = preview.CashbackEarned;
-        var net = CommissionRules.PartnerNet(preview.PaidPrice, platformFee, cashback);
+        var subtotal = pending.Sum(i => i.LineTotal);
+        var cashback = pending.Sum(i => i.CashbackEarned);
+        var platformFee = CommissionRules.PlatformFeeFor(subtotal, fee);
+        var net = CommissionRules.PartnerNet(subtotal, platformFee, cashback);
+        var title = string.Join(", ",
+            pending.Select(i => $"{i.Quantity}x {i.ProductTitle}"));
 
         if (!confirm)
-            return new RedeemResult(preview.Id, preview.Product!.Title,
-                preview.Customer!.Name, preview.PaidPrice, fee, platformFee,
-                cashback, net, false);
+            return new RedeemResult(order.Id, title, order.Customer!.Name,
+                subtotal, fee, platformFee, cashback, net, false);
 
-        // Resgate efetivo: transação retriável (compatível com EnableRetryOnFailure).
         var strategy = _db.Database.CreateExecutionStrategy();
         await strategy.ExecuteAsync(async () =>
         {
             await using var tx = await _db.Database.BeginTransactionAsync(ct);
 
-            var order = await _db.Orders.Include(o => o.Product).Include(o => o.Customer)
-                .FirstOrDefaultAsync(o => o.Id == preview.Id, ct)
+            var fresh = await _db.Orders
+                .Include(o => o.Items)
+                .FirstOrDefaultAsync(o => o.Id == order.Id, ct)
                 ?? throw new AppException("Pedido não encontrado.", 404);
-            if (order.Status == OrderStatus.Redeemed)
-                throw new AppException("Voucher já resgatado.", 409);
 
-            order.Status = OrderStatus.Redeemed;
-            order.RedeemedAt = DateTime.UtcNow;
-            // O cashback já foi creditado na aprovação do pagamento (compra).
-            if (order.Product!.Stock > 0) order.Product.Stock -= 1;
+            var freshPending = fresh.Items
+                .Where(i => i.PartnerId == partnerId && i.RedeemedAt == null)
+                .ToList();
+            if (freshPending.Count == 0)
+                throw new AppException(
+                    "Os itens da sua loja neste voucher já foram resgatados.", 409);
+
+            var now = DateTime.UtcNow;
+            foreach (var item in freshPending)
+            {
+                item.RedeemedAt = now;
+                var product = await _db.Products.FindAsync([item.ProductId], ct);
+                if (product is not null && product.Stock >= item.Quantity)
+                    product.Stock -= item.Quantity;
+            }
+
+            // Pedido só fica "Resgatado" quando TODOS os itens forem resgatados.
+            if (fresh.Items.All(i => i.RedeemedAt != null))
+            {
+                fresh.Status = OrderStatus.Redeemed;
+                fresh.RedeemedAt = now;
+            }
 
             _db.Notifications.Add(new Notification
             {
-                UserId = order.CustomerId,
+                UserId = fresh.CustomerId,
                 Title = "Voucher resgatado",
-                Message = $"Seu voucher de {order.Product.Title} foi resgatado com sucesso.",
+                Message =
+                    $"Itens de {partner.Name} no pedido {fresh.Code} resgatados.",
             });
             _db.AuditLogs.Add(new AuditLog
             {
                 ActorId = actorId,
                 Action = "order.redeem",
                 EntityType = "Order",
-                EntityId = order.Id.ToString(),
-                PayloadJson = JsonSerializer.Serialize(new { order.Code, net, cashback }),
+                EntityId = fresh.Id.ToString(),
+                PayloadJson = JsonSerializer.Serialize(
+                    new { fresh.Code, partnerId, net, cashback, subtotal }),
             });
 
             await _db.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
         });
 
-        return new RedeemResult(preview.Id, preview.Product!.Title, preview.Customer!.Name,
-            preview.PaidPrice, fee, platformFee, cashback, net, true);
+        return new RedeemResult(order.Id, title, order.Customer!.Name,
+            subtotal, fee, platformFee, cashback, net, true);
     }
 }

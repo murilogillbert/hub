@@ -8,6 +8,7 @@ import { StepUpGuard } from '@shared/components/StepUpGuard/StepUpGuard';
 import { HomePage } from '@features/client/pages/HomePage';
 import { CatalogPage } from '@features/client/pages/CatalogPage';
 import { ProductPage } from '@features/client/pages/ProductPage';
+import { CartPage } from '@features/client/pages/CartPage';
 import { CheckoutPage } from '@features/client/pages/CheckoutPage';
 import { PurchaseConfirmationPage } from '@features/client/pages/PurchaseConfirmationPage';
 import { MyItemsPage } from '@features/client/pages/MyItemsPage';
@@ -79,9 +80,11 @@ export function AppRoutes() {
         />
 
         <Route path="/produto/:id" element={<ProductPage />} />
+        <Route path="/carrinho" element={<CartPage />} />
 
         {/* Compra exige login — sem sessão, vai para /login e volta */}
         <Route element={<RequireRole roles={['client', 'admin']} />}>
+          <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/checkout/:id" element={<CheckoutPage />} />
           <Route path="/compra/confirmacao/:id" element={<PurchaseConfirmationPage />} />
           <Route path="/conta/itens" element={<MyItemsPage />} />

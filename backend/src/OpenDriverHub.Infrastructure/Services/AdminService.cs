@@ -15,16 +15,20 @@ public class AdminService : IAdminService
 
     public async Task<AdminMetricsDto> MetricsAsync(CancellationToken ct)
     {
-        var all = await _db.Orders
-            .Include(o => o.Partner)
-            .Include(o => o.Product)
+        var all = await _db.Orders.ToListAsync(ct);
+        // Pedido pode ter vários parceiros → métricas de receita/repasse por item.
+        var validItems = await _db.OrderItems
+            .Include(i => i.Order)
+            .Include(i => i.Partner)
+            .Where(i => i.Order!.Status == OrderStatus.Paid
+                || i.Order!.Status == OrderStatus.Redeemed)
             .ToListAsync(ct);
 
         var valid = all.Where(o => o.Status is OrderStatus.Paid or OrderStatus.Redeemed).ToList();
         var gmv = valid.Sum(o => o.PaidPrice);
-        var net = valid.Sum(o =>
-            CommissionRules.PlatformFeeFor(o.PaidPrice, o.Partner?.FeePercent ?? 10m)
-            - o.CashbackEarned);
+        var net = validItems.Sum(i =>
+            CommissionRules.PlatformFeeFor(i.LineTotal, i.Partner?.FeePercent ?? 10m)
+            - i.CashbackEarned);
 
         var customers = await _db.Users.CountAsync(u => u.Role == UserRole.Client, ct);
         var partnersTotal = await _db.Partners.CountAsync(ct);
@@ -59,13 +63,16 @@ public class AdminService : IAdminService
                 new DateTime(g.Key.Year, g.Key.Month, 1).ToString("MMM/yy"),
                 g.Sum(o => o.PaidPrice))).ToList();
 
-        var top = valid.GroupBy(o => new { o.PartnerId, Name = o.Partner?.Name ?? "" })
-            .Select(g => new TopPartner(g.Key.PartnerId, g.Key.Name, g.Sum(o => o.PaidPrice)))
+        var top = validItems
+            .GroupBy(i => new { i.PartnerId, Name = i.Partner?.Name ?? "" })
+            .Select(g => new TopPartner(g.Key.PartnerId, g.Key.Name,
+                g.Sum(i => i.LineTotal)))
             .OrderByDescending(t => t.Revenue).Take(5).ToList();
 
-        var byCategory = valid
-            .GroupBy(o => o.Product?.Category ?? "—")
-            .Select(g => new NamedValue(g.Key, g.Sum(o => o.PaidPrice), g.Count()))
+        var byCategory = validItems
+            .GroupBy(i => i.Category.Length == 0 ? "—" : i.Category)
+            .Select(g => new NamedValue(g.Key, g.Sum(i => i.LineTotal),
+                g.Sum(i => i.Quantity)))
             .OrderByDescending(n => n.Value).ToList();
 
         var byMethod = valid
@@ -104,14 +111,17 @@ public class AdminService : IAdminService
     public async Task<PagedResult<OrderDto>> SalesAsync(
         Guid? partnerId, string? status, string? q, int page, int pageSize, CancellationToken ct)
     {
-        var query = _db.Orders.Include(o => o.Product).Include(o => o.Partner).Include(o => o.Customer)
+        var query = _db.Orders
+            .Include(o => o.Customer)
+            .Include(o => o.Items).ThenInclude(i => i.Partner)
             .AsQueryable();
-        if (partnerId is { } pid) query = query.Where(o => o.PartnerId == pid);
+        if (partnerId is { } pid)
+            query = query.Where(o => o.Items.Any(i => i.PartnerId == pid));
         if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<OrderStatus>(status, true, out var st))
             query = query.Where(o => o.Status == st);
         if (!string.IsNullOrWhiteSpace(q))
             query = query.Where(o => o.Customer!.Name.Contains(q)
-                || o.Product!.Title.Contains(q) || o.Code.Contains(q));
+                || o.Items.Any(i => i.ProductTitle.Contains(q)) || o.Code.Contains(q));
         return await ToPageAsync(query.OrderByDescending(o => o.CreatedAt), page, pageSize,
             o => o.ToDto(), ct);
     }

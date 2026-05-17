@@ -7,8 +7,9 @@ import { QrCode } from '@shared/components/QrCode/QrCode';
 import { QueryState } from '@shared/components/QueryState/QueryState';
 import { resolveImageUrl } from '@shared/api/client';
 import { useAuth } from '@shared/hooks/useAuth';
+import { useCart } from '@shared/context/CartContext';
 import { useToast } from '@shared/components/Toaster/ToastContext';
-import { formatCurrency, formatPercent } from '@shared/utils/formatters';
+import { formatCurrency } from '@shared/utils/formatters';
 import {
   catalogApi,
   ordersApi,
@@ -41,13 +42,39 @@ export function CheckoutPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const toast = useToast();
+  const cart = useCart();
 
+  // Modo 1 produto (/checkout/:id) ou modo carrinho (/checkout).
   const productQuery = useQuery({
     queryKey: ['product', id],
     queryFn: () => catalogApi.product(id!),
     enabled: !!id,
   });
   const product = productQuery.data;
+
+  const lines = id
+    ? product
+      ? [
+          {
+            productId: product.id,
+            title: product.title,
+            category: product.category,
+            imageUrl: product.imageUrl,
+            price: product.price,
+            cashbackPercent: product.cashbackPercent,
+            quantity: 1,
+          },
+        ]
+      : []
+    : cart.items.map((l) => ({
+        productId: l.productId,
+        title: l.title,
+        category: l.category,
+        imageUrl: l.imageUrl,
+        price: l.price,
+        cashbackPercent: l.cashbackPercent,
+        quantity: l.quantity,
+      }));
 
   const [method, setMethod] = useState<Method>('pix');
   const [useCashbackOpt, setUseCashbackOpt] = useState(false);
@@ -66,7 +93,7 @@ export function CheckoutPage() {
     [],
   );
 
-  if (productQuery.isLoading || productQuery.error || !product) {
+  if (id && (productQuery.isLoading || productQuery.error || !product)) {
     return (
       <QueryState
         loading={productQuery.isLoading}
@@ -79,15 +106,36 @@ export function CheckoutPage() {
     );
   }
 
-  const cashback = (product.price * product.cashbackPercent) / 100;
+  if (lines.length === 0) {
+    return (
+      <div className="checkout">
+        <div className="checkout__left">
+          <h2>Carrinho vazio</h2>
+          <p className="text-muted">
+            Adicione itens ao carrinho para finalizar a compra.
+          </p>
+          <Link to="/produtos">
+            <Button>Explorar catálogo</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const subtotal = lines.reduce((s, l) => s + l.price * l.quantity, 0);
+  const cashback = lines.reduce(
+    (s, l) => s + (l.price * l.quantity * l.cashbackPercent) / 100,
+    0,
+  );
   const balance = user?.cashbackBalance ?? 0;
   const cashbackApplied = useCashbackOpt
-    ? Math.min(Math.round(balance * 100) / 100, product.price)
+    ? Math.min(Math.round(balance * 100) / 100, subtotal)
     : 0;
-  const total = Math.max(0, product.price - cashbackApplied);
+  const total = Math.max(0, subtotal - cashbackApplied);
 
   const goToConfirmation = (snap: PaymentSnapshot) => {
     const orderId = snap.orderId ?? orderIdRef.current;
+    if (!id) cart.clear(); // pedido criado a partir do carrinho
     if (orderId) navigate(`/compra/confirmacao/${orderId}`, { replace: true });
   };
 
@@ -123,7 +171,10 @@ export function CheckoutPage() {
     e.preventDefault();
     setError(null);
     try {
-      const order = await ordersApi.create(product.id, useCashbackOpt);
+      const order = await ordersApi.create(
+        lines.map((l) => ({ productId: l.productId, quantity: l.quantity })),
+        useCashbackOpt,
+      );
       orderIdRef.current = order.id;
 
       if (method === 'pix') {
@@ -316,13 +367,19 @@ export function CheckoutPage() {
 
       <aside className="checkout__right">
         <h3>Resumo</h3>
-        <div className="checkout__item">
-          <img src={resolveImageUrl(product.imageUrl)} alt={product.title} />
-          <div>
-            <strong>{product.title}</strong>
-            <small className="text-muted">{product.category}</small>
+        {lines.map((l) => (
+          <div className="checkout__item" key={l.productId}>
+            <img src={resolveImageUrl(l.imageUrl)} alt={l.title} />
+            <div>
+              <strong>
+                {l.quantity > 1 ? `${l.quantity}x ` : ''}
+                {l.title}
+              </strong>
+              <small className="text-muted">{l.category}</small>
+            </div>
+            <span>{formatCurrency(l.price * l.quantity)}</span>
           </div>
-        </div>
+        ))}
 
         {phase === 'form' && balance > 0 && (
           <label className="checkout__usecash">
@@ -341,7 +398,7 @@ export function CheckoutPage() {
         <dl className="checkout__summary">
           <div>
             <dt>Subtotal</dt>
-            <dd>{formatCurrency(product.price)}</dd>
+            <dd>{formatCurrency(subtotal)}</dd>
           </div>
           {cashbackApplied > 0 && (
             <div>
@@ -361,8 +418,8 @@ export function CheckoutPage() {
           </div>
         </dl>
         <small className="text-soft">
-          Cashback ({formatPercent(product.cashbackPercent)}) é creditado na
-          sua conta assim que o pagamento é confirmado.
+          O cashback é creditado na sua conta assim que o pagamento é
+          confirmado.
         </small>
         {phase === 'form' && (
           <Button type="submit" size="lg" fullWidth>
@@ -373,7 +430,10 @@ export function CheckoutPage() {
                 : `Pagar ${formatCurrency(total)}`}
           </Button>
         )}
-        <Link to={`/produto/${product.id}`} className="checkout__cancel">
+        <Link
+          to={id ? `/produto/${id}` : '/carrinho'}
+          className="checkout__cancel"
+        >
           Cancelar
         </Link>
       </aside>

@@ -45,13 +45,13 @@ public class ReviewService : IReviewService
         var product = await _db.Products.FindAsync([req.ProductId], ct)
             ?? throw new AppException("Produto não encontrado.", 404);
 
-        // Elegibilidade: precisa ter um pedido resgatado com este produto.
-        var orderId = await _db.Orders
-            .Where(o => o.CustomerId == userId
-                && o.ProductId == req.ProductId
-                && o.Status == OrderStatus.Redeemed)
-            .OrderByDescending(o => o.RedeemedAt)
-            .Select(o => (Guid?)o.Id)
+        // Elegibilidade: precisa ter um item resgatado deste produto.
+        var orderId = await _db.OrderItems
+            .Where(i => i.ProductId == req.ProductId
+                && i.RedeemedAt != null
+                && i.Order!.CustomerId == userId)
+            .OrderByDescending(i => i.RedeemedAt)
+            .Select(i => (Guid?)i.OrderId)
             .FirstOrDefaultAsync(ct)
             ?? throw new AppException(
                 "Você só pode avaliar um produto após resgatá-lo.", 403);
@@ -90,7 +90,7 @@ public class ReviewService : IReviewService
     }
 
     private Task<bool> HasRedeemedAsync(Guid userId, Guid productId, CancellationToken ct)
-        => _db.Orders.AnyAsync(o => o.CustomerId == userId
-            && o.ProductId == productId
-            && o.Status == OrderStatus.Redeemed, ct);
+        => _db.OrderItems.AnyAsync(i => i.ProductId == productId
+            && i.RedeemedAt != null
+            && i.Order!.CustomerId == userId, ct);
 }

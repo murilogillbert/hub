@@ -1,6 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '@shared/hooks/useAuth';
+import { useCart } from '@shared/context/CartContext';
 import { formatCurrency } from '@shared/utils/formatters';
 import { FloatingAssistant } from '@features/assistant/components/FloatingAssistant';
 import { NotificationsBell } from '@shared/components/NotificationsBell/NotificationsBell';
@@ -13,6 +14,7 @@ interface ClientLayoutProps {
 
 export function ClientLayout({ children }: ClientLayoutProps) {
   const { user, isAuthenticated, logout } = useAuth();
+  const cart = useCart();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
@@ -47,6 +49,9 @@ export function ClientLayout({ children }: ClientLayoutProps) {
               Início
             </NavLink>
             <NavLink to="/produtos">Catálogo</NavLink>
+            <NavLink to="/carrinho">
+              Carrinho{cart.count > 0 ? ` (${cart.count})` : ''}
+            </NavLink>
             {isAuthenticated && <NavLink to="/conta/itens">Meus itens</NavLink>}
             {isAuthenticated && <NavLink to="/conta/historico">Histórico</NavLink>}
             {isAuthenticated && <NavLink to="/conta/cashback">Meu cashback</NavLink>}

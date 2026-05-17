@@ -51,18 +51,40 @@ public static class Mappings
             ? CategoryType.Store
             : CategoryType.Product;
 
-    public static OrderDto ToDto(this Order o) => new(
-        o.Id, o.Code, o.ProductId, o.Product?.Title ?? "", o.PartnerId,
-        o.Partner?.Name ?? "", o.CustomerId, o.Customer?.Name ?? "",
-        o.PaidPrice, o.CashbackEarned, o.CashbackUsed,
-        o.Status switch
+    public static OrderItemDto ToDto(this OrderItem i) => new(
+        i.Id, i.ProductId, i.ProductTitle, i.ImageUrl, i.Category,
+        i.PartnerId, i.Partner?.Name ?? "", i.UnitPrice, i.Quantity,
+        i.LineTotal, i.CashbackEarned, i.RedeemedAt is not null, i.RedeemedAt);
+
+    public static OrderDto ToDto(this Order o)
+    {
+        var items = (o.Items ?? new()).Select(x => x.ToDto()).ToList();
+        var first = items.FirstOrDefault();
+        // Campos legados (compat) derivam do 1º item.
+        var productId = first?.ProductId ?? o.ProductId ?? Guid.Empty;
+        var productTitle = items.Count switch
         {
-            OrderStatus.PendingPayment => "pending",
-            OrderStatus.Paid => "paid",
-            OrderStatus.Redeemed => "redeemed",
-            _ => "cancelled",
-        },
-        o.CreatedAt, o.RedeemedAt);
+            0 => o.Product?.Title ?? "",
+            1 => first!.ProductTitle,
+            _ => $"{first!.ProductTitle} +{items.Count - 1}",
+        };
+        var partnerId = first?.PartnerId ?? o.PartnerId ?? Guid.Empty;
+        var partnerName = items.Select(i => i.PartnerName).Distinct().Count() > 1
+            ? "Vários parceiros"
+            : first?.PartnerName ?? o.Partner?.Name ?? "";
+        return new(
+            o.Id, o.Code, productId, productTitle, partnerId, partnerName,
+            o.CustomerId, o.Customer?.Name ?? "",
+            o.PaidPrice, o.CashbackEarned, o.CashbackUsed,
+            o.Status switch
+            {
+                OrderStatus.PendingPayment => "pending",
+                OrderStatus.Paid => "paid",
+                OrderStatus.Redeemed => "redeemed",
+                _ => "cancelled",
+            },
+            o.CreatedAt, o.RedeemedAt, items);
+    }
 
     public static ProductKind ParseKind(string s) => s.ToLowerInvariant() switch
     {

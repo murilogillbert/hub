@@ -105,6 +105,23 @@ export interface Order {
   status: OrderStatus;
   createdAt: string;
   redeemedAt?: string;
+  items: OrderItemLine[];
+}
+
+export interface OrderItemLine {
+  id: string;
+  productId: string;
+  productTitle: string;
+  imageUrl: string;
+  category: string;
+  partnerId: string;
+  partnerName: string;
+  unitPrice: number;
+  quantity: number;
+  lineTotal: number;
+  cashbackEarned: number;
+  redeemed: boolean;
+  redeemedAt?: string;
 }
 
 export type CashbackEntryType = 'earned' | 'used';

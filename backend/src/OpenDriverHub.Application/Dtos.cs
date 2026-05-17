@@ -71,12 +71,20 @@ public record NearbyStoreDto(
     string ImageUrl, double DistanceKm);
 
 // ---------- Orders / Payments ----------
-public record CreateOrderRequest(Guid ProductId, bool UseCashback = false);
+public record CartItemInput(Guid ProductId, int Quantity = 1);
+// Compat: aceita 1 produto (ProductId) ou um carrinho (Items).
+public record CreateOrderRequest(
+    Guid? ProductId = null, bool UseCashback = false,
+    List<CartItemInput>? Items = null);
+public record OrderItemDto(
+    Guid Id, Guid ProductId, string ProductTitle, string ImageUrl, string Category,
+    Guid PartnerId, string PartnerName, decimal UnitPrice, int Quantity,
+    decimal LineTotal, decimal CashbackEarned, bool Redeemed, DateTime? RedeemedAt);
 public record OrderDto(
     Guid Id, string Code, Guid ProductId, string ProductTitle, Guid PartnerId,
     string PartnerName, Guid CustomerId, string CustomerName, decimal PaidPrice,
     decimal CashbackEarned, decimal CashbackUsed, string Status,
-    DateTime CreatedAt, DateTime? RedeemedAt);
+    DateTime CreatedAt, DateTime? RedeemedAt, List<OrderItemDto> Items);
 public record CashbackEntryDto(
     Guid Id, string Type, decimal Amount, Guid? OrderId, string? OrderCode,
     string Description, DateTime CreatedAt);

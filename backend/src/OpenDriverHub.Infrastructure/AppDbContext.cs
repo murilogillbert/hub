@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<PartnerStore> Stores => Set<PartnerStore>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<PaymentTransaction> Payments => Set<PaymentTransaction>();
     public DbSet<AssistantLead> Leads => Set<AssistantLead>();
     public DbSet<BotInteraction> BotInteractions => Set<BotInteraction>();
@@ -88,6 +89,23 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
             e.HasOne(x => x.Customer).WithMany().HasForeignKey(x => x.CustomerId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        b.Entity<OrderItem>(e =>
+        {
+            e.HasIndex(x => x.OrderId);
+            e.HasIndex(x => x.PartnerId);
+            e.Property(x => x.ProductTitle).HasMaxLength(200);
+            e.Property(x => x.UnitPrice).HasPrecision(12, 2);
+            e.Property(x => x.LineTotal).HasPrecision(12, 2);
+            e.Property(x => x.CashbackPercent).HasPrecision(5, 2);
+            e.Property(x => x.CashbackEarned).HasPrecision(12, 2);
+            e.HasOne(x => x.Order).WithMany(o => o.Items)
+                .HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Product).WithMany()
+                .HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.Partner).WithMany()
+                .HasForeignKey(x => x.PartnerId).OnDelete(DeleteBehavior.Restrict);
         });
 
         b.Entity<PaymentTransaction>(e =>

@@ -6,12 +6,16 @@ import { resolveImageUrl } from '@shared/api/client';
 import { StoreMap } from '@shared/components/StoreMap/StoreMap';
 import { QueryState } from '@shared/components/QueryState/QueryState';
 import { ProductReviewsSection } from '@shared/components/Reviews/Reviews';
+import { useCart } from '@shared/context/CartContext';
+import { useToast } from '@shared/components/Toaster/ToastContext';
 import { formatCurrency, formatPercent } from '@shared/utils/formatters';
 import './ProductPage.css';
 
 export function ProductPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const cart = useCart();
+  const toast = useToast();
 
   const productQuery = useQuery({
     queryKey: ['product', id],
@@ -89,9 +93,34 @@ export function ProductPage() {
             </div>
           </div>
 
-          <Button size="lg" fullWidth onClick={() => navigate(`/checkout/${product.id}`)}>
-            Comprar agora
-          </Button>
+          <div className="row" style={{ gap: 'var(--space-3)' }}>
+            <Button
+              size="lg"
+              fullWidth
+              onClick={() => navigate(`/checkout/${product.id}`)}
+            >
+              Comprar agora
+            </Button>
+            <Button
+              size="lg"
+              variant="secondary"
+              onClick={() => {
+                cart.add({
+                  productId: product.id,
+                  title: product.title,
+                  category: product.category,
+                  imageUrl: product.imageUrl,
+                  price: product.price,
+                  cashbackPercent: product.cashbackPercent,
+                  partnerId: product.partnerId,
+                  partnerName: product.partnerName,
+                });
+                toast.success('Adicionado ao carrinho.');
+              }}
+            >
+              + Carrinho
+            </Button>
+          </div>
           <small className="text-soft">
             Pague no Pix ou cartão · receba código + QR para resgate em qualquer ponto físico ou
             digital

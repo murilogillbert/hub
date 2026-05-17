@@ -83,14 +83,15 @@ public class Order
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Code { get; set; } = string.Empty;
-    public Guid ProductId { get; set; }
+    // Legado (compat): pedidos antigos de 1 item. Pedidos novos usam Items.
+    public Guid? ProductId { get; set; }
     public Product? Product { get; set; }
-    public Guid PartnerId { get; set; }
+    public Guid? PartnerId { get; set; }
     public Partner? Partner { get; set; }
     public Guid CustomerId { get; set; }
     public User? Customer { get; set; }
-    public decimal PaidPrice { get; set; }
-    public decimal CashbackEarned { get; set; }
+    public decimal PaidPrice { get; set; }       // soma bruta dos itens
+    public decimal CashbackEarned { get; set; }  // soma do cashback dos itens
     public decimal CashbackUsed { get; set; }
     public OrderStatus Status { get; set; } = OrderStatus.PendingPayment;
     public PaymentMethod? PaymentMethod { get; set; }
@@ -99,9 +100,32 @@ public class Order
     public string? VoucherCode { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? PaidAt { get; set; }
-    public DateTime? RedeemedAt { get; set; }
+    public DateTime? RedeemedAt { get; set; } // setado quando TODOS os itens resgatados
     public byte[]? RowVersion { get; set; }
+    public List<OrderItem> Items { get; set; } = new();
     public List<PaymentTransaction> Payments { get; set; } = new();
+}
+
+/// <summary>Item de um pedido. Cada item pertence a um parceiro; o resgate é
+/// feito por parceiro (cada parceiro resgata só os seus itens do voucher).</summary>
+public class OrderItem
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid OrderId { get; set; }
+    public Order? Order { get; set; }
+    public Guid ProductId { get; set; }
+    public Product? Product { get; set; }
+    public Guid PartnerId { get; set; }
+    public Partner? Partner { get; set; }
+    public string ProductTitle { get; set; } = string.Empty; // snapshot
+    public string ImageUrl { get; set; } = string.Empty;      // snapshot
+    public string Category { get; set; } = string.Empty;      // snapshot
+    public decimal UnitPrice { get; set; }
+    public int Quantity { get; set; } = 1;
+    public decimal CashbackPercent { get; set; }
+    public decimal LineTotal { get; set; }      // UnitPrice * Quantity
+    public decimal CashbackEarned { get; set; } // cashback da linha
+    public DateTime? RedeemedAt { get; set; }   // resgate por parceiro
 }
 
 public class PaymentTransaction
