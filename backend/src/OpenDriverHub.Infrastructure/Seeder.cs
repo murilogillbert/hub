@@ -9,14 +9,20 @@ namespace OpenDriverHub.Infrastructure;
 public static class Seeder
 {
     /// <summary>
-    /// Aplica as migrations (sempre) e, se <paramref name="seedDemo"/> for true,
+    /// Aplica as migrations (sempre), garante um usuário admin para o primeiro
+    /// acesso (lançamento enxuto) e, se <paramref name="seedDemo"/> for true,
     /// popula dados demo. Em produção o seed demo deve ficar desligado para não
-    /// criar contas com senha conhecida.
+    /// criar contas com senha conhecida — apenas o admin é criado.
     /// </summary>
     public static async Task SeedAsync(
-        AppDbContext db, IPasswordHasher hasher, bool seedDemo, CancellationToken ct = default)
+        AppDbContext db, IPasswordHasher hasher, bool seedDemo,
+        string adminEmail, string adminPassword, CancellationToken ct = default)
     {
         await db.Database.MigrateAsync(ct);
+
+        // Admin bootstrap — sempre garante um admin, mesmo sem o seed demo.
+        await EnsureAdminAsync(db, hasher, adminEmail, adminPassword, ct);
+
         if (!seedDemo) return;
         if (await db.Partners.AnyAsync(ct)) return;
 
@@ -143,6 +149,32 @@ public static class Seeder
             new Order { Code = OrderService.GenerateCode(), Product = prodBurger, Partner = pBurger, Customer = cliente, PaidPrice = 39.5m, CashbackEarned = 3.95m, CashbackUsed = 2.0m, Status = OrderStatus.Redeemed, PaymentMethod = PaymentMethod.CreditCard, PaidAt = DateTime.UtcNow.AddDays(-7), RedeemedAt = DateTime.UtcNow.AddDays(-6), VoucherCode = PaymentCodes.Voucher(), CreatedAt = DateTime.UtcNow.AddDays(-7) },
             new Order { Code = OrderService.GenerateCode(), Product = prodCine, Partner = pCine, Customer = pedro, PaidPrice = 49.9m, CashbackEarned = 3.99m, Status = OrderStatus.Paid, PaymentMethod = PaymentMethod.Pix, PaidAt = DateTime.UtcNow.AddDays(-1), VoucherCode = PaymentCodes.Voucher(), CreatedAt = DateTime.UtcNow.AddDays(-1) });
 
+        await db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>
+    /// Cria o usuário admin se ainda não existir. Não sobrescreve a senha de
+    /// um admin já existente (o admin pode trocá-la depois sem ser resetado a
+    /// cada deploy). O e-mail é normalizado em minúsculas (login compara assim).
+    /// </summary>
+    private static async Task EnsureAdminAsync(
+        AppDbContext db, IPasswordHasher hasher,
+        string email, string password, CancellationToken ct)
+    {
+        email = (email ?? "").Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            return;
+        if (await db.Users.AnyAsync(u => u.Email == email, ct))
+            return;
+
+        db.Users.Add(new User
+        {
+            Name = "Administrador",
+            Email = email,
+            PasswordHash = hasher.Hash(password),
+            Role = UserRole.Admin,
+            AvatarUrl = "https://api.dicebear.com/9.x/avataaars/svg?seed=admin",
+        });
         await db.SaveChangesAsync(ct);
     }
 }

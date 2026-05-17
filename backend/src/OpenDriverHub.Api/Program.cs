@@ -111,9 +111,11 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
     // Seed demo só roda quando Seed:Enabled=true; dados reais devem vir do admin/parceiro.
-    var seedDemo = cfg.GetValue<bool?>("Seed:Enabled")
-        ?? false;
-    await Seeder.SeedAsync(db, hasher, seedDemo);
+    // O admin (Seed:AdminEmail/AdminPassword) é sempre garantido para o 1º acesso.
+    var seedDemo = cfg.GetValue<bool?>("Seed:Enabled") ?? false;
+    var adminEmail = cfg["Seed:AdminEmail"] ?? "admin@opendriverhub.com";
+    var adminPassword = cfg["Seed:AdminPassword"] ?? "Bababobo!@#";
+    await Seeder.SeedAsync(db, hasher, seedDemo, adminEmail, adminPassword);
 }
 
 app.UseForwardedHeaders();
