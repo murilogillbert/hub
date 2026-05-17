@@ -1,4 +1,4 @@
-import { InputHTMLAttributes, ReactNode, forwardRef } from 'react';
+import { InputHTMLAttributes, ReactNode, forwardRef, useId } from 'react';
 import './Input.css';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -10,7 +10,8 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, hint, error, leftAddon, id, className = '', ...rest }, ref) => {
-    const inputId = id ?? `in-${Math.random().toString(36).slice(2, 8)}`;
+    const autoId = useId();
+    const inputId = id ?? autoId;
     return (
       <div className={`input-field ${className}`}>
         {label && (

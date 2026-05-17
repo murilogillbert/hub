@@ -24,6 +24,17 @@ export function Modal({
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
 
+  // Mantém sempre o onClose/closeDisabled mais recentes sem recriar o efeito.
+  // (As telas passam onClose inline — função nova a cada render. Se o efeito
+  // dependesse dele, ele rodaria a cada tecla e roubaria o foco do campo,
+  // fechando o teclado no celular.)
+  const onCloseRef = useRef(onClose);
+  const closeDisabledRef = useRef(closeDisabled);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+    closeDisabledRef.current = closeDisabled;
+  });
+
   useEffect(() => {
     if (!open) return;
     const previous = document.activeElement instanceof HTMLElement
@@ -38,9 +49,9 @@ export function Modal({
     }, 0);
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !closeDisabled) {
+      if (event.key === 'Escape' && !closeDisabledRef.current) {
         event.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key !== 'Tab') return;
@@ -67,7 +78,8 @@ export function Modal({
       document.body.classList.remove('modal-open');
       previous?.focus();
     };
-  }, [open, onClose, closeDisabled]);
+    // Só reage à abertura/fechamento — NUNCA a cada render do pai.
+  }, [open]);
 
   if (!open) return null;
 
