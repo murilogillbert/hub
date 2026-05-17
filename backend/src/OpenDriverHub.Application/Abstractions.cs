@@ -142,6 +142,7 @@ public interface IAdminService
     Task<PartnerDto> UpdatePartnerAsync(Guid id, PartnerUpsertRequest req, CancellationToken ct);
     Task DeletePartnerAsync(Guid id, CancellationToken ct);
     Task<PagedResult<UserDto>> UsersAsync(string? q, int page, int pageSize, CancellationToken ct);
+    Task<UserDto> CreateUserAsync(AdminUserCreateRequest req, CancellationToken ct);
     Task<UserDto> UpdateUserAsync(Guid id, AdminUserUpdateRequest req, CancellationToken ct);
     Task<PagedResult<AuditLogDto>> AuditLogsAsync(
         DateTime? from, DateTime? to, Guid? userId, string? action,

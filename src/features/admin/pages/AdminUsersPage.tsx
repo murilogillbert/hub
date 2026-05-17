@@ -16,6 +16,8 @@ type Role = 'client' | 'partner' | 'admin';
 
 interface EditState {
   id: string;
+  isNew: boolean;
+  password: string;
   name: string;
   email: string;
   phone: string;
@@ -52,6 +54,18 @@ export function AdminUsersPage() {
 
   const save = useMutation({
     mutationFn: async (e: EditState) => {
+      if (e.isNew) {
+        await adminApi.createUser({
+          name: e.name,
+          email: e.email,
+          password: e.password,
+          phone: e.phone || undefined,
+          role: e.role,
+          cashbackBalance: Number(e.cashbackBalance) || 0,
+          partnerId: e.role === 'partner' ? e.partnerId || null : null,
+        });
+        return;
+      }
       await adminApi.updateUser(e.id, {
         name: e.name,
         email: e.email,
@@ -79,12 +93,12 @@ export function AdminUsersPage() {
         }
       }
     },
-    onSuccess: () => {
+    onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ['admin-users'] });
       qc.invalidateQueries({ queryKey: ['admin-partners'] });
       setEdit(null);
       setError(null);
-      toast.success('Usuário salvo.');
+      toast.success(vars.isNew ? 'Usuário criado.' : 'Usuário salvo.');
     },
     onError: (err) => {
       const message = err instanceof Error ? err.message : 'Falha ao salvar.';
@@ -100,6 +114,8 @@ export function AdminUsersPage() {
     setError(null);
     setEdit({
       id: u.id,
+      isNew: false,
+      password: '',
       name: u.name,
       email: u.email,
       phone: u.phone ?? '',
@@ -114,6 +130,26 @@ export function AdminUsersPage() {
     });
   };
 
+  const openCreate = () => {
+    setError(null);
+    setEdit({
+      id: '',
+      isNew: true,
+      password: '',
+      name: '',
+      email: '',
+      phone: '',
+      role: 'client',
+      cashbackBalance: 0,
+      partnerId: '',
+      pCnpj: '',
+      pCity: '',
+      pState: '',
+      pLat: 0,
+      pLng: 0,
+    });
+  };
+
   const set = <K extends keyof EditState>(k: K, v: EditState[K]) =>
     setEdit((e) => (e ? { ...e, [k]: v } : e));
 
@@ -125,6 +161,14 @@ export function AdminUsersPage() {
     }
     if (edit?.pCnpj && !isValidCnpj(edit.pCnpj)) {
       setError('CNPJ incompleto.');
+      return;
+    }
+    if (edit?.isNew && (!edit.password || edit.password.length < 6)) {
+      setError('A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+    if (edit?.role === 'partner' && !edit.partnerId) {
+      setError('Selecione o parceiro a vincular.');
       return;
     }
     if (edit) save.mutate(edit);
@@ -142,10 +186,11 @@ export function AdminUsersPage() {
         <div>
           <h2>Usuários</h2>
           <p className="text-muted">
-            Gestão de contas. O admin pode editar qualquer usuário e, se for
-            parceiro, também os dados do parceiro (CNPJ, local).
+            Gestão de contas. O admin pode criar e editar qualquer usuário e,
+            se for parceiro, também os dados do parceiro (CNPJ, local).
           </p>
         </div>
+        <Button onClick={openCreate}>+ Novo usuário</Button>
       </header>
 
       <Card>
@@ -238,7 +283,7 @@ export function AdminUsersPage() {
 
       <Modal
         open={Boolean(edit)}
-        title="Editar usuário"
+        title={edit?.isNew ? 'Novo usuário' : 'Editar usuário'}
         onClose={() => setEdit(null)}
         closeDisabled={save.isPending}
       >
@@ -265,6 +310,16 @@ export function AdminUsersPage() {
                 onChange={(e) => set('phone', maskPhone(e.target.value))}
                 error={edit.phone && !isValidPhone(edit.phone) ? 'Telefone incompleto.' : undefined}
               />
+              {edit.isNew && (
+                <Input
+                  label="Senha"
+                  type="password"
+                  value={edit.password}
+                  onChange={(e) => set('password', e.target.value)}
+                  hint="Mínimo 6 caracteres."
+                  required
+                />
+              )}
               <div className="row">
                 <div className="input-field">
                   <label className="input-field__label">Perfil</label>
@@ -312,44 +367,53 @@ export function AdminUsersPage() {
                     </div>
                   </div>
 
-                  <h4 style={{ marginTop: 'var(--space-2)' }}>
-                    Dados do parceiro
-                  </h4>
-                  <Input
-                    label="CNPJ"
-                    value={edit.pCnpj}
-                    onChange={(e) => set('pCnpj', maskCnpj(e.target.value))}
-                    placeholder="00.000.000/0000-00"
-                    error={edit.pCnpj && !isValidCnpj(edit.pCnpj) ? 'CNPJ incompleto.' : undefined}
-                  />
-                  <div className="row">
-                    <Input
-                      label="Cidade"
-                      value={edit.pCity}
-                      onChange={(e) => set('pCity', e.target.value)}
-                    />
-                    <Input
-                      label="Estado"
-                      value={edit.pState}
-                      onChange={(e) => set('pState', e.target.value)}
-                    />
-                  </div>
-                  <div className="row">
-                    <Input
-                      label="Latitude"
-                      inputMode="decimal"
-                      value={String(edit.pLat)}
-                      onChange={(e) => set('pLat', Number(maskCoordinate(e.target.value)))}
-                      error={coordinateError(String(edit.pLat), 'lat')}
-                    />
-                    <Input
-                      label="Longitude"
-                      inputMode="decimal"
-                      value={String(edit.pLng)}
-                      onChange={(e) => set('pLng', Number(maskCoordinate(e.target.value)))}
-                      error={coordinateError(String(edit.pLng), 'lng')}
-                    />
-                  </div>
+                  {edit.isNew ? (
+                    <small className="text-muted">
+                      Os dados do parceiro (CNPJ, local) podem ser editados
+                      depois, abrindo este usuário novamente.
+                    </small>
+                  ) : (
+                    <>
+                      <h4 style={{ marginTop: 'var(--space-2)' }}>
+                        Dados do parceiro
+                      </h4>
+                      <Input
+                        label="CNPJ"
+                        value={edit.pCnpj}
+                        onChange={(e) => set('pCnpj', maskCnpj(e.target.value))}
+                        placeholder="00.000.000/0000-00"
+                        error={edit.pCnpj && !isValidCnpj(edit.pCnpj) ? 'CNPJ incompleto.' : undefined}
+                      />
+                      <div className="row">
+                        <Input
+                          label="Cidade"
+                          value={edit.pCity}
+                          onChange={(e) => set('pCity', e.target.value)}
+                        />
+                        <Input
+                          label="Estado"
+                          value={edit.pState}
+                          onChange={(e) => set('pState', e.target.value)}
+                        />
+                      </div>
+                      <div className="row">
+                        <Input
+                          label="Latitude"
+                          inputMode="decimal"
+                          value={String(edit.pLat)}
+                          onChange={(e) => set('pLat', Number(maskCoordinate(e.target.value)))}
+                          error={coordinateError(String(edit.pLat), 'lat')}
+                        />
+                        <Input
+                          label="Longitude"
+                          inputMode="decimal"
+                          value={String(edit.pLng)}
+                          onChange={(e) => set('pLng', Number(maskCoordinate(e.target.value)))}
+                          error={coordinateError(String(edit.pLng), 'lng')}
+                        />
+                      </div>
+                    </>
+                  )}
                 </>
               )}
 

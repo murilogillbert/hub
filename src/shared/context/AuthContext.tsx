@@ -24,6 +24,11 @@ export interface RegisterPartnerInput {
   phone?: string;
   storeName: string;
   segment: string;
+  cnpj?: string;
+  city?: string;
+  state?: string;
+  lat?: number;
+  lng?: number;
 }
 
 interface AuthContextValue {

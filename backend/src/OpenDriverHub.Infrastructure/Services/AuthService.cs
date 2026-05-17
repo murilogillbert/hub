@@ -53,6 +53,11 @@ public class AuthService : IAuthService
                 Segment = req.Segment.Trim(),
                 FeePercent = 10m,
                 Active = true,
+                Cnpj = (req.Cnpj ?? "").Trim(),
+                City = (req.City ?? "").Trim(),
+                State = (req.State ?? "").Trim(),
+                Lat = req.Lat ?? 0,
+                Lng = req.Lng ?? 0,
                 LogoUrl = $"https://api.dicebear.com/9.x/icons/svg?seed={Uri.EscapeDataString(req.StoreName)}&backgroundType=gradientLinear",
             };
             _db.Partners.Add(partner);

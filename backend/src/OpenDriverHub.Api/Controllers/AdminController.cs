@@ -123,6 +123,11 @@ public class AdminController : ControllerBase
         => Ok(new ApiEnvelope<PagedResult<UserDto>>(
             await _admin.UsersAsync(q, page, pageSize, ct)));
 
+    [HttpPost("users")]
+    public async Task<IActionResult> CreateUser(
+        AdminUserCreateRequest req, CancellationToken ct)
+        => Ok(new ApiEnvelope<UserDto>(await _admin.CreateUserAsync(req, ct)));
+
     [HttpPut("users/{id:guid}")]
     public async Task<IActionResult> UpdateUser(
         Guid id, AdminUserUpdateRequest req, CancellationToken ct)

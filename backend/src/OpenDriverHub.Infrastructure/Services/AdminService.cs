@@ -7,7 +7,11 @@ namespace OpenDriverHub.Infrastructure.Services;
 public class AdminService : IAdminService
 {
     private readonly AppDbContext _db;
-    public AdminService(AppDbContext db) => _db = db;
+    private readonly IPasswordHasher _hasher;
+    public AdminService(AppDbContext db, IPasswordHasher hasher)
+    {
+        _db = db; _hasher = hasher;
+    }
 
     public async Task<AdminMetricsDto> MetricsAsync(CancellationToken ct)
     {
@@ -173,6 +177,63 @@ public class AdminService : IAdminService
             u => u.ToDto(), ct);
     }
 
+    public async Task<UserDto> CreateUserAsync(
+        AdminUserCreateRequest req, CancellationToken ct)
+    {
+        var email = req.Email.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(req.Name))
+            throw new AppException("Nome é obrigatório.", 400);
+        if (string.IsNullOrWhiteSpace(email))
+            throw new AppException("E-mail é obrigatório.", 400);
+        if (string.IsNullOrWhiteSpace(req.Password) || req.Password.Length < 6)
+            throw new AppException("A senha deve ter pelo menos 6 caracteres.", 400);
+        if (await _db.Users.AnyAsync(u => u.Email == email, ct))
+            throw new AppException("E-mail já está em uso.", 409);
+        if (!Enum.TryParse<UserRole>(req.Role, true, out var role))
+            throw new AppException("Perfil inválido.", 400);
+
+        var partnerId = await ResolvePartnerLinkAsync(role, req.PartnerId, ct);
+
+        var user = new User
+        {
+            Name = req.Name.Trim(),
+            Email = email,
+            PasswordHash = _hasher.Hash(req.Password),
+            Phone = req.Phone,
+            Role = role,
+            CashbackBalance = Math.Round(req.CashbackBalance, 2),
+            PartnerId = partnerId,
+            AvatarUrl = $"https://api.dicebear.com/9.x/avataaars/svg?seed={Uri.EscapeDataString(req.Name)}",
+        };
+        _db.Users.Add(user);
+
+        _db.AuditLogs.Add(new AuditLog
+        {
+            Action = "admin.user.create",
+            EntityType = "User",
+            EntityId = user.Id.ToString(),
+            PayloadJson = System.Text.Json.JsonSerializer.Serialize(
+                new { user.Email, Role = role.ToString() }),
+        });
+
+        await _db.SaveChangesAsync(ct);
+        return user.ToDto();
+    }
+
+    // Vínculo de parceiro: obrigatório quando o papel é Partner;
+    // cliente/admin nunca têm parceiro.
+    private async Task<Guid?> ResolvePartnerLinkAsync(
+        UserRole role, Guid? partnerId, CancellationToken ct)
+    {
+        if (role != UserRole.Partner) return null;
+        if (partnerId is null)
+            throw new AppException(
+                "Usuário parceiro precisa estar vinculado a um parceiro.", 400);
+        if (!await _db.Partners.AnyAsync(p => p.Id == partnerId, ct))
+            throw new AppException("Parceiro vinculado não encontrado.", 404);
+        return partnerId;
+    }
+
     public async Task<UserDto> UpdateUserAsync(
         Guid id, AdminUserUpdateRequest req, CancellationToken ct)
     {
@@ -189,20 +250,7 @@ public class AdminService : IAdminService
         if (!Enum.TryParse<UserRole>(req.Role, true, out var role))
             throw new AppException("Perfil inválido.", 400);
 
-        // Vínculo de parceiro: obrigatório quando o papel é Partner.
-        Guid? partnerId = req.PartnerId;
-        if (role == UserRole.Partner)
-        {
-            if (partnerId is null)
-                throw new AppException(
-                    "Usuário parceiro precisa estar vinculado a um parceiro.", 400);
-            if (!await _db.Partners.AnyAsync(p => p.Id == partnerId, ct))
-                throw new AppException("Parceiro vinculado não encontrado.", 404);
-        }
-        else
-        {
-            partnerId = null; // cliente/admin não têm parceiro
-        }
+        var partnerId = await ResolvePartnerLinkAsync(role, req.PartnerId, ct);
 
         user.Name = req.Name.Trim();
         user.Email = email;

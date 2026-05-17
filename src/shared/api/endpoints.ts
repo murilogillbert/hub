@@ -144,6 +144,11 @@ export const authApi = {
     phone?: string;
     storeName: string;
     segment: string;
+    cnpj?: string;
+    city?: string;
+    state?: string;
+    lat?: number;
+    lng?: number;
   }) => api.postPublic<AuthResponse>('/auth/register/partner', body),
   me: () => api.get<User>('/auth/me'),
   updateProfile: (body: { name: string; email: string; phone?: string }) =>
@@ -330,6 +335,9 @@ export interface AdminUserUpdate {
   cashbackBalance: number;
   partnerId?: string | null;
 }
+export interface AdminUserCreate extends AdminUserUpdate {
+  password: string;
+}
 
 export const adminApi = {
   metrics: () => api.get<AdminMetrics>('/admin/metrics'),
@@ -393,6 +401,8 @@ export const adminApi = {
     qs.set('pageSize', String(params?.pageSize ?? 20));
     return api.get<PagedResult<AuditLogDto>>(`/admin/audit-logs?${qs.toString()}`);
   },
+  createUser: (body: AdminUserCreate) =>
+    api.post<User>('/admin/users', body),
   updateUser: (id: string, body: AdminUserUpdate) =>
     api.put<User>(`/admin/users/${id}`, body),
   leads: () => api.get<LeadDto[]>('/admin/leads'),

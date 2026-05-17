@@ -8,7 +8,9 @@ public record ApiEnvelope<T>(T Data);
 public record RegisterRequest(string Name, string Email, string Password, string? Cpf, string? Phone);
 public record PartnerRegisterRequest(
     string Name, string Email, string Password, string? Phone,
-    string StoreName, string Segment);
+    string StoreName, string Segment,
+    string? Cnpj = null, string? City = null, string? State = null,
+    double? Lat = null, double? Lng = null);
 public record LoginRequest(string Email, string Password);
 public record RefreshRequest(string RefreshToken);
 public record UserDto(
@@ -17,6 +19,9 @@ public record UserDto(
 public record AuthResponse(string Token, string RefreshToken, UserDto User);
 public record AdminUserUpdateRequest(
     string Name, string Email, string? Phone, string Role,
+    decimal CashbackBalance, Guid? PartnerId);
+public record AdminUserCreateRequest(
+    string Name, string Email, string Password, string? Phone, string Role,
     decimal CashbackBalance, Guid? PartnerId);
 
 // ---------- Catalog ----------
