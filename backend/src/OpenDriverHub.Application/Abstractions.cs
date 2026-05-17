@@ -100,6 +100,7 @@ public interface IOrderService
     Task<OrderDto> CreateAsync(Guid customerId, CreateOrderRequest req, CancellationToken ct);
     Task<List<OrderDto>> MyOrdersAsync(Guid customerId, string? status, CancellationToken ct);
     Task<OrderDto> GetMyOrderAsync(Guid customerId, Guid orderId, CancellationToken ct);
+    Task<List<CashbackEntryDto>> CashbackEntriesAsync(Guid customerId, CancellationToken ct);
 }
 
 public interface IPaymentService
@@ -134,11 +135,15 @@ public interface ISettingsService
 public interface IAdminService
 {
     Task<AdminMetricsDto> MetricsAsync(CancellationToken ct);
-    Task<List<OrderDto>> SalesAsync(Guid? partnerId, string? status, string? q, CancellationToken ct);
-    Task<List<PartnerDto>> PartnersAsync(CancellationToken ct);
+    Task<PagedResult<OrderDto>> SalesAsync(
+        Guid? partnerId, string? status, string? q, int page, int pageSize, CancellationToken ct);
+    Task<PagedResult<PartnerDto>> PartnersAsync(int page, int pageSize, CancellationToken ct);
     Task<PartnerDto> CreatePartnerAsync(PartnerUpsertRequest req, CancellationToken ct);
     Task<PartnerDto> UpdatePartnerAsync(Guid id, PartnerUpsertRequest req, CancellationToken ct);
     Task DeletePartnerAsync(Guid id, CancellationToken ct);
-    Task<List<UserDto>> UsersAsync(string? q, CancellationToken ct);
+    Task<PagedResult<UserDto>> UsersAsync(string? q, int page, int pageSize, CancellationToken ct);
     Task<UserDto> UpdateUserAsync(Guid id, AdminUserUpdateRequest req, CancellationToken ct);
+    Task<PagedResult<AuditLogDto>> AuditLogsAsync(
+        DateTime? from, DateTime? to, Guid? userId, string? action,
+        int page, int pageSize, CancellationToken ct);
 }

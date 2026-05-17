@@ -20,6 +20,7 @@ public class AppDbContext : DbContext
     public DbSet<IntegrationSetting> IntegrationSettings => Set<IntegrationSetting>();
     public DbSet<PaymentEvent> PaymentEvents => Set<PaymentEvent>();
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<CashbackEntry> CashbackEntries => Set<CashbackEntry>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -94,6 +95,17 @@ public class AppDbContext : DbContext
             e.Property(x => x.Amount).HasPrecision(12, 2);
             e.HasOne(x => x.Order).WithMany(o => o.Payments)
                 .HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        b.Entity<CashbackEntry>(e =>
+        {
+            e.HasIndex(x => new { x.UserId, x.CreatedAt });
+            e.Property(x => x.Amount).HasPrecision(12, 2);
+            e.Property(x => x.Description).HasMaxLength(240);
+            e.HasOne(x => x.User).WithMany()
+                .HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Order).WithMany()
+                .HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.SetNull);
         });
 
         b.Entity<BotInteraction>(e =>

@@ -84,6 +84,18 @@ export interface Order {
   redeemedAt?: string;
 }
 
+export type CashbackEntryType = 'earned' | 'used';
+
+export interface CashbackEntry {
+  id: string;
+  type: CashbackEntryType;
+  amount: number;
+  orderId?: string;
+  orderCode?: string;
+  description: string;
+  createdAt: string;
+}
+
 export interface AppNotification {
   id: string;
   title: string;

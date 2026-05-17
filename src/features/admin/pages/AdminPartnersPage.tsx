@@ -39,15 +39,17 @@ const EMPTY: PartnerForm = {
 export function AdminPartnersPage() {
   const qc = useQueryClient();
   const toast = useToast();
+  const [page, setPage] = useState(1);
   const partnersQuery = useQuery({
-    queryKey: ['admin-partners'],
-    queryFn: () => adminApi.partners(),
+    queryKey: ['admin-partners', page],
+    queryFn: () => adminApi.partners({ page, pageSize: 20 }),
   });
   const segmentsQuery = useQuery({
     queryKey: ['categories', 'store'],
     queryFn: () => catalogApi.categories('store'),
   });
-  const partners = partnersQuery.data ?? [];
+  const partners = partnersQuery.data?.items ?? [];
+  const partnersPage = partnersQuery.data;
 
   const [editing, setEditing] = useState<Partner | null>(null);
   const [form, setForm] = useState<PartnerForm | null>(null);
@@ -242,6 +244,7 @@ export function AdminPartnersPage() {
           error={partnersQuery.error}
           empty={partners.length === 0}
           emptyLabel="Nenhum parceiro."
+          variant="list"
         >
           <table className="history__table">
             <thead>
@@ -301,6 +304,30 @@ export function AdminPartnersPage() {
           </table>
         </QueryState>
       </Card>
+
+      {partnersPage && (
+        <div className="admin-pagination">
+          <span>
+            Pagina {partnersPage.page} de {partnersPage.totalPages} - {partnersPage.total} parceiro(s)
+          </span>
+          <div className="row">
+            <button
+              type="button"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Anterior
+            </button>
+            <button
+              type="button"
+              disabled={page >= partnersPage.totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Proxima
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

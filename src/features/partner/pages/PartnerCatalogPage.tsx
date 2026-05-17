@@ -5,6 +5,7 @@ import { Card } from '@shared/components/Card/Card';
 import { Button } from '@shared/components/Button/Button';
 import { Input } from '@shared/components/Input/Input';
 import { QueryState } from '@shared/components/QueryState/QueryState';
+import { Modal } from '@shared/components/Modal/Modal';
 import { formatCurrency, formatPercent } from '@shared/utils/formatters';
 import {
   partnerApi,
@@ -308,6 +309,7 @@ export function PartnerCatalogPage() {
         loading={productsQuery.isLoading}
         error={productsQuery.error}
         empty={products.length === 0}
+        variant="cards"
         emptyLabel="Você ainda não possui produtos cadastrados."
       >
         <div className="partner-catalog">
@@ -375,59 +377,40 @@ export function PartnerCatalogPage() {
         </div>
       )}
 
-      {exitOpen && (
-        <div
-          className="sidebar-user__overlay"
-          onClick={() => !pwdBusy && setExitOpen(false)}
-        >
-          <form
-            className="sidebar-user__modal"
-            onClick={(e) => e.stopPropagation()}
-            onSubmit={confirmExit}
-          >
-            <div className="sidebar-user__modal-head">
-              <h3>Sair do modo vitrine</h3>
-              <button
-                type="button"
-                className="sidebar-user__close"
-                onClick={() => setExitOpen(false)}
-                aria-label="Fechar"
-              >
-                ×
-              </button>
-            </div>
-            <div className="stack">
-              <p className="text-muted">
-                Confirme sua senha para voltar ao modo de edição.
-              </p>
-              <Input
-                label={`Senha de ${user?.email ?? ''}`}
-                type="password"
-                value={pwd}
-                onChange={(e) => setPwd(e.target.value)}
-                autoFocus
-                required
-              />
-              {pwdErr && (
-                <small className="input-field__error">{pwdErr}</small>
-              )}
-              <div className="row">
-                <Button type="submit" disabled={pwdBusy || !pwd}>
-                  {pwdBusy ? 'Verificando...' : 'Confirmar e sair'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setExitOpen(false)}
-                  disabled={pwdBusy}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </div>
-          </form>
-        </div>
-      )}
+      <Modal
+        open={exitOpen}
+        title="Sair do modo vitrine"
+        onClose={() => setExitOpen(false)}
+        closeDisabled={pwdBusy}
+      >
+        <form className="stack" onSubmit={confirmExit}>
+          <p className="text-muted">
+            Confirme sua senha para voltar ao modo de edição.
+          </p>
+          <Input
+            label={`Senha de ${user?.email ?? ''}`}
+            type="password"
+            value={pwd}
+            onChange={(e) => setPwd(e.target.value)}
+            autoFocus
+            required
+          />
+          {pwdErr && <small className="input-field__error">{pwdErr}</small>}
+          <div className="row">
+            <Button type="submit" disabled={pwdBusy || !pwd}>
+              {pwdBusy ? 'Verificando...' : 'Confirmar e sair'}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setExitOpen(false)}
+              disabled={pwdBusy}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

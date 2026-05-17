@@ -19,11 +19,11 @@ export function AdminDashboardPage() {
   });
   const salesQuery = useQuery({
     queryKey: ['admin-sales', 'recent'],
-    queryFn: () => adminApi.sales(),
+    queryFn: () => adminApi.sales({ page: 1, pageSize: 5 }),
   });
 
   const m = metricsQuery.data;
-  const latestOrders = (salesQuery.data ?? []).slice(0, 5);
+  const latestOrders = salesQuery.data?.items ?? [];
 
   return (
     <div className="admin-page">

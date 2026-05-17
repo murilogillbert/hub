@@ -423,6 +423,7 @@ export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
           error={storesQuery.error}
           empty={stores.length === 0}
           emptyLabel="Nenhuma unidade cadastrada."
+          variant="list"
         >
           <table className="history__table">
             <thead>

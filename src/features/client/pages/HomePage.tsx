@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ProductCard } from '../components/ProductCard';
 import { catalogApi, NearbyStore } from '@shared/api/endpoints';
@@ -10,6 +10,7 @@ import { formatPercent } from '@shared/utils/formatters';
 import './HomePage.css';
 
 export function HomePage() {
+  const navigate = useNavigate();
   const [category, setCategory] = useState('Todos');
   const [query, setQuery] = useState('');
   const [nearby, setNearby] = useState<NearbyStore[] | null>(null);
@@ -90,6 +91,21 @@ export function HomePage() {
   );
 
   const stat = (loading: boolean, value: string) => (loading ? '—' : value);
+
+  const openStoreCatalog = (store: {
+    id: string;
+    partnerId: string;
+    city: string;
+    state: string;
+  }) => {
+    const qs = new URLSearchParams({
+      partnerId: store.partnerId,
+      city: store.city,
+      state: store.state,
+      store: store.id,
+    });
+    navigate(`/produtos?${qs.toString()}`);
+  };
 
   return (
     <div className="home stack">
@@ -174,13 +190,19 @@ export function HomePage() {
           loading={storesQuery.isLoading}
           error={storesQuery.error}
           empty={(nearby ?? stores).length === 0}
+          variant="list"
           emptyLabel={
             nearby
               ? 'Nenhum ponto físico próximo.'
               : 'Nenhum ponto físico cadastrado ainda.'
           }
         >
-          <StoreMap stores={nearby ?? stores} height={380} />
+          <StoreMap
+            stores={nearby ?? stores}
+            height={380}
+            onStoreSelect={openStoreCatalog}
+            selectLabel="Ver ofertas deste local"
+          />
         </QueryState>
       </section>
 
@@ -218,6 +240,7 @@ export function HomePage() {
           loading={productsQuery.isLoading}
           error={productsQuery.error}
           empty={filtered.length === 0}
+          variant="cards"
           emptyLabel="Nenhum produto encontrado."
         >
           <div className="home__grid">

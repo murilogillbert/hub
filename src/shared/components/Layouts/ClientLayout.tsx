@@ -49,6 +49,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
             <NavLink to="/produtos">Catálogo</NavLink>
             {isAuthenticated && <NavLink to="/conta/itens">Meus itens</NavLink>}
             {isAuthenticated && <NavLink to="/conta/historico">Histórico</NavLink>}
+            {isAuthenticated && <NavLink to="/conta/cashback">Meu cashback</NavLink>}
           </nav>
           <div className="layout-client__user">
             {isAuthenticated && user ? (

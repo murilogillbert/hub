@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { QrCode } from '@shared/components/QrCode/QrCode';
 import { Button } from '@shared/components/Button/Button';
@@ -12,6 +13,7 @@ import { Order } from '@shared/types';
 import './ClientArea.css';
 
 export function MyItemsPage() {
+  const navigate = useNavigate();
   const ordersQuery = useQuery({
     queryKey: ['my-orders'],
     queryFn: () => ordersApi.myOrders(),
@@ -60,6 +62,7 @@ export function MyItemsPage() {
         loading={ordersQuery.isLoading}
         error={ordersQuery.error}
         empty={active.length === 0}
+        variant="list"
         emptyLabel="Você ainda não tem vouchers ativos. Compre um produto no catálogo."
       >
         <div className="my-items">
@@ -126,6 +129,12 @@ export function MyItemsPage() {
               </dl>
 
               <div className="row">
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate(`/meus-itens/${selected.id}`)}
+                >
+                  Ver detalhe
+                </Button>
                 <Button variant="secondary" onClick={handleCopy}>
                   {copied ? '✓ Código copiado' : 'Copiar código'}
                 </Button>

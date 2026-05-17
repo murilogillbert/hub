@@ -66,13 +66,18 @@ public class AdminController : ControllerBase
 
     [HttpGet("sales")]
     public async Task<IActionResult> Sales([FromQuery] Guid? partnerId,
-        [FromQuery] string? status, [FromQuery] string? q, CancellationToken ct)
-        => Ok(new ApiEnvelope<List<OrderDto>>(
-            await _admin.SalesAsync(partnerId, status, q, ct)));
+        [FromQuery] string? status, [FromQuery] string? q,
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 20,
+        CancellationToken ct = default)
+        => Ok(new ApiEnvelope<PagedResult<OrderDto>>(
+            await _admin.SalesAsync(partnerId, status, q, page, pageSize, ct)));
 
     [HttpGet("partners")]
-    public async Task<IActionResult> Partners(CancellationToken ct)
-        => Ok(new ApiEnvelope<List<PartnerDto>>(await _admin.PartnersAsync(ct)));
+    public async Task<IActionResult> Partners(
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 20,
+        CancellationToken ct = default)
+        => Ok(new ApiEnvelope<PagedResult<PartnerDto>>(
+            await _admin.PartnersAsync(page, pageSize, ct)));
 
     [HttpPost("partners")]
     public async Task<IActionResult> CreatePartner(PartnerUpsertRequest req, CancellationToken ct)
@@ -112,8 +117,11 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("users")]
-    public async Task<IActionResult> Users([FromQuery] string? q, CancellationToken ct)
-        => Ok(new ApiEnvelope<List<UserDto>>(await _admin.UsersAsync(q, ct)));
+    public async Task<IActionResult> Users(
+        [FromQuery] string? q, [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20, CancellationToken ct = default)
+        => Ok(new ApiEnvelope<PagedResult<UserDto>>(
+            await _admin.UsersAsync(q, page, pageSize, ct)));
 
     [HttpPut("users/{id:guid}")]
     public async Task<IActionResult> UpdateUser(
@@ -124,4 +132,13 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> Leads(CancellationToken ct)
         => Ok(new ApiEnvelope<List<AssistantLeadDto>>(
             await _assistant.ListLeadsAsync(ct)));
+
+    [HttpGet("audit-logs")]
+    public async Task<IActionResult> AuditLogs(
+        [FromQuery] DateTime? from, [FromQuery] DateTime? to,
+        [FromQuery] Guid? userId, [FromQuery] string? action,
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 20,
+        CancellationToken ct = default)
+        => Ok(new ApiEnvelope<PagedResult<AuditLogDto>>(
+            await _admin.AuditLogsAsync(from, to, userId, action, page, pageSize, ct)));
 }

@@ -61,6 +61,16 @@ public class OrderService : IOrderService
         return o.ToDto();
     }
 
+    public async Task<List<CashbackEntryDto>> CashbackEntriesAsync(Guid customerId, CancellationToken ct)
+    {
+        var entries = await _db.CashbackEntries
+            .Include(e => e.Order)
+            .Where(e => e.UserId == customerId)
+            .OrderByDescending(e => e.CreatedAt)
+            .ToListAsync(ct);
+        return entries.Select(e => e.ToDto()).ToList();
+    }
+
     public static string GenerateCode()
     {
         const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";

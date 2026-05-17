@@ -17,6 +17,8 @@ const markerIcon = L.icon({
 interface StoreMapProps {
   stores: PartnerStore[];
   height?: number;
+  onStoreSelect?: (store: PartnerStore) => void;
+  selectLabel?: string;
 }
 
 function FitBounds({ stores }: { stores: PartnerStore[] }) {
@@ -29,7 +31,12 @@ function FitBounds({ stores }: { stores: PartnerStore[] }) {
   return null;
 }
 
-export function StoreMap({ stores, height = 360 }: StoreMapProps) {
+export function StoreMap({
+  stores,
+  height = 360,
+  onStoreSelect,
+  selectLabel = 'Ver ofertas',
+}: StoreMapProps) {
   const center: [number, number] = stores.length
     ? [stores[0].lat, stores[0].lng]
     : [-23.5505, -46.6333];
@@ -45,9 +52,16 @@ export function StoreMap({ stores, height = 360 }: StoreMapProps) {
         {stores.map((store) => (
           <Marker key={store.id} position={[store.lat, store.lng]} icon={markerIcon}>
             <Popup>
-              <strong>{store.name}</strong>
-              <br />
-              <small>{store.address}</small>
+              <div className="store-map__popup">
+                <strong>{store.name}</strong>
+                <small>{store.address}</small>
+                <small>{store.city}/{store.state} · {store.category}</small>
+                {onStoreSelect && (
+                  <button type="button" onClick={() => onStoreSelect(store)}>
+                    {selectLabel}
+                  </button>
+                )}
+              </div>
             </Popup>
           </Marker>
         ))}

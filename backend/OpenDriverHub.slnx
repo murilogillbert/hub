@@ -5,4 +5,7 @@
     <Project Path="src/OpenDriverHub.Domain/OpenDriverHub.Domain.csproj" />
     <Project Path="src/OpenDriverHub.Infrastructure/OpenDriverHub.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OpenDriverHub.Tests/OpenDriverHub.Tests.csproj" />
+  </Folder>
 </Solution>

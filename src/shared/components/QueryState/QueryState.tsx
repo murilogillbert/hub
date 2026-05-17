@@ -6,6 +6,7 @@ interface QueryStateProps {
   error: unknown;
   empty?: boolean;
   emptyLabel?: string;
+  variant?: 'panel' | 'cards' | 'list';
   children: ReactNode;
 }
 
@@ -14,13 +15,30 @@ export function QueryState({
   error,
   empty,
   emptyLabel = 'Nenhum dado encontrado.',
+  variant = 'panel',
   children,
 }: QueryStateProps) {
   if (loading)
     return (
-      <div className="query-state">
-        <span className="query-state__spinner" />
-        <span>Carregando...</span>
+      <div className={`query-skeleton query-skeleton--${variant}`} aria-busy="true">
+        {variant === 'cards' ? (
+          Array.from({ length: 6 }).map((_, idx) => (
+            <div className="query-skeleton__card" key={idx}>
+              <span className="query-skeleton__media" />
+              <span className="query-skeleton__line is-strong" />
+              <span className="query-skeleton__line" />
+              <span className="query-skeleton__line is-short" />
+            </div>
+          ))
+        ) : (
+          Array.from({ length: variant === 'list' ? 5 : 3 }).map((_, idx) => (
+            <div className="query-skeleton__row" key={idx}>
+              <span className="query-skeleton__dot" />
+              <span className="query-skeleton__line is-strong" />
+              <span className="query-skeleton__line" />
+            </div>
+          ))
+        )}
       </div>
     );
   if (error)

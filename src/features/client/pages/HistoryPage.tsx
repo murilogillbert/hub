@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { Card } from '@shared/components/Card/Card';
 import { QueryState } from '@shared/components/QueryState/QueryState';
 import {
@@ -65,6 +66,7 @@ export function HistoryPage() {
           error={ordersQuery.error}
           empty={myOrders.length === 0}
           emptyLabel="Nenhuma compra ainda."
+          variant="list"
         >
         <table className="history__table">
           <thead>
@@ -81,7 +83,9 @@ export function HistoryPage() {
           <tbody>
             {myOrders.map((o) => (
               <tr key={o.id}>
-                <td>{o.productTitle}</td>
+                <td>
+                  <Link to={`/meus-itens/${o.id}`}>{o.productTitle}</Link>
+                </td>
                 <td>{o.partnerName}</td>
                 <td>
                   <code>{formatCode(o.code)}</code>

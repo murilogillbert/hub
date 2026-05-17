@@ -32,6 +32,19 @@ public static class Mappings
     public static NotificationDto ToDto(this Notification n) => new(
         n.Id, n.Title, n.Message, n.Channel, n.ReadAt is not null, n.CreatedAt);
 
+    public static AuditLogDto ToDto(this AuditLog a, string? actorName = null) => new(
+        a.Id, a.ActorId, actorName, a.Action, a.EntityType, a.EntityId,
+        a.PayloadJson, a.CreatedAt);
+
+    public static CashbackEntryDto ToDto(this CashbackEntry e) => new(
+        e.Id,
+        e.Type == CashbackEntryType.Earned ? "earned" : "used",
+        e.Amount,
+        e.OrderId,
+        e.Order?.Code,
+        e.Description,
+        e.CreatedAt);
+
     public static CategoryType ParseCategoryType(string? s) =>
         string.Equals(s, "store", StringComparison.OrdinalIgnoreCase)
             ? CategoryType.Store

@@ -57,11 +57,12 @@ public class CatalogController : ControllerBase
     public async Task<IActionResult> Catalog(
         [FromQuery] string? category, [FromQuery] string? q,
         [FromQuery] string? city, [FromQuery] string? state,
+        [FromQuery] Guid? partnerId,
         [FromQuery] decimal? minPrice, [FromQuery] decimal? maxPrice,
         [FromQuery] string? sort, [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20, CancellationToken ct = default)
         => Ok(new ApiEnvelope<CatalogPage>(await _catalog.SearchAsync(
-            new CatalogQuery(category, q, city, state, minPrice, maxPrice,
+            new CatalogQuery(category, q, city, state, partnerId, minPrice, maxPrice,
                 sort, page, pageSize), ct)));
 
     [HttpGet("catalog/filters")]
@@ -126,6 +127,11 @@ public class ClientController : ControllerBase
     [HttpGet("me/orders/{id:guid}")]
     public async Task<IActionResult> MyOrder(Guid id, CancellationToken ct)
         => Ok(new ApiEnvelope<OrderDto>(await _orders.GetMyOrderAsync(User.UserId(), id, ct)));
+
+    [HttpGet("me/cashback/entries")]
+    public async Task<IActionResult> CashbackEntries(CancellationToken ct)
+        => Ok(new ApiEnvelope<List<CashbackEntryDto>>(
+            await _orders.CashbackEntriesAsync(User.UserId(), ct)));
 
     [HttpPost("payments/process")]
     public async Task<IActionResult> Pay(ProcessPaymentRequest req, CancellationToken ct)
@@ -196,6 +202,7 @@ public class AssistantController : ControllerBase
     }
 
     [HttpPost("chat")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> Chat(AssistantChatRequest req, CancellationToken ct)
     {
         Guid? userId = Guid.TryParse(

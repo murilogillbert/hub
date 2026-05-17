@@ -7,6 +7,7 @@ import {
   User,
   Category,
   AppNotification,
+  CashbackEntry,
 } from '@shared/types';
 
 export interface CatalogQuery {
@@ -14,6 +15,7 @@ export interface CatalogQuery {
   q?: string;
   city?: string;
   state?: string;
+  partnerId?: string;
   minPrice?: number;
   maxPrice?: number;
   sort?: 'relevance' | 'price_asc' | 'price_desc' | 'rating';
@@ -22,6 +24,13 @@ export interface CatalogQuery {
 }
 export interface CatalogResult {
   items: Product[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+export interface PagedResult<T> {
+  items: T[];
   total: number;
   page: number;
   pageSize: number;
@@ -101,6 +110,16 @@ export interface LeadDto {
   };
   createdAt: string;
 }
+export interface AuditLogDto {
+  id: string;
+  actorId?: string;
+  actorName?: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  payloadJson?: string;
+  createdAt: string;
+}
 
 // ---- Auth ----
 export interface AuthResponse {
@@ -157,6 +176,7 @@ export const catalogApi = {
     if (params.q) qs.set('q', params.q);
     if (params.city) qs.set('city', params.city);
     if (params.state) qs.set('state', params.state);
+    if (params.partnerId) qs.set('partnerId', params.partnerId);
     if (params.minPrice != null) qs.set('minPrice', String(params.minPrice));
     if (params.maxPrice != null) qs.set('maxPrice', String(params.maxPrice));
     if (params.sort) qs.set('sort', params.sort);
@@ -223,6 +243,8 @@ export const ordersApi = {
   myOrders: (status?: string) =>
     api.get<Order[]>(`/me/orders${status ? `?status=${status}` : ''}`),
   myOrder: (id: string) => api.get<Order>(`/me/orders/${id}`),
+  cashbackEntries: () =>
+    api.get<CashbackEntry[]>('/me/cashback/entries'),
 };
 export const paymentsApi = {
   process: (body: {
@@ -311,15 +333,28 @@ export interface AdminUserUpdate {
 
 export const adminApi = {
   metrics: () => api.get<AdminMetrics>('/admin/metrics'),
-  sales: (params?: { partnerId?: string; status?: string; q?: string }) => {
+  sales: (params?: {
+    partnerId?: string;
+    status?: string;
+    q?: string;
+    page?: number;
+    pageSize?: number;
+  }) => {
     const qs = new URLSearchParams();
     if (params?.partnerId) qs.set('partnerId', params.partnerId);
     if (params?.status) qs.set('status', params.status);
     if (params?.q) qs.set('q', params.q);
+    qs.set('page', String(params?.page ?? 1));
+    qs.set('pageSize', String(params?.pageSize ?? 20));
     const s = qs.toString();
-    return api.get<Order[]>(`/admin/sales${s ? `?${s}` : ''}`);
+    return api.get<PagedResult<Order>>(`/admin/sales${s ? `?${s}` : ''}`);
   },
-  partners: () => api.get<Partner[]>('/admin/partners'),
+  partners: (params?: { page?: number; pageSize?: number }) => {
+    const qs = new URLSearchParams();
+    qs.set('page', String(params?.page ?? 1));
+    qs.set('pageSize', String(params?.pageSize ?? 20));
+    return api.get<PagedResult<Partner>>(`/admin/partners?${qs.toString()}`);
+  },
   createPartner: (body: PartnerUpsert) =>
     api.post<Partner>('/admin/partners', body),
   updatePartner: (id: string, body: PartnerUpsert) =>
@@ -334,8 +369,30 @@ export const adminApi = {
   updateStore: (id: string, body: StoreUpsert) =>
     api.put<PartnerStore>(`/admin/stores/${id}`, body),
   deleteStore: (id: string) => api.del<void>(`/admin/stores/${id}`),
-  users: (q?: string) =>
-    api.get<User[]>(`/admin/users${q ? `?q=${q}` : ''}`),
+  users: (params?: { q?: string; page?: number; pageSize?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.q) qs.set('q', params.q);
+    qs.set('page', String(params?.page ?? 1));
+    qs.set('pageSize', String(params?.pageSize ?? 20));
+    return api.get<PagedResult<User>>(`/admin/users?${qs.toString()}`);
+  },
+  auditLogs: (params?: {
+    from?: string;
+    to?: string;
+    userId?: string;
+    action?: string;
+    page?: number;
+    pageSize?: number;
+  }) => {
+    const qs = new URLSearchParams();
+    if (params?.from) qs.set('from', params.from);
+    if (params?.to) qs.set('to', params.to);
+    if (params?.userId) qs.set('userId', params.userId);
+    if (params?.action) qs.set('action', params.action);
+    qs.set('page', String(params?.page ?? 1));
+    qs.set('pageSize', String(params?.pageSize ?? 20));
+    return api.get<PagedResult<AuditLogDto>>(`/admin/audit-logs?${qs.toString()}`);
+  },
   updateUser: (id: string, body: AdminUserUpdate) =>
     api.put<User>(`/admin/users/${id}`, body),
   leads: () => api.get<LeadDto[]>('/admin/leads'),

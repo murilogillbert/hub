@@ -41,6 +41,7 @@ export function AdminLayout() {
           <NavLink to="/admin/usuarios">👥 Usuários</NavLink>
           <NavLink to="/admin/categorias">🏷️ Categorias</NavLink>
           <NavLink to="/admin/integracoes">🔌 Integrações</NavLink>
+          <NavLink to="/admin/auditoria">Auditoria</NavLink>
         </nav>
         <SidebarUser />
       </aside>

@@ -6,7 +6,7 @@ import './AdminPages.css';
 export function AdminStoresPage() {
   const partnersQuery = useQuery({
     queryKey: ['admin-partners'],
-    queryFn: () => adminApi.partners(),
+    queryFn: () => adminApi.partners({ page: 1, pageSize: 100 }),
   });
 
   return (
@@ -20,7 +20,7 @@ export function AdminStoresPage() {
         </div>
       </header>
 
-      <StoresManager mode="admin" partners={partnersQuery.data ?? []} />
+      <StoresManager mode="admin" partners={partnersQuery.data?.items ?? []} />
     </div>
   );
 }

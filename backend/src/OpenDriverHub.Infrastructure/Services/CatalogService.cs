@@ -55,13 +55,21 @@ public class CatalogService : ICatalogService
 
         if (!string.IsNullOrWhiteSpace(q.Category) && q.Category != "Todos")
             query = query.Where(p => p.Category == q.Category);
+        if (q.PartnerId is { } partnerId)
+            query = query.Where(p => p.PartnerId == partnerId);
         if (!string.IsNullOrWhiteSpace(q.Q))
         {
             var term = q.Q.Trim();
             query = query.Where(p =>
                 p.Title.Contains(term) ||
                 p.Description.Contains(term) ||
-                p.Partner!.Name.Contains(term));
+                p.Partner!.Name.Contains(term) ||
+                _db.Stores.Any(s =>
+                    s.PartnerId == p.PartnerId &&
+                    (s.Name.Contains(term) ||
+                     s.Address.Contains(term) ||
+                     s.City.Contains(term) ||
+                     s.State.Contains(term))));
         }
         if (q.MinPrice is { } min) query = query.Where(p => p.Price >= min);
         if (q.MaxPrice is { } max) query = query.Where(p => p.Price <= max);
@@ -159,7 +167,7 @@ public class CatalogService : ICatalogService
             !(s.Lat == 0 && s.Lng == 0)).ToListAsync(ct);
         return stores
             .Select(s => new NearbyStoreDto(
-                s.Id, s.PartnerId, s.Name, s.Address, s.Lat, s.Lng, s.Category,
+                s.Id, s.PartnerId, s.Name, s.Address, s.City, s.State, s.Lat, s.Lng, s.Category,
                 GeoUtils.DistanceKm(lat, lng, s.Lat, s.Lng)))
             .Where(s => s.DistanceKm <= radiusKm)
             .OrderBy(s => s.DistanceKm)

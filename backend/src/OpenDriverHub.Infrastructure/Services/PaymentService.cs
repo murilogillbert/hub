@@ -159,9 +159,14 @@ public class PaymentService : IPaymentService
         if (customer is not null)
         {
             if (order.CashbackUsed > 0)
+            {
                 customer.CashbackBalance =
                     Math.Max(0m, customer.CashbackBalance - order.CashbackUsed);
+                AddCashbackEntry(order, CashbackEntryType.Used, order.CashbackUsed);
+            }
             customer.CashbackBalance += order.CashbackEarned;
+            if (order.CashbackEarned > 0)
+                AddCashbackEntry(order, CashbackEntryType.Earned, order.CashbackEarned);
         }
 
         _db.Notifications.Add(new Notification
@@ -173,6 +178,27 @@ public class PaymentService : IPaymentService
                 + $"Cashback de R$ {order.CashbackEarned:0.00} creditado na sua conta.",
         });
         await Task.CompletedTask;
+    }
+
+    private void AddCashbackEntry(Order order, CashbackEntryType type, decimal amount)
+    {
+        var exists = _db.CashbackEntries.Local.Any(e =>
+            e.OrderId == order.Id && e.Type == type)
+            || _db.CashbackEntries.Any(e => e.OrderId == order.Id && e.Type == type);
+        if (exists) return;
+
+        var description = type == CashbackEntryType.Earned
+            ? $"Cashback recebido no pedido {order.Code}"
+            : $"Cashback usado no pedido {order.Code}";
+
+        _db.CashbackEntries.Add(new CashbackEntry
+        {
+            UserId = order.CustomerId,
+            OrderId = order.Id,
+            Type = type,
+            Amount = Math.Round(amount, 2),
+            Description = description,
+        });
     }
 
     private static PaymentStatus ParseStatus(string s) => s switch

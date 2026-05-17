@@ -38,8 +38,11 @@ public class CategoryService : ICategoryService
         if (await _db.Categories.AnyAsync(
                 c => c.Name == name && c.Type == cat.Type && c.Id != id, ct))
             throw new AppException("Já existe uma categoria com esse nome.", 409);
+        var previousName = cat.Name;
         cat.Name = name;
         cat.Active = req.Active;
+        if (!string.Equals(previousName, name, StringComparison.Ordinal))
+            await PropagateRenameAsync(cat.Type, previousName, name, ct);
         await _db.SaveChangesAsync(ct);
         return cat.ToDto();
     }
@@ -51,5 +54,30 @@ public class CategoryService : ICategoryService
         // Soft-delete: desativa para não quebrar produtos existentes.
         cat.Active = false;
         await _db.SaveChangesAsync(ct);
+    }
+
+    private async Task PropagateRenameAsync(
+        CategoryType type, string previousName, string newName, CancellationToken ct)
+    {
+        if (type == CategoryType.Product)
+        {
+            await _db.Products
+                .Where(p => p.Category == previousName)
+                .ExecuteUpdateAsync(
+                    s => s.SetProperty(p => p.Category, newName),
+                    ct);
+            return;
+        }
+
+        await _db.Partners
+            .Where(p => p.Segment == previousName)
+            .ExecuteUpdateAsync(
+                s => s.SetProperty(p => p.Segment, newName),
+                ct);
+        await _db.Stores
+            .Where(s => s.Category == previousName)
+            .ExecuteUpdateAsync(
+                s => s.SetProperty(store => store.Category, newName),
+                ct);
     }
 }

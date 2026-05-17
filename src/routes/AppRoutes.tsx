@@ -13,6 +13,8 @@ import { PurchaseConfirmationPage } from '@features/client/pages/PurchaseConfirm
 import { MyItemsPage } from '@features/client/pages/MyItemsPage';
 import { HistoryPage } from '@features/client/pages/HistoryPage';
 import { ProfilePage } from '@features/client/pages/ProfilePage';
+import { OrderDetailPage } from '@features/client/pages/OrderDetailPage';
+import { CashbackPage } from '@features/client/pages/CashbackPage';
 
 import { LoginPage } from '@features/auth/pages/LoginPage';
 import { RegisterChoicePage } from '@features/auth/pages/RegisterChoicePage';
@@ -31,6 +33,7 @@ import { AdminStoresPage } from '@features/admin/pages/AdminStoresPage';
 import { AdminUsersPage } from '@features/admin/pages/AdminUsersPage';
 import { AdminIntegrationsPage } from '@features/admin/pages/AdminIntegrationsPage';
 import { AdminCategoriesPage } from '@features/admin/pages/AdminCategoriesPage';
+import { AdminAuditPage } from '@features/admin/pages/AdminAuditPage';
 
 export function AppRoutes() {
   return (
@@ -81,7 +84,9 @@ export function AppRoutes() {
           <Route path="/checkout/:id" element={<CheckoutPage />} />
           <Route path="/compra/confirmacao/:id" element={<PurchaseConfirmationPage />} />
           <Route path="/conta/itens" element={<MyItemsPage />} />
+          <Route path="/meus-itens/:id" element={<OrderDetailPage />} />
           <Route path="/conta/historico" element={<HistoryPage />} />
+          <Route path="/conta/cashback" element={<CashbackPage />} />
           <Route path="/conta/perfil" element={<ProfilePage />} />
         </Route>
       </Route>
@@ -114,6 +119,7 @@ export function AppRoutes() {
           <Route path="usuarios" element={<AdminUsersPage />} />
           <Route path="categorias" element={<AdminCategoriesPage />} />
           <Route path="integracoes" element={<AdminIntegrationsPage />} />
+          <Route path="auditoria" element={<AdminAuditPage />} />
         </Route>
       </Route>
 

@@ -97,7 +97,8 @@ public class AdminService : IAdminService
             byMonth, top, byCategory, byMethod, leadsByTemp);
     }
 
-    public async Task<List<OrderDto>> SalesAsync(Guid? partnerId, string? status, string? q, CancellationToken ct)
+    public async Task<PagedResult<OrderDto>> SalesAsync(
+        Guid? partnerId, string? status, string? q, int page, int pageSize, CancellationToken ct)
     {
         var query = _db.Orders.Include(o => o.Product).Include(o => o.Partner).Include(o => o.Customer)
             .AsQueryable();
@@ -107,13 +108,13 @@ public class AdminService : IAdminService
         if (!string.IsNullOrWhiteSpace(q))
             query = query.Where(o => o.Customer!.Name.Contains(q)
                 || o.Product!.Title.Contains(q) || o.Code.Contains(q));
-        var list = await query.OrderByDescending(o => o.CreatedAt).Take(300).ToListAsync(ct);
-        return list.Select(o => o.ToDto()).ToList();
+        return await ToPageAsync(query.OrderByDescending(o => o.CreatedAt), page, pageSize,
+            o => o.ToDto(), ct);
     }
 
-    public async Task<List<PartnerDto>> PartnersAsync(CancellationToken ct)
-        => (await _db.Partners.OrderBy(p => p.Name).ToListAsync(ct))
-            .Select(p => p.ToDto()).ToList();
+    public async Task<PagedResult<PartnerDto>> PartnersAsync(int page, int pageSize, CancellationToken ct)
+        => await ToPageAsync(_db.Partners.OrderBy(p => p.Name), page, pageSize,
+            p => p.ToDto(), ct);
 
     public async Task<PartnerDto> CreatePartnerAsync(PartnerUpsertRequest req, CancellationToken ct)
     {
@@ -163,13 +164,13 @@ public class AdminService : IAdminService
         await _db.SaveChangesAsync(ct);
     }
 
-    public async Task<List<UserDto>> UsersAsync(string? q, CancellationToken ct)
+    public async Task<PagedResult<UserDto>> UsersAsync(string? q, int page, int pageSize, CancellationToken ct)
     {
         var query = _db.Users.AsQueryable();
         if (!string.IsNullOrWhiteSpace(q))
             query = query.Where(u => u.Name.Contains(q) || u.Email.Contains(q));
-        var list = await query.OrderBy(u => u.Name).Take(300).ToListAsync(ct);
-        return list.Select(u => u.ToDto()).ToList();
+        return await ToPageAsync(query.OrderBy(u => u.Name), page, pageSize,
+            u => u.ToDto(), ct);
     }
 
     public async Task<UserDto> UpdateUserAsync(
@@ -221,5 +222,45 @@ public class AdminService : IAdminService
 
         await _db.SaveChangesAsync(ct);
         return user.ToDto();
+    }
+
+    public async Task<PagedResult<AuditLogDto>> AuditLogsAsync(
+        DateTime? from, DateTime? to, Guid? userId, string? action,
+        int page, int pageSize, CancellationToken ct)
+    {
+        var query = _db.AuditLogs.AsQueryable();
+        if (from is { } start) query = query.Where(a => a.CreatedAt >= start);
+        if (to is { } end) query = query.Where(a => a.CreatedAt <= end);
+        if (userId is { } uid) query = query.Where(a => a.ActorId == uid);
+        if (!string.IsNullOrWhiteSpace(action))
+            query = query.Where(a => a.Action.Contains(action));
+
+        var users = _db.Users.Select(u => new { u.Id, u.Name });
+        var enriched = query
+            .OrderByDescending(a => a.CreatedAt)
+            .GroupJoin(users, a => a.ActorId, u => (Guid?)u.Id, (a, actors) => new { Log = a, Actors = actors })
+            .SelectMany(x => x.Actors.DefaultIfEmpty(), (x, actor) => new { x.Log, ActorName = actor == null ? null : actor.Name });
+
+        return await ToPageAsync(enriched, page, pageSize,
+            x => x.Log.ToDto(x.ActorName), ct);
+    }
+
+    private static async Task<PagedResult<TDto>> ToPageAsync<TEntity, TDto>(
+        IQueryable<TEntity> query,
+        int page,
+        int pageSize,
+        Func<TEntity, TDto> map,
+        CancellationToken ct)
+    {
+        var safePage = Math.Max(1, page);
+        var safePageSize = Math.Clamp(pageSize, 1, 100);
+        var total = await query.CountAsync(ct);
+        var list = await query
+            .Skip((safePage - 1) * safePageSize)
+            .Take(safePageSize)
+            .ToListAsync(ct);
+        var totalPages = total == 0 ? 1 : (int)Math.Ceiling(total / (double)safePageSize);
+        return new PagedResult<TDto>(
+            list.Select(map).ToList(), total, safePage, safePageSize, totalPages);
     }
 }

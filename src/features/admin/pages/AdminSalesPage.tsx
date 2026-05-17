@@ -12,22 +12,27 @@ export function AdminSalesPage() {
   const [partnerFilter, setPartnerFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
 
   const partnersQuery = useQuery({
     queryKey: ['admin-partners'],
-    queryFn: () => adminApi.partners(),
+    queryFn: () => adminApi.partners({ page: 1, pageSize: 100 }),
   });
   const salesQuery = useQuery({
-    queryKey: ['admin-sales', partnerFilter, statusFilter],
+    queryKey: ['admin-sales', partnerFilter, statusFilter, search, page],
     queryFn: () =>
       adminApi.sales({
         partnerId: partnerFilter === 'all' ? undefined : partnerFilter,
         status: statusFilter === 'all' ? undefined : statusFilter,
+        q: search || undefined,
+        page,
+        pageSize: 20,
       }),
   });
 
-  const partners = partnersQuery.data ?? [];
-  const orders = salesQuery.data ?? [];
+  const partners = partnersQuery.data?.items ?? [];
+  const orders = salesQuery.data?.items ?? [];
+  const salesPage = salesQuery.data;
 
   const filtered = useMemo(
     () =>
@@ -78,13 +83,19 @@ export function AdminSalesPage() {
             label="Buscar"
             placeholder="Cliente, produto ou código"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
           />
           <div className="admin-filters__select">
             <label>Parceiro</label>
             <select
               value={partnerFilter}
-              onChange={(e) => setPartnerFilter(e.target.value)}
+              onChange={(e) => {
+                setPartnerFilter(e.target.value);
+                setPage(1);
+              }}
             >
               <option value="all">Todos</option>
               {partners.map((p) => (
@@ -98,7 +109,10 @@ export function AdminSalesPage() {
             <label>Status</label>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
             >
               <option value="all">Todos</option>
               <option value="PendingPayment">Aguardando</option>
@@ -116,6 +130,7 @@ export function AdminSalesPage() {
           error={salesQuery.error}
           empty={filtered.length === 0}
           emptyLabel="Nenhuma venda para o filtro."
+          variant="list"
         >
           <table className="history__table">
             <thead>
@@ -159,6 +174,30 @@ export function AdminSalesPage() {
           </table>
         </QueryState>
       </Card>
+
+      {salesPage && (
+        <div className="admin-pagination">
+          <span>
+            Pagina {salesPage.page} de {salesPage.totalPages} - {salesPage.total} venda(s)
+          </span>
+          <div className="row">
+            <button
+              type="button"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Anterior
+            </button>
+            <button
+              type="button"
+              disabled={page >= salesPage.totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Proxima
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

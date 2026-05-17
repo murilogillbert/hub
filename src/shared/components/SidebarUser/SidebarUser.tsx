@@ -3,12 +3,9 @@ import { useAuth } from '@shared/hooks/useAuth';
 import { authApi } from '@shared/api/endpoints';
 import { Input } from '@shared/components/Input/Input';
 import { Button } from '@shared/components/Button/Button';
+import { Modal } from '@shared/components/Modal/Modal';
 import './SidebarUser.css';
 
-/**
- * Bloco do usuário na sidebar (parceiro/admin). Ao clicar, abre um modal
- * para editar as informações do usuário autenticado no momento.
- */
 export function SidebarUser() {
   const { user, setUser } = useAuth();
   const [open, setOpen] = useState(false);
@@ -53,7 +50,7 @@ export function SidebarUser() {
         type="button"
         className="layout-internal__user sidebar-user"
         onClick={() => setOpen(true)}
-        title="Editar minhas informações"
+        title="Editar minhas informacoes"
       >
         <img src={user.avatarUrl} alt={user.name} />
         <div>
@@ -65,74 +62,53 @@ export function SidebarUser() {
         </span>
       </button>
 
-      {open && (
-        <div
-          className="sidebar-user__overlay"
-          onClick={() => !busy && setOpen(false)}
-        >
-          <div
-            className="sidebar-user__modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <header className="sidebar-user__modal-head">
-              <h3>Minhas informações</h3>
-              <button
-                type="button"
-                className="sidebar-user__close"
-                onClick={() => setOpen(false)}
-                aria-label="Fechar"
-              >
-                ×
-              </button>
-            </header>
-
-            <form onSubmit={handleSubmit} className="stack">
-              <div className="sidebar-user__id">
-                <img src={user.avatarUrl} alt={user.name} />
-                <span className="badge badge-primary">{user.role}</span>
-              </div>
-              <Input
-                label="Nome"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-              <Input
-                label="E-mail"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <Input
-                label="Telefone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="(11) 99999-0000"
-              />
-              {error && (
-                <small className="input-field__error">{error}</small>
-              )}
-              {saved && (
-                <span className="badge badge-accent">✓ Salvo</span>
-              )}
-              <div className="row">
-                <Button type="submit" disabled={busy}>
-                  {busy ? 'Salvando...' : 'Salvar'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setOpen(false)}
-                  disabled={busy}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </form>
+      <Modal
+        open={open}
+        title="Minhas informações"
+        onClose={() => setOpen(false)}
+        closeDisabled={busy}
+      >
+        <form onSubmit={handleSubmit} className="stack">
+          <div className="sidebar-user__id">
+            <img src={user.avatarUrl} alt={user.name} />
+            <span className="badge badge-primary">{user.role}</span>
           </div>
-        </div>
-      )}
+          <Input
+            label="Nome"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+          <Input
+            label="E-mail"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <Input
+            label="Telefone"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="(11) 99999-0000"
+          />
+          {error && <small className="input-field__error">{error}</small>}
+          {saved && <span className="badge badge-accent">✓ Salvo</span>}
+          <div className="row">
+            <Button type="submit" disabled={busy}>
+              {busy ? 'Salvando...' : 'Salvar'}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setOpen(false)}
+              disabled={busy}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </>
   );
 }

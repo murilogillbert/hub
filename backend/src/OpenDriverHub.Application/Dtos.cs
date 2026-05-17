@@ -48,17 +48,19 @@ public record CategoryUpsertRequest(string Name, bool Active, string Type = "pro
 
 // Catálogo e-commerce: filtros + paginação
 public record CatalogQuery(
-    string? Category, string? Q, string? City, string? State,
+    string? Category, string? Q, string? City, string? State, Guid? PartnerId,
     decimal? MinPrice, decimal? MaxPrice, string? Sort,
     int Page, int PageSize);
 public record CatalogPage(
     List<ProductDto> Items, int Total, int Page, int PageSize, int TotalPages);
+public record PagedResult<T>(
+    List<T> Items, int Total, int Page, int PageSize, int TotalPages);
 public record CatalogFiltersDto(
     List<string> Categories, List<string> Cities, List<string> States,
     decimal MinPrice, decimal MaxPrice);
 public record NearbyStoreDto(
     Guid Id, Guid PartnerId, string Name, string Address,
-    double Lat, double Lng, string Category, double DistanceKm);
+    string City, string State, double Lat, double Lng, string Category, double DistanceKm);
 
 // ---------- Orders / Payments ----------
 public record CreateOrderRequest(Guid ProductId, bool UseCashback = false);
@@ -67,6 +69,9 @@ public record OrderDto(
     string PartnerName, Guid CustomerId, string CustomerName, decimal PaidPrice,
     decimal CashbackEarned, decimal CashbackUsed, string Status,
     DateTime CreatedAt, DateTime? RedeemedAt);
+public record CashbackEntryDto(
+    Guid Id, string Type, decimal Amount, Guid? OrderId, string? OrderCode,
+    string Description, DateTime CreatedAt);
 public record ProcessPaymentRequest(Guid OrderId, string Method, CardInput? Card);
 public record CardInput(
     string Number, string Holder, string Expiry, string Cvv,
@@ -164,3 +169,7 @@ public record AdminMetricsDto(
     List<NamedValue> SalesByCategory,
     List<NamedValue> PaymentMethods,
     List<NamedValue> LeadsByTemperature);
+
+public record AuditLogDto(
+    Guid Id, Guid? ActorId, string? ActorName, string Action, string EntityType,
+    string EntityId, string? PayloadJson, DateTime CreatedAt);

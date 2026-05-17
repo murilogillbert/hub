@@ -50,3 +50,9 @@ public enum LeadTemperature
     Morno = 1,
     Quente = 2,
 }
+
+public enum CashbackEntryType
+{
+    Earned = 0,
+    Used = 1,
+}

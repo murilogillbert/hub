@@ -3,8 +3,8 @@
   --color-ink: #05070b;
   --color-navy: #071525;
   --color-navy-soft: #0d2238;
-  --color-gold: #d6b25e;
-  --color-gold-light: #f4df9a;
+  --color-gold: #9f7418;
+  --color-gold-light: #d8b34a;
   --color-bone: #f7f3ea;
   --color-smoke: #e7e9ee;
 
@@ -18,9 +18,9 @@
   --color-text-soft: #8b8f9c;
 
   /* ===== Primária = dourado (texto escuro em cima) ===== */
-  --color-primary: #d6b25e;
-  --color-primary-hover: #f4df9a;
-  --color-primary-soft: #f5ead0;
+  --color-primary: #9f7418;
+  --color-primary-hover: #d8b34a;
+  --color-primary-soft: #f8ecd0;
   --color-on-primary: #05070b;
 
   /* Cashback / sucesso (mantém verde pela semântica de dinheiro) */
@@ -72,7 +72,7 @@ h4 {
   font-family: var(--font-display);
   font-weight: 800;
   line-height: 1.12;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 
 p {
@@ -161,7 +161,7 @@ html {
   border-radius: var(--radius-pill);
   font-size: var(--font-xs);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   text-transform: uppercase;
   background: var(--color-surface-alt);
   color: var(--color-text-muted);
@@ -174,7 +174,7 @@ html {
 
 .badge-primary {
   background: var(--color-primary-soft);
-  color: #8a6d1f;
+  color: #5e430b;
 }
 
 .badge-warning {

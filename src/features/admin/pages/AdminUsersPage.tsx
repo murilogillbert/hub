@@ -4,6 +4,7 @@ import { Card } from '@shared/components/Card/Card';
 import { Input } from '@shared/components/Input/Input';
 import { Button } from '@shared/components/Button/Button';
 import { QueryState } from '@shared/components/QueryState/QueryState';
+import { Modal } from '@shared/components/Modal/Modal';
 import { formatCurrency } from '@shared/utils/formatters';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { coordinateError, formatMoneyInput, isValidCnpj, isValidPhone, maskCnpj, maskCoordinate, maskPhone, parseMoneyInput } from '@shared/utils/masks';
@@ -33,19 +34,21 @@ export function AdminUsersPage() {
   const qc = useQueryClient();
   const toast = useToast();
   const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
   const [edit, setEdit] = useState<EditState | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const usersQuery = useQuery({
-    queryKey: ['admin-users'],
-    queryFn: () => adminApi.users(),
+    queryKey: ['admin-users', query, page],
+    queryFn: () => adminApi.users({ q: query || undefined, page, pageSize: 20 }),
   });
   const partnersQuery = useQuery({
     queryKey: ['admin-partners'],
-    queryFn: () => adminApi.partners(),
+    queryFn: () => adminApi.partners({ page: 1, pageSize: 100 }),
   });
-  const users = usersQuery.data ?? [];
-  const partners = partnersQuery.data ?? [];
+  const users = usersQuery.data?.items ?? [];
+  const usersPage = usersQuery.data;
+  const partners = partnersQuery.data?.items ?? [];
 
   const save = useMutation({
     mutationFn: async (e: EditState) => {
@@ -150,7 +153,10 @@ export function AdminUsersPage() {
           label="Buscar usuário"
           placeholder="Nome ou e-mail"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setPage(1);
+          }}
         />
       </Card>
 
@@ -159,6 +165,7 @@ export function AdminUsersPage() {
           loading={usersQuery.isLoading}
           error={usersQuery.error}
           empty={filtered.length === 0}
+          variant="list"
           emptyLabel="Nenhum usuário."
         >
           <table className="history__table">
@@ -205,29 +212,40 @@ export function AdminUsersPage() {
         </QueryState>
       </Card>
 
-      {edit && (
-        <div
-          className="sidebar-user__overlay"
-          onClick={() => !save.isPending && setEdit(null)}
-        >
-          <form
-            className="sidebar-user__modal"
-            onClick={(e) => e.stopPropagation()}
-            onSubmit={submit}
-          >
-            <div className="sidebar-user__modal-head">
-              <h3>Editar usuário</h3>
-              <button
-                type="button"
-                className="sidebar-user__close"
-                onClick={() => setEdit(null)}
-                aria-label="Fechar"
-              >
-                ×
-              </button>
-            </div>
+      {usersPage && (
+        <div className="admin-pagination">
+          <span>
+            Pagina {usersPage.page} de {usersPage.totalPages} - {usersPage.total} usuario(s)
+          </span>
+          <div className="row">
+            <button
+              type="button"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Anterior
+            </button>
+            <button
+              type="button"
+              disabled={page >= usersPage.totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Proxima
+            </button>
+          </div>
+        </div>
+      )}
 
-            <div className="stack">
+      <Modal
+        open={Boolean(edit)}
+        title="Editar usuário"
+        onClose={() => setEdit(null)}
+        closeDisabled={save.isPending}
+      >
+        {edit && (
+          <form className="stack" onSubmit={submit}>
+
+            <>
               <Input
                 label="Nome"
                 value={edit.name}
@@ -349,10 +367,10 @@ export function AdminUsersPage() {
                   Cancelar
                 </Button>
               </div>
-            </div>
+            </>
           </form>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }
