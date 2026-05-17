@@ -6,6 +6,7 @@ import { Input } from '@shared/components/Input/Input';
 import { useAuth } from '@shared/hooks/useAuth';
 import { routeForRole } from '@shared/context/AuthContext';
 import { catalogApi } from '@shared/api/endpoints';
+import { isValidPhone, maskPhone } from '@shared/utils/masks';
 import './AuthPages.css';
 
 export function RegisterPartnerPage() {
@@ -33,6 +34,10 @@ export function RegisterPartnerPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (form.phone && !isValidPhone(form.phone)) {
+      setError('Telefone incompleto.');
+      return;
+    }
     setError(null);
     setBusy(true);
     try {
@@ -83,8 +88,11 @@ export function RegisterPartnerPage() {
           <Input
             label="Telefone"
             value={form.phone}
-            onChange={update('phone')}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, phone: maskPhone(e.target.value) }))
+            }
             placeholder="(11) 99999-0000"
+            error={form.phone && !isValidPhone(form.phone) ? 'Telefone incompleto.' : undefined}
           />
           <Input
             label="Nome da loja / parceiro"

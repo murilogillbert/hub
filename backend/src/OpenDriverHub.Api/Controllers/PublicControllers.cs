@@ -157,6 +157,18 @@ public class MeController : ControllerBase
         await _auth.UpdateNotificationsAsync(User.UserId(), req, ct);
         return NoContent();
     }
+
+    [HttpGet("me/notifications")]
+    public async Task<IActionResult> MyNotifications(CancellationToken ct)
+        => Ok(new ApiEnvelope<List<NotificationDto>>(
+            await _auth.NotificationsAsync(User.UserId(), ct)));
+
+    [HttpPut("me/password")]
+    public async Task<IActionResult> Password(ChangePasswordRequest req, CancellationToken ct)
+    {
+        await _auth.ChangePasswordAsync(User.UserId(), req, ct);
+        return NoContent();
+    }
 }
 
 [ApiController]

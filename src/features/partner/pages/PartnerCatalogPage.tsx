@@ -15,6 +15,8 @@ import {
 } from '@shared/api/endpoints';
 import { resolveImageUrl } from '@shared/api/client';
 import { useAuth } from '@shared/hooks/useAuth';
+import { useToast } from '@shared/components/Toaster/ToastContext';
+import { formatMoneyInput, parseMoneyInput } from '@shared/utils/masks';
 import { Product } from '@shared/types';
 import './PartnerPages.css';
 
@@ -31,6 +33,7 @@ const EMPTY: ProductUpsert = {
 
 export function PartnerCatalogPage() {
   const qc = useQueryClient();
+  const toast = useToast();
   const productsQuery = useQuery({
     queryKey: ['partner-products'],
     queryFn: () => partnerApi.products(),
@@ -91,7 +94,10 @@ export function PartnerCatalogPage() {
     onSuccess: () => {
       invalidate();
       setForm(null);
+      toast.success('Produto criado.');
     },
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : 'Falha ao criar produto.'),
   });
   const updateMut = useMutation({
     mutationFn: ({ id, body }: { id: string; body: ProductUpsert }) =>
@@ -100,11 +106,19 @@ export function PartnerCatalogPage() {
       invalidate();
       setForm(null);
       setEditing(null);
+      toast.success('Produto salvo.');
     },
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : 'Falha ao salvar produto.'),
   });
   const deleteMut = useMutation({
     mutationFn: (id: string) => partnerApi.deleteProduct(id),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      toast.success('Produto removido.');
+    },
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : 'Falha ao remover produto.'),
   });
 
   const openCreate = () => {
@@ -174,9 +188,10 @@ export function PartnerCatalogPage() {
             <div className="row">
               <Input
                 label="Preço (R$)"
-                type="number"
-                value={String(form.price)}
-                onChange={(e) => set('price', Number(e.target.value))}
+                inputMode="decimal"
+                value={formatMoneyInput(form.price)}
+                onChange={(e) => set('price', parseMoneyInput(e.target.value))}
+                error={form.price <= 0 ? 'Informe um preço maior que zero.' : undefined}
               />
               <Input
                 label="Cashback (%)"

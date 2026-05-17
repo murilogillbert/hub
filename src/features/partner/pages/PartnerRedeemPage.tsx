@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { useAuth } from '@shared/hooks/useAuth';
 import { QrScanner } from '@shared/components/QrScanner/QrScanner';
+import { useToast } from '@shared/components/Toaster/ToastContext';
 import { formatCurrency } from '@shared/utils/formatters';
 import { partnerApi, RedeemResult } from '@shared/api/endpoints';
 import './PartnerRedeemPage.css';
@@ -9,6 +10,7 @@ type Screen = 'home' | 'scan' | 'manual' | 'result';
 
 export function PartnerRedeemPage() {
   const { user } = useAuth();
+  const toast = useToast();
 
   const [screen, setScreen] = useState<Screen>('home');
   const [codeInput, setCodeInput] = useState('');
@@ -35,6 +37,7 @@ export function PartnerRedeemPage() {
     try {
       const result = await partnerApi.redeem(rawCode, false);
       setSummary(result);
+      toast.success('Voucher validado.');
     } catch (err) {
       setError(
         err instanceof Error
@@ -52,6 +55,7 @@ export function PartnerRedeemPage() {
     try {
       await partnerApi.redeem(codeInput || '', true);
       setRedeemed(true);
+      toast.success('Resgate confirmado.');
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Falha ao confirmar o resgate.',

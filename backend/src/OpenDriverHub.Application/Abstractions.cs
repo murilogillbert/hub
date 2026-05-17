@@ -47,6 +47,8 @@ public interface IAuthService
     Task<UserDto> MeAsync(Guid userId, CancellationToken ct);
     Task<UserDto> UpdateProfileAsync(Guid userId, UpdateProfileRequest req, CancellationToken ct);
     Task UpdateNotificationsAsync(Guid userId, UpdateNotificationsRequest req, CancellationToken ct);
+    Task ChangePasswordAsync(Guid userId, ChangePasswordRequest req, CancellationToken ct);
+    Task<List<NotificationDto>> NotificationsAsync(Guid userId, CancellationToken ct);
 }
 
 public interface ICatalogService

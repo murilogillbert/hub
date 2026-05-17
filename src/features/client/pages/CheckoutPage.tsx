@@ -7,6 +7,7 @@ import { QrCode } from '@shared/components/QrCode/QrCode';
 import { QueryState } from '@shared/components/QueryState/QueryState';
 import { resolveImageUrl } from '@shared/api/client';
 import { useAuth } from '@shared/hooks/useAuth';
+import { useToast } from '@shared/components/Toaster/ToastContext';
 import { formatCurrency, formatPercent } from '@shared/utils/formatters';
 import {
   catalogApi,
@@ -38,6 +39,7 @@ export function CheckoutPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const toast = useToast();
 
   const productQuery = useQuery({
     queryKey: ['product', id],
@@ -83,24 +85,26 @@ export function CheckoutPage() {
   const total = Math.max(0, product.price - cashbackApplied);
 
   const goToConfirmation = (snap: PaymentSnapshot) => {
-    navigate('/compra/confirmacao', {
-      state: {
-        code: snap.voucherCode ?? snap.paymentReference ?? orderIdRef.current,
-        productTitle: product.title,
-        price: product.price,
-        cashback,
-      },
-    });
+    const orderId = snap.orderId ?? orderIdRef.current;
+    if (orderId) navigate(`/compra/confirmacao/${orderId}`, { replace: true });
   };
 
   const startPixPolling = (orderId: string) => {
     pollRef.current = window.setInterval(async () => {
-      const snap = await paymentsApi.status(orderId);
-      setSnapshot(snap);
-      if (snap.paymentStatus === 'approved') {
-        if (pollRef.current) window.clearInterval(pollRef.current);
-        setPhase('approved');
-        window.setTimeout(() => goToConfirmation(snap), 1200);
+      try {
+        const snap = await paymentsApi.status(orderId);
+        setSnapshot(snap);
+        if (snap.paymentStatus === 'approved') {
+          if (pollRef.current) window.clearInterval(pollRef.current);
+          setPhase('approved');
+          toast.success('Pagamento aprovado.');
+          window.setTimeout(() => goToConfirmation(snap), 1200);
+        }
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : 'Falha ao atualizar pagamento.';
+        setError(message);
+        toast.error(message);
       }
     }, 2500);
   };
@@ -133,6 +137,7 @@ export function CheckoutPage() {
       setSnapshot(snap);
       if (snap.paymentStatus === 'approved') {
         setPhase('approved');
+        toast.success('Pagamento aprovado.');
         window.setTimeout(() => goToConfirmation(snap), 1000);
       } else {
         setPhase('error');
@@ -140,7 +145,9 @@ export function CheckoutPage() {
       }
     } catch (err) {
       setPhase('error');
-      setError(err instanceof Error ? err.message : 'Falha no pagamento.');
+      const message = err instanceof Error ? err.message : 'Falha no pagamento.';
+      setError(message);
+      toast.error(message);
     }
   };
 

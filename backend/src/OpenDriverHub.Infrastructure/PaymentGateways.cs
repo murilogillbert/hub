@@ -1,4 +1,6 @@
 using System.Security.Cryptography;
+using System.Net.Http.Json;
+using System.Text.Json;
 using OpenDriverHub.Application;
 using OpenDriverHub.Domain;
 
@@ -59,28 +61,131 @@ public class MockPaymentGateway : IPaymentGateway
     }
 }
 
-/// <summary>Mercado Pago sandbox — ativado por Payment:Provider=mercadopago.
-/// O access token é resolvido em runtime via ISettingsProvider (banco
-/// sobrepõe .env). Sem token configurado, recusa o pagamento.
-/// A chamada HTTP real fica como TODO de produção.</summary>
+/// <summary>Mercado Pago REAL (api.mercadopago.com). Access token resolvido em
+/// runtime via ISettingsProvider (banco sobrepõe .env). PIX cria cobrança e
+/// retorna QR/copia-e-cola; cartão usa token gerado no front (SDK MP.js).</summary>
 public class MercadoPagoGateway : IPaymentGateway
 {
-    private readonly MockPaymentGateway _fallback = new();
     private readonly ISettingsProvider _settings;
+    private readonly IHttpClientFactory _http;
     public string Provider => "mercadopago";
 
-    public MercadoPagoGateway(ISettingsProvider settings) => _settings = settings;
+    public MercadoPagoGateway(ISettingsProvider settings, IHttpClientFactory http)
+    {
+        _settings = settings; _http = http;
+    }
 
-    public async Task<PaymentStatusSnapshot> ProcessAsync(Order order, decimal amount, PaymentMethod method, CardInput? card, CancellationToken ct)
+    private async Task<HttpClient> ClientAsync(CancellationToken ct)
     {
         var token = await _settings.GetAsync("MercadoPago:AccessToken", ct);
         if (string.IsNullOrWhiteSpace(token))
             throw new AppException(
                 "Mercado Pago não configurado. Defina o Access Token em Admin → Integrações.",
                 503);
-        return await _fallback.ProcessAsync(order, amount, method, card, ct);
+        var c = _http.CreateClient();
+        c.BaseAddress = new Uri("https://api.mercadopago.com/");
+        c.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        return c;
     }
 
-    public Task<PaymentStatusSnapshot?> SyncAsync(Order order, CancellationToken ct)
-        => _fallback.SyncAsync(order, ct);
+    private static string MapStatus(string? s) => s switch
+    {
+        "approved" => "approved",
+        "rejected" or "cancelled" => "rejected",
+        "refunded" or "charged_back" => "rejected",
+        _ => "pending",
+    };
+
+    public async Task<PaymentStatusSnapshot> ProcessAsync(
+        Order order, decimal amount, PaymentMethod method, CardInput? card,
+        CancellationToken ct)
+    {
+        var client = await ClientAsync(ct);
+        var reference = PaymentCodes.Reference(order.Id);
+        var payerEmail = order.Customer?.Email ?? "comprador@opendriverhub.com";
+
+        object body;
+        if (method == PaymentMethod.Pix)
+        {
+            body = new
+            {
+                transaction_amount = decimal.Round(amount, 2),
+                description = order.Product?.Title ?? $"Pedido {order.Code}",
+                payment_method_id = "pix",
+                external_reference = reference,
+                payer = new { email = payerEmail },
+            };
+        }
+        else
+        {
+            if (card is null || string.IsNullOrWhiteSpace(card.Token))
+                throw new AppException(
+                    "Pagamento com cartão requer o token do cartão (SDK Mercado Pago).",
+                    400);
+            body = new
+            {
+                transaction_amount = decimal.Round(amount, 2),
+                token = card.Token,
+                description = order.Product?.Title ?? $"Pedido {order.Code}",
+                installments = card.Installments ?? 1,
+                payment_method_id = card.PaymentMethodId,
+                external_reference = reference,
+                payer = new { email = payerEmail },
+            };
+        }
+
+        using var req = new HttpRequestMessage(HttpMethod.Post, "v1/payments");
+        req.Headers.Add("X-Idempotency-Key", Guid.NewGuid().ToString());
+        req.Content = JsonContent.Create(body);
+        using var resp = await client.SendAsync(req, ct);
+        using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync(ct));
+        var root = doc.RootElement;
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            var msg = root.TryGetProperty("message", out var m)
+                ? m.GetString() : "Falha no Mercado Pago.";
+            throw new AppException($"Mercado Pago: {msg}", 502);
+        }
+
+        var paymentId = root.GetProperty("id").ToString();
+        var status = MapStatus(root.TryGetProperty("status", out var st) ? st.GetString() : null);
+        var detail = root.TryGetProperty("status_detail", out var sd) ? sd.GetString() : null;
+
+        PixPayload? pix = null;
+        if (method == PaymentMethod.Pix &&
+            root.TryGetProperty("point_of_interaction", out var poi) &&
+            poi.TryGetProperty("transaction_data", out var td))
+        {
+            var qr = td.TryGetProperty("qr_code", out var q) ? q.GetString() ?? "" : "";
+            var ticket = td.TryGetProperty("ticket_url", out var tu) ? tu.GetString() ?? "" : "";
+            pix = new PixPayload(qr, qr, ticket, DateTime.UtcNow.AddMinutes(30));
+        }
+
+        var voucher = status == "approved" ? PaymentCodes.Voucher() : null;
+        return new PaymentStatusSnapshot(
+            order.Id, paymentId, reference, status, detail, voucher,
+            order.Status.ToString(), pix);
+    }
+
+    public async Task<PaymentStatusSnapshot?> SyncAsync(Order order, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(order.ExternalPaymentId)
+            || order.Status != OrderStatus.PendingPayment)
+            return null;
+
+        var client = await ClientAsync(ct);
+        using var resp = await client.GetAsync($"v1/payments/{order.ExternalPaymentId}", ct);
+        if (!resp.IsSuccessStatusCode) return null;
+        using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync(ct));
+        var status = MapStatus(
+            doc.RootElement.TryGetProperty("status", out var st) ? st.GetString() : null);
+        if (status != "approved") return null;
+
+        return new PaymentStatusSnapshot(
+            order.Id, order.ExternalPaymentId, order.PaymentReference,
+            "approved", "accredited", order.VoucherCode ?? PaymentCodes.Voucher(),
+            OrderStatus.Paid.ToString(), null);
+    }
 }

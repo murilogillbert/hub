@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '@shared/hooks/useAuth';
 import { formatCurrency } from '@shared/utils/formatters';
 import { FloatingAssistant } from '@features/assistant/components/FloatingAssistant';
+import { NotificationsBell } from '@shared/components/NotificationsBell/NotificationsBell';
 import './Layouts.css';
 
 interface ClientLayoutProps {
@@ -55,6 +56,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
                 <span className="badge badge-accent">
                   Cashback: {formatCurrency(user.cashbackBalance)}
                 </span>
+                <NotificationsBell />
                 <Link to="/conta/perfil" className="layout-client__avatar">
                   <img src={user.avatarUrl} alt={user.name} />
                 </Link>

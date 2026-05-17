@@ -5,6 +5,8 @@ import { Button } from '@shared/components/Button/Button';
 import { Input } from '@shared/components/Input/Input';
 import { QueryState } from '@shared/components/QueryState/QueryState';
 import { formatPercent } from '@shared/utils/formatters';
+import { useToast } from '@shared/components/Toaster/ToastContext';
+import { coordinateError, isValidCnpj, maskCnpj, maskCoordinate } from '@shared/utils/masks';
 import { adminApi, catalogApi } from '@shared/api/endpoints';
 import { Partner } from '@shared/types';
 import './AdminPages.css';
@@ -36,6 +38,7 @@ const EMPTY: PartnerForm = {
 
 export function AdminPartnersPage() {
   const qc = useQueryClient();
+  const toast = useToast();
   const partnersQuery = useQuery({
     queryKey: ['admin-partners'],
     queryFn: () => adminApi.partners(),
@@ -57,12 +60,22 @@ export function AdminPartnersPage() {
   };
   const createMut = useMutation({
     mutationFn: (b: PartnerForm) => adminApi.createPartner(b),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      toast.success('Parceiro criado.');
+    },
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : 'Falha ao criar parceiro.'),
   });
   const updateMut = useMutation({
     mutationFn: ({ id, b }: { id: string; b: PartnerForm }) =>
       adminApi.updatePartner(id, b),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      toast.success('Parceiro salvo.');
+    },
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : 'Falha ao salvar parceiro.'),
   });
   const toggleMut = useMutation({
     mutationFn: (p: Partner) =>
@@ -99,6 +112,14 @@ export function AdminPartnersPage() {
 
   const submit = () => {
     if (!form) return;
+    if (
+      (form.cnpj && !isValidCnpj(form.cnpj)) ||
+      coordinateError(String(form.lat), 'lat') ||
+      coordinateError(String(form.lng), 'lng')
+    ) {
+      toast.error('Revise os campos destacados antes de salvar.');
+      return;
+    }
     if (editing) updateMut.mutate({ id: editing.id, b: form });
     else createMut.mutate(form);
   };
@@ -162,8 +183,9 @@ export function AdminPartnersPage() {
             <Input
               label="CNPJ"
               value={form.cnpj}
-              onChange={(e) => set('cnpj', e.target.value)}
+              onChange={(e) => set('cnpj', maskCnpj(e.target.value))}
               placeholder="00.000.000/0000-00"
+              error={form.cnpj && !isValidCnpj(form.cnpj) ? 'CNPJ incompleto.' : undefined}
             />
             <div className="row">
               <Input
@@ -181,15 +203,17 @@ export function AdminPartnersPage() {
             <div className="row">
               <Input
                 label="Latitude"
-                type="number"
+                inputMode="decimal"
                 value={String(form.lat)}
-                onChange={(e) => set('lat', Number(e.target.value))}
+                onChange={(e) => set('lat', Number(maskCoordinate(e.target.value)))}
+                error={coordinateError(String(form.lat), 'lat')}
               />
               <Input
                 label="Longitude"
-                type="number"
+                inputMode="decimal"
                 value={String(form.lng)}
-                onChange={(e) => set('lng', Number(e.target.value))}
+                onChange={(e) => set('lng', Number(maskCoordinate(e.target.value)))}
+                error={coordinateError(String(form.lng), 'lng')}
               />
             </div>
             <Input

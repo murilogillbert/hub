@@ -1,26 +1,27 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@shared/components/Button/Button';
 import { QrCode } from '@shared/components/QrCode/QrCode';
+import { QueryState } from '@shared/components/QueryState/QueryState';
+import { ordersApi } from '@shared/api/endpoints';
 import { formatCode, formatCurrency } from '@shared/utils/formatters';
 import './PurchaseConfirmationPage.css';
 
-interface ConfirmationState {
-  code: string;
-  productTitle: string;
-  price: number;
-  cashback: number;
-}
-
 export function PurchaseConfirmationPage() {
-  const location = useLocation();
   const navigate = useNavigate();
-  const state = location.state as ConfirmationState | null;
+  const { id } = useParams<{ id: string }>();
+  const orderQuery = useQuery({
+    queryKey: ['my-order', id],
+    queryFn: () => ordersApi.myOrder(id!),
+    enabled: !!id,
+  });
+  const order = orderQuery.data;
 
-  if (!state) {
+  if (!id) {
     return (
       <div className="confirmation confirmation--empty">
         <h2>Nenhuma compra recente</h2>
-        <p className="text-muted">Você pode acessar seus vouchers em "Meus itens".</p>
+        <p className="text-muted">Voce pode acessar seus vouchers em "Meus itens".</p>
         <Link to="/conta/itens">
           <Button>Ir para meus itens</Button>
         </Link>
@@ -28,27 +29,40 @@ export function PurchaseConfirmationPage() {
     );
   }
 
+  if (orderQuery.isLoading || orderQuery.error || !order) {
+    return (
+      <QueryState
+        loading={orderQuery.isLoading}
+        error={orderQuery.error}
+        empty={!order && !orderQuery.isLoading}
+        emptyLabel="Pedido nao encontrado."
+      >
+        <div />
+      </QueryState>
+    );
+  }
+
   return (
     <div className="confirmation">
-      <span className="confirmation__success">✓ Pagamento aprovado</span>
-      <h1>Seu voucher está pronto 🎉</h1>
+      <span className="confirmation__success">Pagamento aprovado</span>
+      <h1>Seu voucher esta pronto</h1>
       <p className="text-muted">
         Apresente o QR code abaixo no parceiro para resgatar seu produto. O
-        cashback de <strong>{formatCurrency(state.cashback)}</strong> já foi
-        creditado na sua conta e pode ser usado na próxima compra.
+        cashback de <strong>{formatCurrency(order.cashbackEarned)}</strong> ja foi
+        creditado na sua conta e pode ser usado na proxima compra.
       </p>
 
       <div className="confirmation__voucher">
         <div className="confirmation__voucher-info">
           <small className="text-soft">Produto</small>
-          <h3>{state.productTitle}</h3>
+          <h3>{order.productTitle}</h3>
           <small className="text-soft">Valor pago</small>
-          <strong>{formatCurrency(state.price)}</strong>
-          <small className="text-soft">Código do voucher</small>
-          <code className="confirmation__code">{formatCode(state.code)}</code>
+          <strong>{formatCurrency(order.paidPrice)}</strong>
+          <small className="text-soft">Codigo do voucher</small>
+          <code className="confirmation__code">{formatCode(order.code)}</code>
         </div>
         <div className="confirmation__voucher-qr">
-          <QrCode value={state.code} size={200} label={formatCode(state.code)} />
+          <QrCode value={order.code} size={200} label={formatCode(order.code)} />
         </div>
       </div>
 

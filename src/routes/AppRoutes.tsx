@@ -79,10 +79,7 @@ export function AppRoutes() {
         {/* Compra exige login — sem sessão, vai para /login e volta */}
         <Route element={<RequireRole roles={['client', 'admin']} />}>
           <Route path="/checkout/:id" element={<CheckoutPage />} />
-          <Route
-            path="/compra/confirmacao"
-            element={<PurchaseConfirmationPage />}
-          />
+          <Route path="/compra/confirmacao/:id" element={<PurchaseConfirmationPage />} />
           <Route path="/conta/itens" element={<MyItemsPage />} />
           <Route path="/conta/historico" element={<HistoryPage />} />
           <Route path="/conta/perfil" element={<ProfilePage />} />

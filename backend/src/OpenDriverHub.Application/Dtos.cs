@@ -68,8 +68,12 @@ public record OrderDto(
     decimal CashbackEarned, decimal CashbackUsed, string Status,
     DateTime CreatedAt, DateTime? RedeemedAt);
 public record ProcessPaymentRequest(Guid OrderId, string Method, CardInput? Card);
-public record CardInput(string Number, string Holder, string Expiry, string Cvv);
+public record CardInput(
+    string Number, string Holder, string Expiry, string Cvv,
+    // Fluxo real Mercado Pago: token gerado no front via SDK (PCI-safe).
+    string? Token = null, string? PaymentMethodId = null, int? Installments = null);
 public record PixPayload(string QrCode, string CopiaECola, string TicketUrl, DateTime ExpiresAt);
+public record PaymentConfigDto(string Provider, string PublicKey);
 public record PaymentStatusSnapshot(
     Guid OrderId, string? PaymentId, string? PaymentReference, string PaymentStatus,
     string? StatusDetail, string? VoucherCode, string OrderStatus, PixPayload? Pix);
@@ -97,6 +101,10 @@ public record AssistantChatResponse(string Reply, bool Fallback);
 // ---------- Profile ----------
 public record UpdateProfileRequest(string Name, string Email, string? Phone);
 public record UpdateNotificationsRequest(bool WhatsApp, bool Email, bool Promo);
+public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
+public record NotificationDto(
+    Guid Id, string Title, string Message, string Channel,
+    bool Read, DateTime CreatedAt);
 
 // ---------- Integration settings ----------
 public record IntegrationFieldDto(

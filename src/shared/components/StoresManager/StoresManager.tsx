@@ -6,6 +6,8 @@ import { Input } from '@shared/components/Input/Input';
 import { QueryState } from '@shared/components/QueryState/QueryState';
 import { StoreMap } from '@shared/components/StoreMap/StoreMap';
 import { adminApi, catalogApi, partnerApi, StoreUpsert } from '@shared/api/endpoints';
+import { useToast } from '@shared/components/Toaster/ToastContext';
+import { coordinateError, maskCoordinate } from '@shared/utils/masks';
 import { Partner, PartnerStore } from '@shared/types';
 import './StoresManager.css';
 
@@ -54,6 +56,7 @@ function toForm(store: PartnerStore): StoreForm {
 
 export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
   const qc = useQueryClient();
+  const toast = useToast();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<PartnerStore | null>(null);
   const [form, setForm] = useState<StoreForm>({ ...EMPTY });
@@ -79,6 +82,8 @@ export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
 
   const stores = storesQuery.data ?? [];
   const categories = categoriesQuery.data ?? [];
+  const latError = coordinateError(form.lat, 'lat', formOpen);
+  const lngError = coordinateError(form.lng, 'lng', formOpen);
 
   const mapStores = useMemo(() => {
     const lat = Number(form.lat);
@@ -100,7 +105,7 @@ export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
     return preview.length ? preview : stores;
   }, [editing?.id, editing?.partnerId, form, stores]);
 
-  const invalidate = () => {
+  const invalidate = (message?: string) => {
     qc.invalidateQueries({ queryKey });
     qc.invalidateQueries({ queryKey: ['stores'] });
     qc.invalidateQueries({ queryKey: ['catalog-filters'] });
@@ -108,28 +113,37 @@ export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
     setFormOpen(false);
     setForm({ ...EMPTY });
     setMessage(null);
+    if (message) toast.success(message);
   };
 
   const createMut = useMutation({
     mutationFn: (body: StoreUpsert) =>
       isAdmin ? adminApi.createStore(body) : partnerApi.createStore(body),
-    onSuccess: invalidate,
-    onError: (e) =>
-      setMessage(e instanceof Error ? e.message : 'Falha ao salvar unidade.'),
+    onSuccess: () => invalidate('Unidade cadastrada.'),
+    onError: (e) => {
+      const message = e instanceof Error ? e.message : 'Falha ao salvar unidade.';
+      setMessage(message);
+      toast.error(message);
+    },
   });
   const updateMut = useMutation({
     mutationFn: ({ id, body }: { id: string; body: StoreUpsert }) =>
       isAdmin
         ? adminApi.updateStore(id, body)
         : partnerApi.updateStore(id, body),
-    onSuccess: invalidate,
-    onError: (e) =>
-      setMessage(e instanceof Error ? e.message : 'Falha ao salvar unidade.'),
+    onSuccess: () => invalidate('Unidade salva.'),
+    onError: (e) => {
+      const message = e instanceof Error ? e.message : 'Falha ao salvar unidade.';
+      setMessage(message);
+      toast.error(message);
+    },
   });
   const deleteMut = useMutation({
     mutationFn: (id: string) =>
       isAdmin ? adminApi.deleteStore(id) : partnerApi.deleteStore(id),
-    onSuccess: invalidate,
+    onSuccess: () => invalidate('Unidade removida.'),
+    onError: (e) =>
+      toast.error(e instanceof Error ? e.message : 'Falha ao remover unidade.'),
   });
 
   const set = <K extends keyof StoreForm>(key: K, value: StoreForm[K]) =>
@@ -155,6 +169,7 @@ export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     setMessage(null);
+    if (latError || lngError) return;
     const body: StoreUpsert = {
       partnerId: isAdmin ? form.partnerId : undefined,
       name: form.name.trim(),
@@ -350,7 +365,8 @@ export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
                 type="number"
                 step="0.000001"
                 value={form.lat}
-                onChange={(e) => set('lat', e.target.value)}
+                onChange={(e) => set('lat', maskCoordinate(e.target.value))}
+                error={latError}
                 required
               />
               <Input
@@ -358,7 +374,8 @@ export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
                 type="number"
                 step="0.000001"
                 value={form.lng}
-                onChange={(e) => set('lng', e.target.value)}
+                onChange={(e) => set('lng', maskCoordinate(e.target.value))}
+                error={lngError}
                 required
               />
             </div>

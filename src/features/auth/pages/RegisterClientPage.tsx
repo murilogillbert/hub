@@ -4,6 +4,7 @@ import { Button } from '@shared/components/Button/Button';
 import { Input } from '@shared/components/Input/Input';
 import { useAuth } from '@shared/hooks/useAuth';
 import { routeForRole } from '@shared/context/AuthContext';
+import { isValidCpf, maskCpf } from '@shared/utils/masks';
 import './AuthPages.css';
 
 export function RegisterClientPage() {
@@ -25,6 +26,10 @@ export function RegisterClientPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (form.cpf && !isValidCpf(form.cpf)) {
+      setError('CPF incompleto.');
+      return;
+    }
     setError(null);
     setBusy(true);
     try {
@@ -71,8 +76,11 @@ export function RegisterClientPage() {
           <Input
             label="CPF"
             value={form.cpf}
-            onChange={update('cpf')}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, cpf: maskCpf(e.target.value) }))
+            }
             placeholder="000.000.000-00"
+            error={form.cpf && !isValidCpf(form.cpf) ? 'CPF incompleto.' : undefined}
           />
           <Input
             label="Senha"

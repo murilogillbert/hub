@@ -5,6 +5,8 @@ import { Input } from '@shared/components/Input/Input';
 import { Button } from '@shared/components/Button/Button';
 import { QueryState } from '@shared/components/QueryState/QueryState';
 import { formatCurrency } from '@shared/utils/formatters';
+import { useToast } from '@shared/components/Toaster/ToastContext';
+import { coordinateError, formatMoneyInput, isValidCnpj, isValidPhone, maskCnpj, maskCoordinate, maskPhone, parseMoneyInput } from '@shared/utils/masks';
 import { adminApi } from '@shared/api/endpoints';
 import { User, Partner } from '@shared/types';
 import './AdminPages.css';
@@ -29,6 +31,7 @@ interface EditState {
 
 export function AdminUsersPage() {
   const qc = useQueryClient();
+  const toast = useToast();
   const [query, setQuery] = useState('');
   const [edit, setEdit] = useState<EditState | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -78,9 +81,13 @@ export function AdminUsersPage() {
       qc.invalidateQueries({ queryKey: ['admin-partners'] });
       setEdit(null);
       setError(null);
+      toast.success('Usuário salvo.');
     },
-    onError: (err) =>
-      setError(err instanceof Error ? err.message : 'Falha ao salvar.'),
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : 'Falha ao salvar.';
+      setError(message);
+      toast.error(message);
+    },
   });
 
   const openEdit = (u: User) => {
@@ -109,6 +116,14 @@ export function AdminUsersPage() {
 
   const submit = (ev: FormEvent) => {
     ev.preventDefault();
+    if (edit?.phone && !isValidPhone(edit.phone)) {
+      setError('Telefone incompleto.');
+      return;
+    }
+    if (edit?.pCnpj && !isValidCnpj(edit.pCnpj)) {
+      setError('CNPJ incompleto.');
+      return;
+    }
     if (edit) save.mutate(edit);
   };
 
@@ -229,7 +244,8 @@ export function AdminUsersPage() {
               <Input
                 label="Telefone"
                 value={edit.phone}
-                onChange={(e) => set('phone', e.target.value)}
+                onChange={(e) => set('phone', maskPhone(e.target.value))}
+                error={edit.phone && !isValidPhone(edit.phone) ? 'Telefone incompleto.' : undefined}
               />
               <div className="row">
                 <div className="input-field">
@@ -248,10 +264,10 @@ export function AdminUsersPage() {
                 </div>
                 <Input
                   label="Saldo cashback (R$)"
-                  type="number"
-                  value={String(edit.cashbackBalance)}
+                  inputMode="decimal"
+                  value={formatMoneyInput(edit.cashbackBalance)}
                   onChange={(e) =>
-                    set('cashbackBalance', Number(e.target.value))
+                    set('cashbackBalance', parseMoneyInput(e.target.value))
                   }
                 />
               </div>
@@ -284,8 +300,9 @@ export function AdminUsersPage() {
                   <Input
                     label="CNPJ"
                     value={edit.pCnpj}
-                    onChange={(e) => set('pCnpj', e.target.value)}
+                    onChange={(e) => set('pCnpj', maskCnpj(e.target.value))}
                     placeholder="00.000.000/0000-00"
+                    error={edit.pCnpj && !isValidCnpj(edit.pCnpj) ? 'CNPJ incompleto.' : undefined}
                   />
                   <div className="row">
                     <Input
@@ -302,15 +319,17 @@ export function AdminUsersPage() {
                   <div className="row">
                     <Input
                       label="Latitude"
-                      type="number"
+                      inputMode="decimal"
                       value={String(edit.pLat)}
-                      onChange={(e) => set('pLat', Number(e.target.value))}
+                      onChange={(e) => set('pLat', Number(maskCoordinate(e.target.value)))}
+                      error={coordinateError(String(edit.pLat), 'lat')}
                     />
                     <Input
                       label="Longitude"
-                      type="number"
+                      inputMode="decimal"
                       value={String(edit.pLng)}
-                      onChange={(e) => set('pLng', Number(e.target.value))}
+                      onChange={(e) => set('pLng', Number(maskCoordinate(e.target.value)))}
+                      error={coordinateError(String(edit.pLng), 'lng')}
                     />
                   </div>
                 </>

@@ -123,6 +123,27 @@ public class AuthService : IAuthService
         await _db.SaveChangesAsync(ct);
     }
 
+    public async Task ChangePasswordAsync(Guid userId, ChangePasswordRequest req, CancellationToken ct)
+    {
+        var user = await _db.Users.FindAsync([userId], ct)
+            ?? throw new AppException("Usuario nao encontrado.", 404);
+        if (!_hasher.Verify(req.CurrentPassword, user.PasswordHash))
+            throw new AppException("Senha atual incorreta.", 400);
+        if (string.IsNullOrWhiteSpace(req.NewPassword) || req.NewPassword.Length < 6)
+            throw new AppException("A nova senha deve ter pelo menos 6 caracteres.", 400);
+        user.PasswordHash = _hasher.Hash(req.NewPassword);
+        await _db.SaveChangesAsync(ct);
+    }
+
+    public async Task<List<NotificationDto>> NotificationsAsync(Guid userId, CancellationToken ct)
+        => (await _db.Notifications
+                .Where(n => n.UserId == userId)
+                .OrderByDescending(n => n.CreatedAt)
+                .Take(20)
+                .ToListAsync(ct))
+            .Select(n => n.ToDto())
+            .ToList();
+
     private AuthResponse Build(User user)
     {
         var (token, refresh) = _jwt.Issue(user);

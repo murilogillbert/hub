@@ -84,6 +84,15 @@ export interface Order {
   redeemedAt?: string;
 }
 
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  channel: string;
+  read: boolean;
+  createdAt: string;
+}
+
 export type PaymentMethod = 'pix' | 'credit' | 'debit';
 
 export interface SalesByHour {

@@ -29,6 +29,9 @@ public static class Mappings
     public static CategoryDto ToDto(this Category c) =>
         new(c.Id, c.Name, c.Type.ToString().ToLowerInvariant(), c.Active);
 
+    public static NotificationDto ToDto(this Notification n) => new(
+        n.Id, n.Title, n.Message, n.Channel, n.ReadAt is not null, n.CreatedAt);
+
     public static CategoryType ParseCategoryType(string? s) =>
         string.Equals(s, "store", StringComparison.OrdinalIgnoreCase)
             ? CategoryType.Store

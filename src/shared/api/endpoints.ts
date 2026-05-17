@@ -6,6 +6,7 @@ import {
   Order,
   User,
   Category,
+  AppNotification,
 } from '@shared/types';
 
 export interface CatalogQuery {
@@ -133,6 +134,9 @@ export const authApi = {
     email: boolean;
     promo: boolean;
   }) => api.put<void>('/me/notifications', body),
+  notifications: () => api.get<AppNotification[]>('/me/notifications'),
+  changePassword: (body: { currentPassword: string; newPassword: string }) =>
+    api.put<void>('/me/password', body),
 };
 
 // ---- Catalog ----
