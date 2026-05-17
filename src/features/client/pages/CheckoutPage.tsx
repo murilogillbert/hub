@@ -34,6 +34,7 @@ const METHODS: { id: Method; label: string; description: string }[] = [
 ];
 
 type Phase = 'form' | 'pix_waiting' | 'processing' | 'approved' | 'error';
+const PIX_MIN_VISIBLE_MS = 5 * 60 * 1000;
 
 export function CheckoutPage() {
   const { id } = useParams<{ id: string }>();
@@ -53,6 +54,7 @@ export function CheckoutPage() {
   const [card, setCard] = useState({ number: '', holder: '', expiry: '', cvv: '' });
   const [phase, setPhase] = useState<Phase>('form');
   const [snapshot, setSnapshot] = useState<PaymentSnapshot | null>(null);
+  const [pixVisibleUntil, setPixVisibleUntil] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const orderIdRef = useRef<string | null>(null);
   const pollRef = useRef<number | null>(null);
@@ -89,11 +91,19 @@ export function CheckoutPage() {
     if (orderId) navigate(`/compra/confirmacao/${orderId}`, { replace: true });
   };
 
+  const keepPixPayload = (snap: PaymentSnapshot) => {
+    setSnapshot((current) => ({
+      ...snap,
+      pix: snap.pix ?? current?.pix ?? null,
+    }));
+  };
+
   const startPixPolling = (orderId: string) => {
+    if (pollRef.current) window.clearInterval(pollRef.current);
     pollRef.current = window.setInterval(async () => {
       try {
         const snap = await paymentsApi.status(orderId);
-        setSnapshot(snap);
+        keepPixPayload(snap);
         if (snap.paymentStatus === 'approved') {
           if (pollRef.current) window.clearInterval(pollRef.current);
           setPhase('approved');
@@ -122,7 +132,13 @@ export function CheckoutPage() {
           method: 'pix',
           card: null,
         });
-        setSnapshot(snap);
+        keepPixPayload(snap);
+        const gatewayExpiry = snap.pix?.expiresAt
+          ? new Date(snap.pix.expiresAt).getTime()
+          : 0;
+        setPixVisibleUntil(
+          new Date(Math.max(Date.now() + PIX_MIN_VISIBLE_MS, gatewayExpiry)),
+        );
         setPhase('pix_waiting');
         startPixPolling(order.id);
         return;
@@ -246,9 +262,17 @@ export function CheckoutPage() {
             <div>
               <strong>Escaneie o QR ou copie o código Pix</strong>
               <p className="text-muted">
-                Aguardando confirmação... A tela atualiza sozinha quando o
-                pagamento cair (~8s, reconciliação do servidor).
+                Aguardando confirmação. O QR Code permanece disponível por
+                pelo menos 5 minutos nesta tela.
               </p>
+              {pixVisibleUntil && (
+                <small className="text-soft">
+                  Visível até {pixVisibleUntil.toLocaleTimeString('pt-BR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </small>
+              )}
               <code className="checkout__pix-code">
                 {snapshot.pix.copiaECola}
               </code>

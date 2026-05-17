@@ -13,7 +13,7 @@ public static class PaymentCodes
     public static string Voucher() => $"OD-{Hex(4)}";
 }
 
-/// <summary>Gateway local (default). PIX confirma sozinho via reconciliação (~8s).</summary>
+/// <summary>Gateway local (default). PIX confirma sozinho após a janela mínima de exibição.</summary>
 public class MockPaymentGateway : IPaymentGateway
 {
     public string Provider => "mock";
@@ -47,10 +47,10 @@ public class MockPaymentGateway : IPaymentGateway
 
     public Task<PaymentStatusSnapshot?> SyncAsync(Order order, CancellationToken ct)
     {
-        // PIX pendente confirma após 8s da criação (simula webhook do banco).
+        // PIX pendente confirma após 5 minutos para manter o QR disponível no checkout.
         if (order.PaymentMethod == PaymentMethod.Pix
             && order.Status == OrderStatus.PendingPayment
-            && DateTime.UtcNow - order.CreatedAt > TimeSpan.FromSeconds(8))
+            && DateTime.UtcNow - order.CreatedAt > TimeSpan.FromMinutes(5))
         {
             return Task.FromResult<PaymentStatusSnapshot?>(new PaymentStatusSnapshot(
                 order.Id, order.ExternalPaymentId, order.PaymentReference,
