@@ -4,6 +4,19 @@ import path from 'node:path';
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          query: ['@tanstack/react-query'],
+          maps: ['leaflet', 'react-leaflet'],
+          scanner: ['html5-qrcode'],
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       '@shared': path.resolve(__dirname, 'src/shared'),
