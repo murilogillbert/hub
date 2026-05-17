@@ -8,6 +8,9 @@ import {
   Category,
   AppNotification,
   CashbackEntry,
+  ProductReviews,
+  ReviewEligibility,
+  ReviewItem,
 } from '@shared/types';
 
 export interface CatalogQuery {
@@ -254,6 +257,16 @@ export const ordersApi = {
   myOrder: (id: string) => api.get<Order>(`/me/orders/${id}`),
   cashbackEntries: () =>
     api.get<CashbackEntry[]>('/me/cashback/entries'),
+};
+export const reviewsApi = {
+  forProduct: (productId: string) =>
+    api.get<ProductReviews>(`/products/${productId}/reviews`),
+  eligibility: (productId: string) =>
+    api.get<ReviewEligibility>(
+      `/me/reviews/eligibility?productId=${productId}`,
+    ),
+  create: (body: { productId: string; rating: number; comment?: string }) =>
+    api.post<ReviewItem>('/reviews', body),
 };
 export const paymentsApi = {
   process: (body: {

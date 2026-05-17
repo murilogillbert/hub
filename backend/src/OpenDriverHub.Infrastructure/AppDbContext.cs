@@ -21,6 +21,7 @@ public class AppDbContext : DbContext
     public DbSet<PaymentEvent> PaymentEvents => Set<PaymentEvent>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<CashbackEntry> CashbackEntries => Set<CashbackEntry>();
+    public DbSet<Review> Reviews => Set<Review>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -106,6 +107,19 @@ public class AppDbContext : DbContext
                 .HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.Order).WithMany()
                 .HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        b.Entity<Review>(e =>
+        {
+            // 1 avaliação por produto por usuário.
+            e.HasIndex(x => new { x.ProductId, x.UserId }).IsUnique();
+            e.Property(x => x.Comment).HasMaxLength(1000);
+            e.HasOne(x => x.Product).WithMany()
+                .HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.User).WithMany()
+                .HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.Order).WithMany()
+                .HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Restrict);
         });
 
         b.Entity<BotInteraction>(e =>

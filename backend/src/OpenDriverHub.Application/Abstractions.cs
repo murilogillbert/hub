@@ -103,6 +103,13 @@ public interface IOrderService
     Task<List<CashbackEntryDto>> CashbackEntriesAsync(Guid customerId, CancellationToken ct);
 }
 
+public interface IReviewService
+{
+    Task<ProductReviewsDto> ListForProductAsync(Guid productId, CancellationToken ct);
+    Task<ReviewEligibilityDto> EligibilityAsync(Guid userId, Guid productId, CancellationToken ct);
+    Task<ReviewDto> CreateAsync(Guid userId, CreateReviewRequest req, CancellationToken ct);
+}
+
 public interface IPaymentService
 {
     Task<PaymentStatusSnapshot> ProcessAsync(Guid customerId, ProcessPaymentRequest req, CancellationToken ct);

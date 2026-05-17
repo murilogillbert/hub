@@ -53,6 +53,12 @@ public class CatalogController : ControllerBase
     public async Task<IActionResult> Product(Guid id, CancellationToken ct)
         => Ok(new ApiEnvelope<ProductDto>(await _catalog.GetProductAsync(id, ct)));
 
+    [HttpGet("products/{id:guid}/reviews")]
+    public async Task<IActionResult> ProductReviews(
+        Guid id, [FromServices] IReviewService reviews, CancellationToken ct)
+        => Ok(new ApiEnvelope<ProductReviewsDto>(
+            await reviews.ListForProductAsync(id, ct)));
+
     [HttpGet("catalog")]
     public async Task<IActionResult> Catalog(
         [FromQuery] string? category, [FromQuery] string? q,
@@ -109,10 +115,12 @@ public class ClientController : ControllerBase
 {
     private readonly IOrderService _orders;
     private readonly IPaymentService _payments;
+    private readonly IReviewService _reviews;
 
-    public ClientController(IOrderService orders, IPaymentService payments)
+    public ClientController(
+        IOrderService orders, IPaymentService payments, IReviewService reviews)
     {
-        _orders = orders; _payments = payments;
+        _orders = orders; _payments = payments; _reviews = reviews;
     }
 
     [HttpPost("orders")]
@@ -132,6 +140,18 @@ public class ClientController : ControllerBase
     public async Task<IActionResult> CashbackEntries(CancellationToken ct)
         => Ok(new ApiEnvelope<List<CashbackEntryDto>>(
             await _orders.CashbackEntriesAsync(User.UserId(), ct)));
+
+    [HttpGet("me/reviews/eligibility")]
+    public async Task<IActionResult> ReviewEligibility(
+        [FromQuery] Guid productId, CancellationToken ct)
+        => Ok(new ApiEnvelope<ReviewEligibilityDto>(
+            await _reviews.EligibilityAsync(User.UserId(), productId, ct)));
+
+    [HttpPost("reviews")]
+    public async Task<IActionResult> CreateReview(
+        CreateReviewRequest req, CancellationToken ct)
+        => Ok(new ApiEnvelope<ReviewDto>(
+            await _reviews.CreateAsync(User.UserId(), req, ct)));
 
     [HttpPost("payments/process")]
     public async Task<IActionResult> Pay(ProcessPaymentRequest req, CancellationToken ct)

@@ -5,6 +5,7 @@ import { catalogApi } from '@shared/api/endpoints';
 import { resolveImageUrl } from '@shared/api/client';
 import { StoreMap } from '@shared/components/StoreMap/StoreMap';
 import { QueryState } from '@shared/components/QueryState/QueryState';
+import { ProductReviewsSection } from '@shared/components/Reviews/Reviews';
 import { formatCurrency, formatPercent } from '@shared/utils/formatters';
 import './ProductPage.css';
 
@@ -60,7 +61,9 @@ export function ProductPage() {
         <div className="product-page__info">
           <div className="row">
             <span className="badge badge-primary">{product.category}</span>
-            <span className="badge">★ {product.rating.toFixed(1)}</span>
+            <span className="badge">
+              ★ {product.rating > 0 ? product.rating.toFixed(1) : 'novo'}
+            </span>
           </div>
           <h1>{product.title}</h1>
           <p className="text-muted">{product.description}</p>
@@ -113,6 +116,8 @@ export function ProductPage() {
           </ul>
         </section>
       )}
+
+      <ProductReviewsSection productId={product.id} />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { Button } from '@shared/components/Button/Button';
 import { Card } from '@shared/components/Card/Card';
 import { QueryState } from '@shared/components/QueryState/QueryState';
 import { StoreMap } from '@shared/components/StoreMap/StoreMap';
+import { ReviewForm } from '@shared/components/Reviews/Reviews';
 import { catalogApi, ordersApi } from '@shared/api/endpoints';
 import {
   formatCode,
@@ -126,6 +127,10 @@ export function OrderDetailPage() {
                 ))}
               </ol>
             </Card>
+
+            {order.status === 'redeemed' && (
+              <ReviewForm productId={order.productId} />
+            )}
 
             <Card className="order-detail__stores">
               <div className="row-between">

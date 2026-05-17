@@ -44,6 +44,28 @@ export interface PartnerStore {
   imageUrl?: string;
 }
 
+export interface ReviewItem {
+  id: string;
+  productId: string;
+  userId: string;
+  userName: string;
+  userAvatarUrl?: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+export interface ProductReviews {
+  average: number;
+  count: number;
+  items: ReviewItem[];
+}
+
+export interface ReviewEligibility {
+  canReview: boolean;
+  alreadyReviewed: boolean;
+}
+
 export interface Category {
   id: string;
   name: string;

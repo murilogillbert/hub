@@ -134,6 +134,21 @@ public class CashbackEntry
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
+/// <summary>Avaliação de um produto por um cliente que já resgatou.</summary>
+public class Review
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid ProductId { get; set; }
+    public Product? Product { get; set; }
+    public Guid UserId { get; set; }
+    public User? User { get; set; }
+    public Guid OrderId { get; set; }
+    public Order? Order { get; set; }
+    public int Rating { get; set; } // 1..5
+    public string Comment { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
 public class AssistantLead
 {
     public Guid Id { get; set; } = Guid.NewGuid();

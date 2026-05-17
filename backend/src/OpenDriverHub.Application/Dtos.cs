@@ -91,6 +91,15 @@ public record PaymentStatusSnapshot(
     Guid OrderId, string? PaymentId, string? PaymentReference, string PaymentStatus,
     string? StatusDetail, string? VoucherCode, string OrderStatus, PixPayload? Pix);
 
+// ---------- Reviews ----------
+public record CreateReviewRequest(Guid ProductId, int Rating, string? Comment);
+public record ReviewDto(
+    Guid Id, Guid ProductId, Guid UserId, string UserName, string? UserAvatarUrl,
+    int Rating, string Comment, DateTime CreatedAt);
+public record ProductReviewsDto(
+    double Average, int Count, List<ReviewDto> Items);
+public record ReviewEligibilityDto(bool CanReview, bool AlreadyReviewed);
+
 // ---------- Redeem ----------
 public record RedeemRequest(string Code);
 public record RedeemResult(
