@@ -174,6 +174,19 @@ public record PartnerMetricsDto(
     List<NamedValue> SalesByCategory,
     List<NamedValue> PaymentMethods);
 
+// ---------- Repasses (payouts) ----------
+public record PartnerPayoutDto(
+    Guid Id, Guid PartnerId, string PartnerName, decimal Amount,
+    DateTime PeriodStart, DateTime PeriodEnd, string Note, DateTime CreatedAt);
+public record CreatePayoutRequest(
+    Guid PartnerId, decimal Amount,
+    DateTime PeriodStart, DateTime PeriodEnd, string? Note);
+/// <summary>Resumo por parceiro: líquido devido (resgatado), já repassado e
+/// disponível para lançar.</summary>
+public record PartnerPayoutSummaryDto(
+    Guid PartnerId, string PartnerName, decimal EarnedNet,
+    decimal Paid, decimal Available);
+
 public record AdminMetricsDto(
     decimal Gmv,
     decimal NetRevenue,

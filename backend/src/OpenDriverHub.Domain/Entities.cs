@@ -233,6 +233,22 @@ public class IntegrationSetting
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
 
+/// <summary>Repasse (pagamento) lançado pelo admin a um parceiro, referente
+/// a um período de 10 dias do que foi resgatado. É o que define o "Recebido"
+/// do parceiro (já creditado a ele).</summary>
+public class PartnerPayout
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid PartnerId { get; set; }
+    public Partner? Partner { get; set; }
+    public decimal Amount { get; set; }
+    public DateTime PeriodStart { get; set; }
+    public DateTime PeriodEnd { get; set; }
+    public string Note { get; set; } = string.Empty;
+    public Guid? CreatedBy { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
 public class AuditLog
 {
     public Guid Id { get; set; } = Guid.NewGuid();

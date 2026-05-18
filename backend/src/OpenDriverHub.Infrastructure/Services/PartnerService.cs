@@ -85,9 +85,13 @@ public class PartnerService : IPartnerService
             i.LineTotal, CommissionRules.PlatformFeeFor(i.LineTotal, fee),
             i.CashbackEarned);
 
-        // Repasse: itens já resgatados = a receber; pagos não resgatados = pendente.
-        var paidTransfer = valid.Where(i => i.RedeemedAt != null).Sum(NetOf);
-        var pendingTransfer = valid.Where(i => i.RedeemedAt == null).Sum(NetOf);
+        // Repasse REAL: "Recebido" = soma dos repasses lançados pelo admin.
+        // "A receber" = líquido já resgatado ainda não repassado.
+        var earnedNet = valid.Where(i => i.RedeemedAt != null).Sum(NetOf);
+        var paidTransfer = await _db.PartnerPayouts
+            .Where(p => p.PartnerId == partnerId)
+            .SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
+        var pendingTransfer = Math.Max(0m, earnedNet - paidTransfer);
 
         // Pedidos (distintos) que contêm itens deste parceiro.
         var orders = items.Select(i => i.Order!).DistinctBy(o => o.Id).ToList();

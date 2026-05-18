@@ -358,6 +358,23 @@ export interface AdminUserUpdate {
 export interface AdminUserCreate extends AdminUserUpdate {
   password: string;
 }
+export interface PartnerPayout {
+  id: string;
+  partnerId: string;
+  partnerName: string;
+  amount: number;
+  periodStart: string;
+  periodEnd: string;
+  note: string;
+  createdAt: string;
+}
+export interface PayoutSummary {
+  partnerId: string;
+  partnerName: string;
+  earnedNet: number;
+  paid: number;
+  available: number;
+}
 
 export const adminApi = {
   metrics: () => api.get<AdminMetrics>('/admin/metrics'),
@@ -425,6 +442,24 @@ export const adminApi = {
     api.post<User>('/admin/users', body),
   updateUser: (id: string, body: AdminUserUpdate) =>
     api.put<User>(`/admin/users/${id}`, body),
+  payoutSummary: () =>
+    api.get<PayoutSummary[]>('/admin/payouts/summary'),
+  payouts: (params?: { partnerId?: string; page?: number; pageSize?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.partnerId) qs.set('partnerId', params.partnerId);
+    qs.set('page', String(params?.page ?? 1));
+    qs.set('pageSize', String(params?.pageSize ?? 20));
+    return api.get<PagedResult<PartnerPayout>>(
+      `/admin/payouts?${qs.toString()}`,
+    );
+  },
+  createPayout: (body: {
+    partnerId: string;
+    amount: number;
+    periodStart: string;
+    periodEnd: string;
+    note?: string;
+  }) => api.post<PartnerPayout>('/admin/payouts', body),
   leads: () => api.get<LeadDto[]>('/admin/leads'),
   integrations: () => api.get<IntegrationGroup[]>('/admin/integrations'),
   updateIntegration: (key: string, value: string | null) =>

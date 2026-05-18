@@ -303,6 +303,128 @@ public class AdminService : IAdminService
             x => x.Log.ToDto(x.ActorName), ct);
     }
 
+    // Líquido devido ao parceiro = soma do PartnerNet dos itens já resgatados.
+    private async Task<decimal> EarnedNetAsync(
+        Guid partnerId, decimal fee, CancellationToken ct)
+    {
+        var redeemed = await _db.OrderItems
+            .Where(i => i.PartnerId == partnerId && i.RedeemedAt != null)
+            .Select(i => new { i.LineTotal, i.CashbackEarned })
+            .ToListAsync(ct);
+        return redeemed.Sum(r => CommissionRules.PartnerNet(
+            r.LineTotal, CommissionRules.PlatformFeeFor(r.LineTotal, fee),
+            r.CashbackEarned));
+    }
+
+    public async Task<List<PartnerPayoutSummaryDto>> PayoutSummaryAsync(
+        CancellationToken ct)
+    {
+        var partners = await _db.Partners.OrderBy(p => p.Name).ToListAsync(ct);
+        var redeemed = await _db.OrderItems
+            .Where(i => i.RedeemedAt != null)
+            .Select(i => new { i.PartnerId, i.LineTotal, i.CashbackEarned })
+            .ToListAsync(ct);
+        var paidByPartner = (await _db.PartnerPayouts
+                .GroupBy(p => p.PartnerId)
+                .Select(g => new { PartnerId = g.Key, Sum = g.Sum(x => x.Amount) })
+                .ToListAsync(ct))
+            .ToDictionary(x => x.PartnerId, x => x.Sum);
+
+        var result = new List<PartnerPayoutSummaryDto>();
+        foreach (var p in partners)
+        {
+            var earnedNet = redeemed.Where(r => r.PartnerId == p.Id).Sum(r =>
+                CommissionRules.PartnerNet(r.LineTotal,
+                    CommissionRules.PlatformFeeFor(r.LineTotal, p.FeePercent),
+                    r.CashbackEarned));
+            var paid = paidByPartner.TryGetValue(p.Id, out var s) ? s : 0m;
+            result.Add(new PartnerPayoutSummaryDto(
+                p.Id, p.Name, Math.Round(earnedNet, 2), Math.Round(paid, 2),
+                Math.Max(0m, Math.Round(earnedNet - paid, 2))));
+        }
+        return result;
+    }
+
+    public async Task<PagedResult<PartnerPayoutDto>> PayoutsAsync(
+        Guid? partnerId, int page, int pageSize, CancellationToken ct)
+    {
+        var q = _db.PartnerPayouts.Include(p => p.Partner).AsQueryable();
+        if (partnerId is { } pid) q = q.Where(p => p.PartnerId == pid);
+        return await ToPageAsync(
+            q.OrderByDescending(p => p.CreatedAt), page, pageSize,
+            p => new PartnerPayoutDto(p.Id, p.PartnerId, p.Partner!.Name,
+                p.Amount, p.PeriodStart, p.PeriodEnd, p.Note, p.CreatedAt), ct);
+    }
+
+    public async Task<PartnerPayoutDto> CreatePayoutAsync(
+        Guid actorId, CreatePayoutRequest req, CancellationToken ct)
+    {
+        var partner = await _db.Partners.FindAsync([req.PartnerId], ct)
+            ?? throw new AppException("Parceiro não encontrado.", 404);
+        var amount = Math.Round(req.Amount, 2);
+        if (amount <= 0)
+            throw new AppException("Valor deve ser maior que zero.", 400);
+        if (req.PeriodEnd.Date < req.PeriodStart.Date)
+            throw new AppException("Período inválido (fim antes do início).", 400);
+
+        var earnedNet = await EarnedNetAsync(partner.Id, partner.FeePercent, ct);
+        var alreadyPaid = await _db.PartnerPayouts
+            .Where(p => p.PartnerId == partner.Id)
+            .SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
+        var available = Math.Round(earnedNet - alreadyPaid, 2);
+        if (amount > available + 0.01m)
+            throw new AppException(
+                $"Valor acima do disponível para repasse (R$ {available:0.00}).",
+                400);
+
+        var payout = new PartnerPayout
+        {
+            PartnerId = partner.Id,
+            Amount = amount,
+            PeriodStart = req.PeriodStart.Date,
+            PeriodEnd = req.PeriodEnd.Date,
+            Note = (req.Note ?? "").Trim(),
+            CreatedBy = actorId,
+        };
+        _db.PartnerPayouts.Add(payout);
+
+        _db.AuditLogs.Add(new AuditLog
+        {
+            ActorId = actorId,
+            Action = "admin.payout.create",
+            EntityType = "PartnerPayout",
+            EntityId = payout.Id.ToString(),
+            PayloadJson = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                partner.Id,
+                partner.Name,
+                amount,
+                req.PeriodStart,
+                req.PeriodEnd,
+            }),
+        });
+
+        // Notifica o(s) usuário(s) do parceiro, se houver.
+        var partnerUserIds = await _db.Users
+            .Where(u => u.PartnerId == partner.Id)
+            .Select(u => u.Id)
+            .ToListAsync(ct);
+        foreach (var uid in partnerUserIds)
+            _db.Notifications.Add(new Notification
+            {
+                UserId = uid,
+                Title = "Repasse recebido",
+                Message =
+                    $"Repasse de R$ {amount:0.00} creditado "
+                    + $"({req.PeriodStart:dd/MM} a {req.PeriodEnd:dd/MM}).",
+            });
+
+        await _db.SaveChangesAsync(ct);
+        return new PartnerPayoutDto(payout.Id, partner.Id, partner.Name,
+            payout.Amount, payout.PeriodStart, payout.PeriodEnd, payout.Note,
+            payout.CreatedAt);
+    }
+
     private static async Task<PagedResult<TDto>> ToPageAsync<TEntity, TDto>(
         IQueryable<TEntity> query,
         int page,

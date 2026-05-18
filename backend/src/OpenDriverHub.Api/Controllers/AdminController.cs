@@ -94,6 +94,24 @@ public class AdminController : ControllerBase
         return NoContent();
     }
 
+    [HttpGet("payouts/summary")]
+    public async Task<IActionResult> PayoutSummary(CancellationToken ct)
+        => Ok(new ApiEnvelope<List<PartnerPayoutSummaryDto>>(
+            await _admin.PayoutSummaryAsync(ct)));
+
+    [HttpGet("payouts")]
+    public async Task<IActionResult> Payouts(
+        [FromQuery] Guid? partnerId, [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20, CancellationToken ct = default)
+        => Ok(new ApiEnvelope<PagedResult<PartnerPayoutDto>>(
+            await _admin.PayoutsAsync(partnerId, page, pageSize, ct)));
+
+    [HttpPost("payouts")]
+    public async Task<IActionResult> CreatePayout(
+        CreatePayoutRequest req, CancellationToken ct)
+        => Ok(new ApiEnvelope<PartnerPayoutDto>(
+            await _admin.CreatePayoutAsync(User.UserId(), req, ct)));
+
     [HttpGet("stores")]
     public async Task<IActionResult> Stores([FromQuery] Guid? partnerId, CancellationToken ct)
         => Ok(new ApiEnvelope<List<StoreDto>>(

@@ -154,4 +154,9 @@ public interface IAdminService
     Task<PagedResult<AuditLogDto>> AuditLogsAsync(
         DateTime? from, DateTime? to, Guid? userId, string? action,
         int page, int pageSize, CancellationToken ct);
+    Task<List<PartnerPayoutSummaryDto>> PayoutSummaryAsync(CancellationToken ct);
+    Task<PagedResult<PartnerPayoutDto>> PayoutsAsync(
+        Guid? partnerId, int page, int pageSize, CancellationToken ct);
+    Task<PartnerPayoutDto> CreatePayoutAsync(
+        Guid actorId, CreatePayoutRequest req, CancellationToken ct);
 }

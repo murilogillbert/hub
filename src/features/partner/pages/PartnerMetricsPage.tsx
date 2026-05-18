@@ -48,7 +48,7 @@ export function PartnerMetricsPage() {
               <StatCard
                 label="A receber"
                 value={formatCurrency(m.pendingTransfer)}
-                hint="vendas pagas aguardando resgate"
+                hint="resgatado, aguardando repasse (10 dias)"
               />
               <StatCard
                 label="Recebido"

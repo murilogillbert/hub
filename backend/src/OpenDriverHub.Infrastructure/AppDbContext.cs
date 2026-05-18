@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<CashbackEntry> CashbackEntries => Set<CashbackEntry>();
     public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<PartnerPayout> PartnerPayouts => Set<PartnerPayout>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -138,6 +139,15 @@ public class AppDbContext : DbContext
                 .HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne(x => x.Order).WithMany()
                 .HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        b.Entity<PartnerPayout>(e =>
+        {
+            e.HasIndex(x => new { x.PartnerId, x.CreatedAt });
+            e.Property(x => x.Amount).HasPrecision(12, 2);
+            e.Property(x => x.Note).HasMaxLength(400);
+            e.HasOne(x => x.Partner).WithMany()
+                .HasForeignKey(x => x.PartnerId).OnDelete(DeleteBehavior.Cascade);
         });
 
         b.Entity<BotInteraction>(e =>

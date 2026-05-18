@@ -34,6 +34,7 @@ export function AdminLayout() {
           </NavLink>
           <NavLink to="/admin/vendas">💳 Análise de vendas</NavLink>
           <NavLink to="/admin/parceiros">🤝 Parceiros</NavLink>
+          <NavLink to="/admin/repasses">💸 Repasses</NavLink>
           <NavLink to="/admin/unidades">Unidades</NavLink>
           <NavLink to="/admin/usuarios">👥 Usuários</NavLink>
           <NavLink to="/admin/categorias">🏷️ Categorias</NavLink>
