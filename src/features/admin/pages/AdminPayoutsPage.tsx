@@ -7,6 +7,13 @@ import { QueryState } from '@shared/components/QueryState/QueryState';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { adminApi } from '@shared/api/endpoints';
 import { formatCurrency } from '@shared/utils/formatters';
+import {
+  downloadTextFile,
+  openPrintableReport,
+  csvCell,
+  buildCsv,
+  htmlEscape,
+} from '@shared/utils/exportReport';
 import './AdminPages.css';
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
@@ -82,6 +89,95 @@ export function AdminPayoutsPage() {
     setAmount(available > 0 ? available.toFixed(2) : '');
   };
 
+  const history = historyQuery.data?.items ?? [];
+  const stamp = new Date().toISOString().slice(0, 10);
+
+  const exportCsv = () => {
+    const rows = [
+      'Resumo por parceiro',
+      'Parceiro;Liquido resgatado;Ja repassado;Disponivel',
+      ...summary.map((s) =>
+        [
+          csvCell(s.partnerName),
+          csvCell(s.earnedNet.toFixed(2)),
+          csvCell(s.paid.toFixed(2)),
+          csvCell(s.available.toFixed(2)),
+        ].join(';'),
+      ),
+      '',
+      'Repasses lancados',
+      'Data;Parceiro;Periodo inicio;Periodo fim;Valor;Observacao',
+      ...history.map((p) =>
+        [
+          csvCell(new Date(p.createdAt).toLocaleDateString('pt-BR')),
+          csvCell(p.partnerName),
+          csvCell(new Date(p.periodStart).toLocaleDateString('pt-BR')),
+          csvCell(new Date(p.periodEnd).toLocaleDateString('pt-BR')),
+          csvCell(p.amount.toFixed(2)),
+          csvCell(p.note),
+        ].join(';'),
+      ),
+    ];
+    downloadTextFile(
+      `repasses-${stamp}.csv`,
+      buildCsv(rows),
+      'text/csv;charset=utf-8;',
+    );
+  };
+
+  const exportPdf = () => {
+    const summaryRows = summary
+      .map(
+        (s) =>
+          `<tr><td>${htmlEscape(s.partnerName)}</td><td>${formatCurrency(
+            s.earnedNet,
+          )}</td><td>${formatCurrency(s.paid)}</td><td>${formatCurrency(
+            s.available,
+          )}</td></tr>`,
+      )
+      .join('');
+    const historyRows = history
+      .map(
+        (p) =>
+          `<tr><td>${new Date(p.createdAt).toLocaleDateString(
+            'pt-BR',
+          )}</td><td>${htmlEscape(p.partnerName)}</td><td>${new Date(
+            p.periodStart,
+          ).toLocaleDateString('pt-BR')} a ${new Date(
+            p.periodEnd,
+          ).toLocaleDateString('pt-BR')}</td><td>${formatCurrency(
+            p.amount,
+          )}</td><td>${htmlEscape(p.note)}</td></tr>`,
+      )
+      .join('');
+    openPrintableReport(
+      `repasses-${stamp}.pdf`,
+      `<html><head><title>Repasses</title><style>
+        body{font-family:Arial,sans-serif;padding:24px;color:#1f2937}
+        h1{font-size:22px;margin:0 0 4px} h2{font-size:16px;margin:24px 0 8px}
+        small{color:#6b7280}
+        table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
+        th,td{border:1px solid #d1d5db;padding:6px 8px;text-align:left}
+        th{background:#f3f4f6}
+      </style></head><body>
+      <h1>Repasses a parceiros</h1>
+      <small>OpenDriverHub · gerado em ${new Date().toLocaleString(
+        'pt-BR',
+      )}</small>
+      <h2>Resumo por parceiro</h2>
+      <table><thead><tr><th>Parceiro</th><th>Líquido resgatado</th>
+      <th>Já repassado</th><th>Disponível</th></tr></thead><tbody>
+      ${summaryRows || '<tr><td colspan="4">Sem dados</td></tr>'}</tbody></table>
+      <h2>Repasses lançados</h2>
+      <table><thead><tr><th>Data</th><th>Parceiro</th><th>Período</th>
+      <th>Valor</th><th>Obs.</th></tr></thead><tbody>
+      ${historyRows || '<tr><td colspan="5">Nenhum repasse lançado</td></tr>'}
+      </tbody></table>
+      <script>window.onload=()=>{window.print()}</script>
+      </body></html>`,
+    );
+  };
+
   return (
     <div className="admin-page">
       <header className="admin-page__header">
@@ -91,6 +187,14 @@ export function AdminPayoutsPage() {
             Pagamentos em pacotes de 10 dias, creditados 10 dias depois. O
             valor lançado aqui é o que aparece como “Recebido” para o parceiro.
           </p>
+        </div>
+        <div className="row">
+          <Button variant="secondary" onClick={exportCsv}>
+            Exportar CSV
+          </Button>
+          <Button variant="secondary" onClick={exportPdf}>
+            Exportar PDF
+          </Button>
         </div>
       </header>
 
