@@ -5,12 +5,13 @@
   gap: var(--space-2);
   border-radius: var(--radius-pill);
   font-family: var(--font-sans);
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  transition: background 0.25s, transform 0.2s, box-shadow 0.25s, color 0.2s;
+  font-weight: 700;
+  letter-spacing: 0;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s, color 0.2s,
+    border-color 0.2s;
   border: 1px solid transparent;
   white-space: nowrap;
+  cursor: pointer;
 }
 
 .btn:disabled {
@@ -28,12 +29,12 @@
 }
 
 .btn--md {
-  padding: 12px 22px;
+  padding: 11px 22px;
   font-size: var(--font-sm);
 }
 
 .btn--lg {
-  padding: 16px 30px;
+  padding: 15px 32px;
   font-size: var(--font-md);
 }
 
@@ -41,35 +42,51 @@
   width: 100%;
 }
 
+/* Primary = lima (CTA principal "Sou Motorista", "Cadastre-se") */
 .btn--primary {
-  background: var(--color-gold);
+  background: var(--lime-gradient);
   color: var(--color-on-primary);
-  box-shadow: var(--shadow-gold);
+  box-shadow: var(--shadow-primary);
 }
 
 .btn--primary:not(:disabled):hover {
-  background: var(--color-gold-light);
+  background: var(--color-lime-hover);
   transform: translateY(-2px);
+  box-shadow: 0 16px 36px rgba(181, 220, 47, 0.42);
 }
 
+/* Secondary = outline branco (sobre fundo escuro) ou navy (sobre claro) */
 .btn--secondary {
-  background: var(--color-surface);
+  background: transparent;
   color: var(--color-text);
   border-color: var(--color-border);
 }
 
 .btn--secondary:not(:disabled):hover {
-  border-color: var(--color-gold);
-  color: #8a6d1f;
+  border-color: var(--color-info);
+  color: var(--color-info);
+  background: var(--color-info-soft);
+}
+
+/* Em fundos escuros (hero) usa-se .btn--secondary com .on-dark */
+.btn--secondary.on-dark {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: transparent;
+}
+.btn--secondary.on-dark:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #fff;
+  color: #fff;
 }
 
 .btn--ghost {
   background: transparent;
-  color: #8a6d1f;
+  color: var(--color-info);
 }
 
 .btn--ghost:not(:disabled):hover {
-  background: var(--color-primary-soft);
+  background: var(--color-info-soft);
 }
 
 .btn--danger {

@@ -22,8 +22,8 @@
 }
 
 .input-field__box:focus-within {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-soft);
+  border-color: var(--color-info);
+  box-shadow: 0 0 0 3px var(--color-info-soft);
 }
 
 .input-field__box--error {
