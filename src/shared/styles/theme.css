@@ -1,46 +1,79 @@
 :root {
-  /* ===== Paleta de marca (replicada do opendriver: ink/navy + gold) ===== */
-  --color-ink: #05070b;
-  --color-navy: #071525;
-  --color-navy-soft: #0d2238;
-  --color-gold: #9f7418;
-  --color-gold-light: #d8b34a;
-  --color-bone: #f7f3ea;
-  --color-smoke: #e7e9ee;
+  /* ===== Paleta de marca OpenDriverHub (navy + azul + lima) =====
+   * Decisão semântica:
+   *  - PRIMARY  = lima      → CTAs ("Sou Motorista", "Cadastre-se")
+   *  - INFO     = azul vivo → links, destaques de palavras-chave
+   *  - NAVY     = navy      → header/hero/seções escuras + texto em fundos claros
+   * Tokens antigos (--color-gold*) ficam como aliases p/ não quebrar nada. */
+  --color-navy: #0a1726;
+  --color-navy-soft: #10243f;
+  --color-navy-deep: #060e1a;
+
+  --color-blue: #1f7bff;
+  --color-blue-hover: #0f66e0;
+  --color-blue-light: #4fb8ff;
+  --color-blue-soft: #e0eeff;
+
+  --color-lime: #b5dc2f;
+  --color-lime-hover: #93c92e;
+  --color-lime-dark: #7aab1f;
+  --color-lime-soft: #eef8d2;
+
+  --color-ink: #1f2937;
+  --color-bone: #f7f9fb;
+  --color-smoke: #eef1f5;
 
   /* ===== Superfícies / texto ===== */
-  --color-bg: #f7f3ea;
+  --color-bg: #f7f9fb;
   --color-surface: #ffffff;
-  --color-surface-alt: #f1ece0;
-  --color-border: #e4ddc9;
-  --color-text: #05070b;
-  --color-text-muted: #5b6171;
-  --color-text-soft: #8b8f9c;
+  --color-surface-alt: #f2f5f9;
+  --color-border: #e5eaf0;
+  --color-text: #1f2937;
+  --color-text-muted: #6b7280;
+  --color-text-soft: #9ca3af;
 
-  /* ===== Primária = dourado (texto escuro em cima) ===== */
-  --color-primary: #9f7418;
-  --color-primary-hover: #d8b34a;
-  --color-primary-soft: #f8ecd0;
-  --color-on-primary: #05070b;
+  /* ===== Primária = LIMA (CTA) ===== */
+  --color-primary: var(--color-lime);
+  --color-primary-hover: var(--color-lime-hover);
+  --color-primary-soft: var(--color-lime-soft);
+  --color-on-primary: var(--color-navy);
 
-  /* Cashback / sucesso (mantém verde pela semântica de dinheiro) */
-  --color-accent: #1f8f6b;
-  --color-accent-soft: #e2f1ea;
+  /* Cashback / saldos positivos / valores em dinheiro (também lima) */
+  --color-accent: var(--color-lime-dark);
+  --color-accent-soft: var(--color-lime-soft);
 
-  --color-warning: #c98a2b;
+  /* Info = azul (links, palavras destacadas no copy, status "pendente") */
+  --color-info: var(--color-blue);
+  --color-info-soft: var(--color-blue-soft);
+
+  --color-warning: #d99109;
   --color-danger: #d6453f;
-  --color-info: #2f6d9c;
+
+  /* ===== Aliases de compat (telas/componentes antigos com --color-gold) =====
+   * Apontam para a nova identidade. Não usar em código novo. */
+  --color-gold: var(--color-lime);
+  --color-gold-light: var(--color-lime-hover);
+
+  /* ===== Gradientes ===== */
+  --brand-gradient: linear-gradient(135deg, #1f7bff 0%, #4fb8ff 100%);
+  --lime-gradient: linear-gradient(135deg, #b5dc2f 0%, #93c92e 100%);
+  --hero-gradient: linear-gradient(180deg, #0a1726 0%, #0d1f36 100%);
+  --footer-gradient: linear-gradient(90deg, #1f7bff 0%, #4fb8ff 55%, #b5dc2f 100%);
 
   --radius-sm: 6px;
   --radius-md: 12px;
-  --radius-lg: 20px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
   --radius-pill: 999px;
 
-  --shadow-sm: 0 2px 10px rgba(5, 7, 11, 0.06);
-  --shadow-md: 0 18px 60px rgba(5, 7, 11, 0.1);
-  --shadow-lg: 0 28px 90px rgba(7, 21, 37, 0.2);
-  --shadow-gold: 0 22px 70px rgba(214, 178, 94, 0.24);
-  --shadow-navy: 0 28px 90px rgba(7, 21, 37, 0.32);
+  --shadow-sm: 0 2px 8px rgba(10, 23, 38, 0.06);
+  --shadow-md: 0 12px 32px rgba(10, 23, 38, 0.08);
+  --shadow-lg: 0 24px 64px rgba(10, 23, 38, 0.14);
+  --shadow-primary: 0 12px 32px rgba(181, 220, 47, 0.32);
+  --shadow-blue: 0 12px 32px rgba(31, 123, 255, 0.24);
+  --shadow-navy: 0 24px 64px rgba(10, 23, 38, 0.24);
+  /* Alias de compat */
+  --shadow-gold: var(--shadow-primary);
 
   --space-1: 4px;
   --space-2: 8px;
@@ -57,11 +90,18 @@
   --font-lg: 18px;
   --font-xl: 22px;
   --font-2xl: 28px;
-  --font-3xl: 36px;
+  --font-3xl: 38px;
+  --font-4xl: 48px;
 
   --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, Segoe UI,
     Roboto, sans-serif;
   --font-display: 'Sora', 'Manrope', ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
 }
 
 h1,
@@ -72,7 +112,15 @@ h4 {
   font-family: var(--font-display);
   font-weight: 800;
   line-height: 1.12;
-  letter-spacing: 0;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--color-info);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
 }
 
 p {
@@ -111,6 +159,7 @@ html {
 /* Tipografia fluida — escala menor em telas pequenas */
 @media (max-width: 600px) {
   :root {
+    --font-4xl: 32px;
     --font-3xl: 26px;
     --font-2xl: 21px;
     --font-xl: 18px;
@@ -153,36 +202,66 @@ html {
   font-size: var(--font-sm);
 }
 
+.text-accent {
+  color: var(--color-accent);
+}
+
+.text-info {
+  color: var(--color-info);
+}
+
+/* ===== Badges (pílula curta) ===== */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 12px;
+  padding: 4px 12px;
   border-radius: var(--radius-pill);
   font-size: var(--font-xs);
   font-weight: 700;
   letter-spacing: 0;
-  text-transform: uppercase;
   background: var(--color-surface-alt);
   color: var(--color-text-muted);
 }
 
 .badge-accent {
-  background: var(--color-accent-soft);
-  color: var(--color-accent);
+  background: var(--color-lime-soft);
+  color: var(--color-lime-dark);
 }
 
 .badge-primary {
-  background: var(--color-primary-soft);
-  color: #5e430b;
+  background: var(--color-blue-soft);
+  color: var(--color-blue-hover);
 }
 
 .badge-warning {
-  background: #f7ebd5;
+  background: #fdf1d8;
   color: var(--color-warning);
 }
 
 .badge-danger {
-  background: #f6e0df;
+  background: #fbe1df;
   color: var(--color-danger);
+}
+
+/* ===== Utilitários novos ===== */
+.section {
+  padding: var(--space-7) 0;
+}
+
+.section--dark {
+  background: var(--color-navy);
+  color: #fff;
+}
+
+.section--soft {
+  background: var(--color-bg);
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: var(--font-xs);
+  font-weight: 800;
+  color: var(--color-info);
 }
