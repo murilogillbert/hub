@@ -1,0 +1,87 @@
+.lucro-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-5) 0 var(--space-8);
+}
+
+.lucro-page__hero {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: var(--space-6);
+  align-items: center;
+  background: var(--hero-gradient);
+  color: #fff;
+  padding: var(--space-7) var(--space-6);
+  border-radius: var(--radius-xl);
+}
+
+@media (max-width: 800px) {
+  .lucro-page__hero {
+    grid-template-columns: 1fr;
+    padding: var(--space-5);
+  }
+}
+
+.lucro-page__hero-copy h1 {
+  font-size: clamp(1.6rem, 3.4vw, 2.6rem);
+  line-height: 1.15;
+  margin: var(--space-2) 0 var(--space-3);
+}
+
+.lucro-page__hero-copy p {
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 var(--space-2);
+}
+
+.lucro-page__hero-sub {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.lucro-page__hero-copy .eyebrow {
+  color: var(--color-lime);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+.lucro-page__hero-copy .text-lime {
+  color: var(--color-lime);
+}
+
+.lucro-page__hero-side {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  backdrop-filter: blur(4px);
+}
+
+.lucro-page__hero-side ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  font-weight: 500;
+  color: #fff;
+}
+
+.lucro-page__form-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.lucro-page__form-card header {
+  margin-bottom: var(--space-5);
+}
+
+.lucro-page__form-card h2 {
+  margin: 0 0 var(--space-1);
+  color: var(--color-navy);
+}

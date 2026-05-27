@@ -291,6 +291,48 @@ export function HomePage() {
         </ol>
       </section>
 
+      {/* ================= CALCULADORA DE LUCRO REAL ================= */}
+      <section className="home__lucro">
+        <div className="home__lucro-copy">
+          <span className="home__lucro-eyebrow">🚗 Calculadora de Lucro Real</span>
+          <h2>
+            Descubra se dirigir hoje <span className="text-lime">realmente compensou</span>.
+          </h2>
+          <p>
+            Informe quanto recebeu na Uber, 99, Open Driver e corridas
+            particulares. Depois veja quanto gastou com combustível,
+            depreciação, manutenção, pneus, seguro, financiamento e outros
+            custos. No final, você vê faturamento total, custo real, lucro
+            líquido, lucro por hora, lucro por km — e se o dia valeu a pena.
+          </p>
+          <ul className="home__lucro-list">
+            <li>✅ Faturamento total</li>
+            <li>✅ Custo real</li>
+            <li>✅ Lucro líquido</li>
+            <li>✅ Lucro por hora</li>
+            <li>✅ Lucro por km</li>
+            <li>✅ Se o dia valeu a pena</li>
+          </ul>
+          <Link to="/lucro-real-motorista">
+            <Button size="lg">Calcular meu lucro real →</Button>
+          </Link>
+        </div>
+        <div className="home__lucro-mock" aria-hidden="true">
+          <div className="home__lucro-mock-card home__lucro-mock-card--1">
+            <small>Faturamento</small>
+            <strong>R$ 438,00</strong>
+          </div>
+          <div className="home__lucro-mock-card home__lucro-mock-card--2">
+            <small>Lucro real</small>
+            <strong>R$ 169,57</strong>
+          </div>
+          <div className="home__lucro-mock-card home__lucro-mock-card--3">
+            <small>Lucro/hora</small>
+            <strong>R$ 17,85</strong>
+          </div>
+        </div>
+      </section>
+
       {/* ================= PARA QUEM É + STATS ================= */}
       <section className="home__audience">
         <div className="home__audience-card">

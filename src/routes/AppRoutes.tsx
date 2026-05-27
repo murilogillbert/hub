@@ -16,6 +16,7 @@ import { HistoryPage } from '@features/client/pages/HistoryPage';
 import { ProfilePage } from '@features/client/pages/ProfilePage';
 import { OrderDetailPage } from '@features/client/pages/OrderDetailPage';
 import { CashbackPage } from '@features/client/pages/CashbackPage';
+import { LucroRealPage } from '@features/client/pages/LucroRealPage';
 
 import { LoginPage } from '@features/auth/pages/LoginPage';
 import { RegisterChoicePage } from '@features/auth/pages/RegisterChoicePage';
@@ -45,6 +46,7 @@ export function AppRoutes() {
         <Route path="/" element={<HomePage />} />
         <Route path="/produtos" element={<CatalogPage />} />
         <Route path="/catalogo" element={<CatalogPage />} />
+        <Route path="/lucro-real-motorista" element={<LucroRealPage />} />
 
         {/* Auth: 1 tela de login, cadastro com seletor + 2 telas */}
         <Route

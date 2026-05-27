@@ -392,7 +392,93 @@
   .home__audience { grid-template-columns: 1fr; padding: var(--space-5); }
   .home__partners-grid { grid-template-columns: repeat(3, 1fr); }
   .home__cta-band { grid-template-columns: 1fr; text-align: left; }
+  .home__lucro { grid-template-columns: 1fr; padding: var(--space-5); }
+  .home__lucro-mock { min-height: 0; flex-direction: row; flex-wrap: wrap; }
+  .home__lucro-mock-card { position: static; width: auto; flex: 1; min-width: 130px; }
 }
+
+/* ===== Calculadora de Lucro Real (CTA na home) ===== */
+.home__lucro {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: var(--space-6);
+  background: var(--hero-gradient);
+  color: #fff;
+  border-radius: var(--radius-xl);
+  padding: var(--space-7);
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.home__lucro-copy h2 {
+  font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+  line-height: 1.2;
+  margin: var(--space-2) 0 var(--space-3);
+  color: #fff;
+}
+
+.home__lucro-copy p {
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 var(--space-3);
+}
+
+.home__lucro-copy .text-lime { color: var(--color-lime); }
+
+.home__lucro-eyebrow {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-lime);
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+}
+
+.home__lucro-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-4);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 500;
+}
+
+.home__lucro-mock {
+  position: relative;
+  min-height: 280px;
+}
+
+.home__lucro-mock-card {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--color-navy);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 150px;
+}
+
+.home__lucro-mock-card small {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+.home__lucro-mock-card strong {
+  font-size: 1.4rem;
+  color: var(--color-navy);
+}
+
+.home__lucro-mock-card--1 { top: 8%;  left: 6%;  }
+.home__lucro-mock-card--2 { top: 38%; left: 32%; background: var(--color-lime); }
+.home__lucro-mock-card--2 small { color: var(--color-navy); }
+.home__lucro-mock-card--3 { top: 68%; left: 12%; }
 
 @media (max-width: 600px) {
   .home { gap: var(--space-6); }

@@ -1,0 +1,207 @@
+.lucro-calc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.lucro-calc__intro {
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.lucro-calc__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.lucro-calc__group {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface);
+}
+
+.lucro-calc__group legend {
+  padding: 0 var(--space-2);
+  font-weight: 600;
+  color: var(--color-navy);
+}
+
+.lucro-calc__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.lucro-calc__lgpd {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+
+.lucro-calc__lgpd input {
+  margin-top: 4px;
+}
+
+.lucro-calc__err {
+  color: var(--color-danger);
+  margin: 0;
+}
+
+.lucro-calc__actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* ===== Resultado ===== */
+.lucro-calc__result {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.lucro-calc__result-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.lucro-calc__result-head h3 {
+  margin: 0;
+  color: var(--color-navy);
+}
+
+.lucro-calc__status {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+
+.lucro-calc__status--prejuizo {
+  background: #fde2e1;
+  color: var(--color-danger);
+}
+.lucro-calc__status--muito_baixa {
+  background: #fde9c8;
+  color: var(--color-warning);
+}
+.lucro-calc__status--apertada {
+  background: #fff3cd;
+  color: #8a6d10;
+}
+.lucro-calc__status--boa {
+  background: var(--color-info-soft);
+  color: var(--color-info);
+}
+.lucro-calc__status--excelente {
+  background: var(--color-lime-soft);
+  color: var(--color-lime-dark);
+}
+
+.lucro-calc__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+}
+
+.lucro-calc__card {
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid var(--color-border);
+}
+
+.lucro-calc__card small {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.lucro-calc__card strong {
+  font-size: 1.6rem;
+  color: var(--color-navy);
+}
+
+.lucro-calc__card.is-big strong {
+  font-size: 2.1rem;
+}
+
+.lucro-calc__card--info {
+  background: var(--color-info-soft);
+  border-color: transparent;
+}
+.lucro-calc__card--good {
+  background: var(--color-lime-soft);
+  border-color: transparent;
+}
+.lucro-calc__card--warn {
+  background: #fff5e0;
+  border-color: transparent;
+}
+.lucro-calc__card--bad {
+  background: #fde2e1;
+  border-color: transparent;
+}
+.lucro-calc__card--bad strong {
+  color: var(--color-danger);
+}
+
+.lucro-calc__minor {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-3);
+  border-top: 1px dashed var(--color-border);
+  padding-top: var(--space-4);
+}
+
+.lucro-calc__minor-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lucro-calc__minor-item small {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+.lucro-calc__minor-item strong {
+  color: var(--color-navy);
+}
+
+.lucro-calc__cta {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+
+.lucro-calc__breakdown summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--color-info);
+}
+
+.lucro-calc__breakdown ul {
+  margin: var(--space-3) 0 0;
+  padding-left: var(--space-5);
+  color: var(--color-text-muted);
+  line-height: 1.7;
+}

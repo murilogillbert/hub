@@ -91,6 +91,9 @@ export function ClientLayout({ children }: ClientLayoutProps) {
       <footer className="layout-client__footer">
         <div className="container row-between">
           <small>&copy; {new Date().getFullYear()} OpenDriverHub</small>
+          <Link to="/lucro-real-motorista" className="layout-client__footer-link">
+            Motorista, descubra se seu dia compensou →
+          </Link>
           <small className="text-soft">Hub de parceiros com cashback</small>
         </div>
       </footer>

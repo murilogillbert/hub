@@ -156,6 +156,14 @@
   background: var(--color-surface);
 }
 
+.layout-client__footer-link {
+  color: var(--color-info);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+.layout-client__footer-link:hover { text-decoration: underline; }
+
 /* ============ INTERNAL LAYOUT (partner/admin) ============ */
 .layout-internal {
   display: grid;
