@@ -136,6 +136,56 @@ public class AssistantService : IAssistantService
         await _db.SaveChangesAsync(ct);
     }
 
+    public async Task<LucroSubmissionDto> CreateLucroSubmissionAsync(
+        Guid? userId, string? ip, LucroSubmissionInput input, CancellationToken ct)
+    {
+        if (!input.Consent.Granted)
+            throw new AppException(
+                "Consentimento LGPD é obrigatório para gravar os dados.", 400);
+
+        // 1. Lead mínimo (entra no ranking de temperatura do admin).
+        var lead = new AssistantLead
+        {
+            UserId = userId,
+            Profile = "motorista",
+            Category = "lucro_real",
+            Goal = "auto_diagnostico",
+            MainIntent = "descobrir_se_compensa",
+            Score = input.Score,
+            Temperature = ParseTemp(input.Temperature),
+        };
+        _db.Leads.Add(lead);
+
+        // 2. Trilha de auditoria LGPD: consentimento + payload completo,
+        //    com timestamp e IP. PII fica numa única linha indexável por leadId.
+        var payload = JsonSerializer.Serialize(new
+        {
+            contact = input.Contact,
+            consent = new
+            {
+                granted = input.Consent.Granted,
+                text = input.Consent.ConsentText,
+                version = input.Consent.ConsentVersion,
+                grantedAt = DateTime.UtcNow,
+                ip,
+            },
+            input = input.Input,
+            result = input.Result,
+        });
+
+        _db.AuditLogs.Add(new AuditLog
+        {
+            ActorId = userId,
+            Action = "lucro_real_submitted",
+            EntityType = "DriverProfit",
+            EntityId = lead.Id.ToString(),
+            PayloadJson = payload,
+        });
+
+        await _db.SaveChangesAsync(ct);
+        return new LucroSubmissionDto(lead.Id, lead.CreatedAt);
+    }
+
     public async Task<List<AssistantLeadDto>> ListLeadsAsync(CancellationToken ct)
         => (await _db.Leads.OrderByDescending(l => l.CreatedAt).Take(200).ToListAsync(ct))
             .Select(l => new AssistantLeadDto(l.Id,

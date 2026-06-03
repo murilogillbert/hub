@@ -125,6 +125,11 @@ public interface IAssistantService
     Task RecordInteractionAsync(BotInteractionInput input, CancellationToken ct);
     Task<List<AssistantLeadDto>> ListLeadsAsync(CancellationToken ct);
     Task<AssistantChatResponse> ChatAsync(AssistantChatRequest req, Guid? userId, CancellationToken ct);
+    /// <summary>Persiste uma submissão da calculadora de lucro real,
+    /// gravando a trilha de consentimento LGPD em AuditLog e criando um
+    /// AssistantLead minimalista para o ranking do admin.</summary>
+    Task<LucroSubmissionDto> CreateLucroSubmissionAsync(
+        Guid? userId, string? ip, LucroSubmissionInput input, CancellationToken ct);
 }
 
 /// <summary>Resolve uma credencial: valor do banco (se houver) senão o .env/appsettings.</summary>

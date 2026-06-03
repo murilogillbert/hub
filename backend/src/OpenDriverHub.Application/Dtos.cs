@@ -124,6 +124,22 @@ public record BotInteractionInput(
     string MensagemUsuario, string RespostaBot, string EtapaFluxo,
     Guid? LeadId, AssistantLeadInput Lead);
 
+// ---------- Lucro Real (calculadora) ----------
+/// <summary>Dado de contato informado voluntariamente na calculadora.</summary>
+public record LucroContact(string? Nome, string? Whatsapp, string? Cidade);
+
+/// <summary>Trilha de auditoria do consentimento LGPD.</summary>
+public record LucroConsent(
+    bool Granted, string ConsentText, string ConsentVersion);
+
+/// <summary>Submissão da calculadora de lucro real do motorista.</summary>
+public record LucroSubmissionInput(
+    LucroContact Contact, LucroConsent Consent,
+    System.Text.Json.JsonElement Input, System.Text.Json.JsonElement Result,
+    int Score, string Temperature);
+
+public record LucroSubmissionDto(Guid Id, DateTime CreatedAt);
+
 public record ChatMessage(string Role, string Content);
 public record AssistantChatRequest(List<ChatMessage> Messages);
 public record AssistantChatResponse(string Reply, bool Fallback);

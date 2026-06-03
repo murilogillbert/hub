@@ -502,6 +502,17 @@ export interface AssistantChatResponse {
   reply: string;
   fallback: boolean;
 }
+// Submissão da calculadora de lucro real. Endpoint dedicado para garantir
+// que o contato + a trilha de consentimento LGPD sejam persistidos.
+export interface LucroSubmissionPayload {
+  contact: { nome?: string; whatsapp?: string; cidade?: string };
+  consent: { granted: boolean; consentText: string; consentVersion: string };
+  input: Record<string, number>;
+  result: Record<string, unknown>;
+  score: number;
+  temperature: 'cold' | 'warm' | 'hot' | 'frio' | 'morno' | 'quente';
+}
+
 export const assistantApi = {
   createLead: (body: unknown) =>
     api.post<{ id: string }>('/assistant/leads', body),
@@ -509,4 +520,9 @@ export const assistantApi = {
     api.post<void>('/assistant/interactions', body),
   chat: (messages: ChatMessage[]) =>
     api.post<AssistantChatResponse>('/assistant/chat', { messages }),
+  submitLucroReal: (body: LucroSubmissionPayload) =>
+    api.post<{ id: string; createdAt: string }>(
+      '/assistant/lucro-submissions',
+      body,
+    ),
 };

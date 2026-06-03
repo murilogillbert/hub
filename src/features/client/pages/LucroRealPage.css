@@ -24,6 +24,8 @@
 }
 
 .lucro-page__hero-copy h1 {
+  /* sobrescreve color global do theme.css (h1 = --color-text cinza-escuro) */
+  color: #fff;
   font-size: clamp(1.6rem, 3.4vw, 2.6rem);
   line-height: 1.15;
   margin: var(--space-2) 0 var(--space-3);

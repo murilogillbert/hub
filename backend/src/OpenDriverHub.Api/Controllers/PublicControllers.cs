@@ -231,4 +231,20 @@ public class AssistantController : ControllerBase
         return Ok(new ApiEnvelope<AssistantChatResponse>(
             await _assistant.ChatAsync(req, userId, ct)));
     }
+
+    /// <summary>Submissão da calculadora de lucro real do motorista.
+    /// Endpoint público (não exige login). Persiste consentimento LGPD
+    /// auditável em AuditLog + AssistantLead minimalista.</summary>
+    [HttpPost("lucro-submissions")]
+    [EnableRateLimiting("auth")]
+    public async Task<IActionResult> LucroSubmission(
+        LucroSubmissionInput input, CancellationToken ct)
+    {
+        Guid? userId = Guid.TryParse(
+            User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+            out var id) ? id : null;
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        return Ok(new ApiEnvelope<LucroSubmissionDto>(
+            await _assistant.CreateLucroSubmissionAsync(userId, ip, input, ct)));
+    }
 }

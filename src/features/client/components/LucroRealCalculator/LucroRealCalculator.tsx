@@ -3,6 +3,16 @@ import { Input } from '@shared/components/Input/Input';
 import { Button } from '@shared/components/Button/Button';
 import { formatCurrency } from '@shared/utils/formatters';
 import { assistantApi } from '@shared/api/endpoints';
+
+/** Texto e versão do termo de consentimento — persistidos no AuditLog
+ *  como prova de finalidade (LGPD Art. 7º §6º / Art. 8º). Bump a versão
+ *  sempre que mudar a redação abaixo. */
+const CONSENT_VERSION = 'v1-2026-06';
+const CONSENT_TEXT =
+  'Autorizo a Open Driver a utilizar meus dados para calcular meu ' +
+  'resultado econômico, gerar diagnóstico personalizado e enviar ' +
+  'comunicações pelo WhatsApp sobre benefícios, economia e ' +
+  'oportunidades para motoristas.';
 import {
   LucroInput,
   LucroResult,
@@ -51,20 +61,23 @@ export function LucroRealCalculator({
     const r = calcularLucroReal(form);
     setResult(r);
 
-    // Captura de lead (fase 1 — reaproveita o pipeline do assistente).
-    // Falha silenciosa: não trava o resultado se o back estiver indisponível.
+    // Endpoint dedicado: persiste contato + consentimento auditável (texto
+    // exato + versão + timestamp + IP via back) no AuditLog, e cria um
+    // AssistantLead minimalista para o ranking do admin.
+    // Falha silenciosa: o diagnóstico local já está pronto na tela.
     try {
       const score = scoreFromLucroHora(r.lucroHora);
-      await assistantApi.createLead({
-        source: 'lucro_real',
-        profile: 'motorista',
-        category: 'lucro_real',
-        goal: 'auto_diagnostico',
-        mainIntent: 'descobrir_se_compensa',
+      await assistantApi.submitLucroReal({
+        contact: contato,
+        consent: {
+          granted: true,
+          consentText: CONSENT_TEXT,
+          consentVersion: CONSENT_VERSION,
+        },
+        input: form as unknown as Record<string, number>,
+        result: r as unknown as Record<string, unknown>,
         score,
         temperature: temperatureFromScore(score),
-        contact: contato,
-        payload: { input: form, result: r },
       });
     } catch {
       /* ignore — diagnostico local já está pronto */
@@ -181,12 +194,7 @@ export function LucroRealCalculator({
             checked={consentimento}
             onChange={(e) => setConsentimento(e.target.checked)}
           />
-          <span>
-            Autorizo a Open Driver a utilizar meus dados para calcular meu
-            resultado econômico, gerar diagnóstico personalizado e enviar
-            comunicações pelo WhatsApp sobre benefícios, economia e
-            oportunidades para motoristas.
-          </span>
+          <span>{CONSENT_TEXT}</span>
         </label>
 
         {erro && <p className="lucro-calc__err">{erro}</p>}
