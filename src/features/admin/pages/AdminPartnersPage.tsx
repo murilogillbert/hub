@@ -22,6 +22,7 @@ interface PartnerForm {
   state: string;
   lat: number;
   lng: number;
+  asaasWalletId: string;
 }
 const EMPTY: PartnerForm = {
   name: '',
@@ -34,6 +35,7 @@ const EMPTY: PartnerForm = {
   state: '',
   lat: 0,
   lng: 0,
+  asaasWalletId: '',
 };
 
 export function AdminPartnersPage() {
@@ -92,6 +94,7 @@ export function AdminPartnersPage() {
         state: p.state,
         lat: p.lat,
         lng: p.lng,
+        asaasWalletId: p.asaasWalletId ?? undefined,
       }),
     onSuccess: invalidate,
   });
@@ -109,6 +112,7 @@ export function AdminPartnersPage() {
       state: p.state ?? '',
       lat: p.lat ?? 0,
       lng: p.lng ?? 0,
+      asaasWalletId: p.asaasWalletId ?? '',
     });
   };
 
@@ -222,6 +226,13 @@ export function AdminPartnersPage() {
               label="URL do logo (opcional)"
               value={form.logoUrl}
               onChange={(e) => set('logoUrl', e.target.value)}
+            />
+            <Input
+              label="Asaas Wallet ID (split automático)"
+              value={form.asaasWalletId}
+              onChange={(e) => set('asaasWalletId', e.target.value)}
+              placeholder="UUID da carteira do parceiro no Asaas (opcional)"
+              hint="Com a carteira preenchida e o provider Asaas ativo, o líquido do parceiro cai direto na conta dele a cada venda. Vazio = repasse manual."
             />
             <div className="row">
               <Button

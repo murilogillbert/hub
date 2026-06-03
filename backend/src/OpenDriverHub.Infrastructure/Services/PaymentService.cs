@@ -16,7 +16,9 @@ public class PaymentService : IPaymentService
 
     public async Task<PaymentStatusSnapshot> ProcessAsync(Guid customerId, ProcessPaymentRequest req, CancellationToken ct)
     {
-        var order = await _db.Orders.Include(o => o.Product).Include(o => o.Customer)
+        var order = await _db.Orders
+            .Include(o => o.Product).Include(o => o.Customer)
+            .Include(o => o.Items).ThenInclude(i => i.Partner) // necessário p/ split Asaas
             .FirstOrDefaultAsync(o => o.Id == req.OrderId && o.CustomerId == customerId, ct)
             ?? throw new AppException("Pedido não encontrado.", 404);
         if (order.Status != OrderStatus.PendingPayment)
@@ -134,7 +136,7 @@ public class PaymentService : IPaymentService
 
         _db.PaymentEvents.Add(new PaymentEvent
         {
-            Provider = "mercado_pago",
+            Provider = _gateway.Provider,
             EventType = eventType,
             ExternalId = externalId,
             OrderId = order?.Id,

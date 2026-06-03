@@ -346,6 +346,7 @@ export interface PartnerUpsert {
   state?: string;
   lat?: number;
   lng?: number;
+  asaasWalletId?: string;
 }
 export interface AdminUserUpdate {
   name: string;

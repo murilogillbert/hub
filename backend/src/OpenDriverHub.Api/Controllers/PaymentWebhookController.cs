@@ -71,6 +71,59 @@ public class PaymentWebhookController : ControllerBase
         return await ReconcileAsync(paymentId, eventType, ct);
     }
 
+    /// <summary>
+    /// Webhook do Asaas. Diferente do Mercado Pago, o Asaas não assina via HMAC:
+    /// valida por um token compartilhado enviado no header <c>asaas-access-token</c>,
+    /// configurado no painel do Asaas e em Admin → Integrações.
+    /// Body: { event, payment: { id, status, externalReference } }.
+    /// </summary>
+    [HttpPost("asaas")]
+    public async Task<IActionResult> Asaas(
+        [FromBody] System.Text.Json.JsonElement body, CancellationToken ct)
+    {
+        var expected = await _settings.GetAsync("Asaas:WebhookToken", ct);
+        var requireToken =
+            !bool.TryParse(_cfg["Payment:WebhookRequireSignature"], out var rs) || rs;
+
+        if (string.IsNullOrWhiteSpace(expected))
+        {
+            if (requireToken)
+            {
+                _log.LogWarning("Webhook Asaas recebido sem token configurado.");
+                return StatusCode(503, new { error = "webhook_token_not_configured" });
+            }
+            _log.LogWarning("Webhook Asaas aceito SEM verificação (dev: token ausente).");
+        }
+        else
+        {
+            var received = Request.Headers["asaas-access-token"].ToString();
+            var ok = !string.IsNullOrEmpty(received)
+                && CryptographicOperations.FixedTimeEquals(
+                    Encoding.UTF8.GetBytes(received),
+                    Encoding.UTF8.GetBytes(expected));
+            if (!ok)
+            {
+                _log.LogWarning("Token de webhook Asaas inválido.");
+                return Unauthorized(new { error = "invalid_token" });
+            }
+        }
+
+        var eventType = body.TryGetProperty("event", out var ev)
+            ? ev.GetString() ?? "payment" : "payment";
+        string? paymentId = null;
+        if (body.TryGetProperty("payment", out var pay)
+            && pay.TryGetProperty("id", out var pid))
+            paymentId = pid.GetString();
+
+        if (string.IsNullOrWhiteSpace(paymentId))
+            return BadRequest(new { error = "missing_payment_id" });
+
+        var rawPayload = body.GetRawText();
+        var status = await _payments.ReconcileByExternalAsync(
+            paymentId, eventType, rawPayload, ct);
+        return Ok(new { received = true, status });
+    }
+
     private async Task<IActionResult> ReconcileAsync(
         string paymentId, string eventType, CancellationToken ct)
     {

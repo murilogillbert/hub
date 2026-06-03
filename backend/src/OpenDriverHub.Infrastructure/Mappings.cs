@@ -21,7 +21,7 @@ public static class Mappings
 
     public static PartnerDto ToDto(this Partner p) => new(
         p.Id, p.Name, p.Segment, p.LogoUrl, p.Active, p.FeePercent, p.JoinedAt,
-        p.Cnpj, p.City, p.State, p.Lat, p.Lng);
+        p.Cnpj, p.City, p.State, p.Lat, p.Lng, p.AsaasWalletId);
 
     public static StoreDto ToDto(this PartnerStore s) => new(
         s.Id, s.PartnerId, s.Name, s.Address, s.City, s.State, s.Lat, s.Lng,

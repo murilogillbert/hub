@@ -40,6 +40,16 @@ public class SettingsService : ISettingsService, ISettingsProvider
                 new("MercadoPago:PublicKey", "Public Key", false),
                 new("MercadoPago:WebhookSecret", "Webhook Secret", true),
             ]),
+        new("asaas", "Asaas",
+            "Gateway de pagamento com split automático: o líquido cai direto na "
+            + "carteira de cada parceiro (walletId no cadastro). Webhook reconcilia o status.",
+            "🏦",
+            [
+                new("Asaas:ApiKey", "API Key", true),
+                new("Asaas:WebhookToken", "Webhook Token", true),
+                new("Asaas:Environment", "Ambiente (sandbox/production)", false),
+                new("Asaas:DefaultCpfCnpj", "CPF/CNPJ de teste (sandbox)", false),
+            ]),
         new("email", "E-mail (Gmail)",
             "Conta Gmail para e-mails transacionais (confirmações e relatórios).",
             "✉️",

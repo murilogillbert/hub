@@ -146,6 +146,8 @@ public class AdminService : IAdminService
             State = req.State?.Trim() ?? "",
             Lat = req.Lat ?? 0,
             Lng = req.Lng ?? 0,
+            AsaasWalletId = string.IsNullOrWhiteSpace(req.AsaasWalletId)
+                ? null : req.AsaasWalletId.Trim(),
         };
         _db.Partners.Add(p);
         await _db.SaveChangesAsync(ct);
@@ -166,6 +168,10 @@ public class AdminService : IAdminService
         if (req.State is not null) p.State = req.State.Trim();
         if (req.Lat is { } lat) p.Lat = lat;
         if (req.Lng is { } lng) p.Lng = lng;
+        // null = não mexe; string vazia = limpa (volta a repasse manual).
+        if (req.AsaasWalletId is not null)
+            p.AsaasWalletId = string.IsNullOrWhiteSpace(req.AsaasWalletId)
+                ? null : req.AsaasWalletId.Trim();
         await _db.SaveChangesAsync(ct);
         return p.ToDto();
     }

@@ -31,6 +31,9 @@ public class Partner
     public double Lng { get; set; }
     public bool Active { get; set; } = true;
     public decimal FeePercent { get; set; } = 10m;
+    /// <summary>Carteira do parceiro no Asaas (walletId). Quando presente,
+    /// o pagamento é dividido (split) e o líquido cai direto na conta dele.</summary>
+    public string? AsaasWalletId { get; set; }
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
     public List<Product> Products { get; set; } = new();
     public List<PartnerStore> Stores { get; set; } = new();

@@ -36,10 +36,12 @@ public record ProductUpsertRequest(
 public record PartnerDto(
     Guid Id, string Name, string Segment, string LogoUrl, bool Active,
     decimal FeePercent, DateTime JoinedAt,
-    string Cnpj, string City, string State, double Lat, double Lng);
+    string Cnpj, string City, string State, double Lat, double Lng,
+    string? AsaasWalletId = null);
 public record PartnerUpsertRequest(
     string Name, string Segment, string LogoUrl, decimal FeePercent, bool Active,
-    string? Cnpj, string? City, string? State, double? Lat, double? Lng);
+    string? Cnpj, string? City, string? State, double? Lat, double? Lng,
+    string? AsaasWalletId = null);
 public record StoreDto(
     Guid Id, Guid PartnerId, string Name, string Address,
     string City, string State, double Lat, double Lng, string Category,

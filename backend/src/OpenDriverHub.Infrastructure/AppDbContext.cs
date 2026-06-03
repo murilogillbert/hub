@@ -56,6 +56,7 @@ public class AppDbContext : DbContext
         {
             e.Property(x => x.Name).HasMaxLength(160).IsRequired();
             e.Property(x => x.FeePercent).HasPrecision(5, 2);
+            e.Property(x => x.AsaasWalletId).HasMaxLength(64);
         });
 
         b.Entity<PartnerStore>(e =>

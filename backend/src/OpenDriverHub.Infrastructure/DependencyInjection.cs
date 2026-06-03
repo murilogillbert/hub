@@ -21,8 +21,12 @@ public static class DependencyInjection
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         services.AddScoped<ICurrentUser, CurrentUser>();
 
+        // Gateway de pagamento selecionado por Payment:Provider. Convivem 3
+        // implementações; o admin troca o provider sem recompilar.
         if (paymentProvider.Equals("mercadopago", StringComparison.OrdinalIgnoreCase))
             services.AddScoped<IPaymentGateway, MercadoPagoGateway>();
+        else if (paymentProvider.Equals("asaas", StringComparison.OrdinalIgnoreCase))
+            services.AddScoped<IPaymentGateway, AsaasGateway>();
         else
             services.AddScoped<IPaymentGateway, MockPaymentGateway>();
 
