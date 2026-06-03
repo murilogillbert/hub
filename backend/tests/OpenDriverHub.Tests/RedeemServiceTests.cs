@@ -36,6 +36,23 @@ public class RedeemServiceTests
             PaidPrice = 80m,
             CashbackEarned = 4m,
             Status = OrderStatus.Paid,
+            Items =
+            {
+                new OrderItem
+                {
+                    Product = product,
+                    ProductId = product.Id,
+                    Partner = partner,
+                    PartnerId = partner.Id,
+                    ProductTitle = product.Title,
+                    Category = product.Category,
+                    UnitPrice = product.Price,
+                    Quantity = 1,
+                    CashbackPercent = product.CashbackPercent,
+                    LineTotal = 80m,
+                    CashbackEarned = 4m,
+                },
+            },
         };
         scope.Db.AddRange(partner, customer, product, order);
         await scope.Db.SaveChangesAsync();
