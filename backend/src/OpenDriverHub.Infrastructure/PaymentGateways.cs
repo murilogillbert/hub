@@ -69,11 +69,13 @@ public class MercadoPagoGateway : IPaymentGateway
 {
     private readonly ISettingsProvider _settings;
     private readonly IHttpClientFactory _http;
+    private readonly ILogger<MercadoPagoGateway> _log;
     public string Provider => "mercadopago";
 
-    public MercadoPagoGateway(ISettingsProvider settings, IHttpClientFactory http)
+    public MercadoPagoGateway(ISettingsProvider settings, IHttpClientFactory http,
+        ILogger<MercadoPagoGateway> log)
     {
-        _settings = settings; _http = http;
+        _settings = settings; _http = http; _log = log;
     }
 
     private async Task<HttpClient> ClientAsync(CancellationToken ct)
@@ -140,11 +142,14 @@ public class MercadoPagoGateway : IPaymentGateway
         req.Headers.Add("X-Idempotency-Key", Guid.NewGuid().ToString());
         req.Content = JsonContent.Create(body);
         using var resp = await client.SendAsync(req, ct);
-        using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync(ct));
+        var rawBody = await resp.Content.ReadAsStringAsync(ct);
+        using var doc = JsonDocument.Parse(rawBody);
         var root = doc.RootElement;
 
         if (!resp.IsSuccessStatusCode)
         {
+            _log.LogWarning("Mercado Pago POST /v1/payments falhou — HTTP {Status}: {Body}",
+                (int)resp.StatusCode, rawBody);
             var msg = root.TryGetProperty("message", out var m)
                 ? m.GetString() : "Falha no Mercado Pago.";
             throw new AppException($"Mercado Pago: {msg}", 502);
