@@ -481,6 +481,35 @@
 .home__lucro-mock-card--2 small { color: var(--color-navy); }
 .home__lucro-mock-card--3 { top: 68%; left: 12%; }
 
+/* ---- Correção de cascata: os estilos base do lucro-mock estão declarados
+   APÓS o primeiro bloco @media 980px neste arquivo, então eles sobrescrevem
+   as regras mobile (position:absolute volta, min-height:280px volta, flex some).
+   Re-declaramos aqui — depois da base — para que tablet e mobile recebam o
+   layout flex correto com cards visíveis. ---- */
+@media (max-width: 980px) {
+  .home__lucro-mock {
+    display: flex;
+    min-height: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+  .home__lucro-mock-card {
+    position: static;
+    flex: 1;
+    min-width: 120px;
+  }
+  /* Limpa os valores de posicionamento absoluto das variantes */
+  .home__lucro-mock-card--1,
+  .home__lucro-mock-card--2,
+  .home__lucro-mock-card--3 {
+    top: auto;
+    left: auto;
+    bottom: auto;
+    right: auto;
+  }
+}
+
 @media (max-width: 600px) {
   .home { gap: var(--space-6); }
 
@@ -526,6 +555,9 @@
 
   /* --- Lucro --- */
   .home__lucro-list { grid-template-columns: 1fr; }
+  /* Gap menor e sem min-width fixo em telas estreitas */
+  .home__lucro-mock { gap: var(--space-2); }
+  .home__lucro-mock-card { min-width: 0; }
 
   /* --- Catálogo / Mapa --- */
   .home__search { width: 100%; }
