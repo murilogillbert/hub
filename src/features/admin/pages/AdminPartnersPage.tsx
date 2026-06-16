@@ -7,7 +7,7 @@ import { QueryState } from '@shared/components/QueryState/QueryState';
 import { formatPercent } from '@shared/utils/formatters';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { coordinateError, isValidCnpj, maskCnpj, maskCoordinate } from '@shared/utils/masks';
-import { adminApi, catalogApi } from '@shared/api/endpoints';
+import { adminApi, catalogApi, PartnerUpsert } from '@shared/api/endpoints';
 import { Partner } from '@shared/types';
 import './AdminPages.css';
 
@@ -15,26 +15,26 @@ interface PartnerForm {
   name: string;
   segment: string;
   logoUrl: string;
-  feePercent: number;
+  feePercent: string;
   active: boolean;
   cnpj: string;
   city: string;
   state: string;
-  lat: number;
-  lng: number;
+  lat: string;
+  lng: string;
   asaasWalletId: string;
 }
 const EMPTY: PartnerForm = {
   name: '',
   segment: '',
   logoUrl: '',
-  feePercent: 10,
+  feePercent: '10',
   active: true,
   cnpj: '',
   city: '',
   state: '',
-  lat: 0,
-  lng: 0,
+  lat: '0',
+  lng: '0',
   asaasWalletId: '',
 };
 
@@ -63,7 +63,7 @@ export function AdminPartnersPage() {
     setEditing(null);
   };
   const createMut = useMutation({
-    mutationFn: (b: PartnerForm) => adminApi.createPartner(b),
+    mutationFn: (b: PartnerUpsert) => adminApi.createPartner(b),
     onSuccess: () => {
       invalidate();
       toast.success('Parceiro criado.');
@@ -72,7 +72,7 @@ export function AdminPartnersPage() {
       toast.error(err instanceof Error ? err.message : 'Falha ao criar parceiro.'),
   });
   const updateMut = useMutation({
-    mutationFn: ({ id, b }: { id: string; b: PartnerForm }) =>
+    mutationFn: ({ id, b }: { id: string; b: PartnerUpsert }) =>
       adminApi.updatePartner(id, b),
     onSuccess: () => {
       invalidate();
@@ -105,13 +105,13 @@ export function AdminPartnersPage() {
       name: p.name,
       segment: p.segment,
       logoUrl: p.logoUrl,
-      feePercent: p.feePercent,
+      feePercent: String(p.feePercent),
       active: p.active,
       cnpj: p.cnpj ?? '',
       city: p.city ?? '',
       state: p.state ?? '',
-      lat: p.lat ?? 0,
-      lng: p.lng ?? 0,
+      lat: String(p.lat ?? 0),
+      lng: String(p.lng ?? 0),
       asaasWalletId: p.asaasWalletId ?? '',
     });
   };
@@ -120,14 +120,20 @@ export function AdminPartnersPage() {
     if (!form) return;
     if (
       (form.cnpj && !isValidCnpj(form.cnpj)) ||
-      coordinateError(String(form.lat), 'lat') ||
-      coordinateError(String(form.lng), 'lng')
+      coordinateError(form.lat, 'lat') ||
+      coordinateError(form.lng, 'lng')
     ) {
       toast.error('Revise os campos destacados antes de salvar.');
       return;
     }
-    if (editing) updateMut.mutate({ id: editing.id, b: form });
-    else createMut.mutate(form);
+    const body: PartnerUpsert = {
+      ...form,
+      feePercent: Number(form.feePercent) || 0,
+      lat: Number(form.lat) || 0,
+      lng: Number(form.lng) || 0,
+    };
+    if (editing) updateMut.mutate({ id: editing.id, b: body });
+    else createMut.mutate(body);
   };
 
   const set = <K extends keyof PartnerForm>(k: K, v: PartnerForm[K]) =>
@@ -181,9 +187,9 @@ export function AdminPartnersPage() {
               </div>
               <Input
                 label="Taxa (%)"
-                type="number"
-                value={String(form.feePercent)}
-                onChange={(e) => set('feePercent', Number(e.target.value))}
+                inputMode="decimal"
+                value={form.feePercent}
+                onChange={(e) => set('feePercent', maskCoordinate(e.target.value))}
               />
             </div>
             <Input
@@ -210,16 +216,16 @@ export function AdminPartnersPage() {
               <Input
                 label="Latitude"
                 inputMode="decimal"
-                value={String(form.lat)}
-                onChange={(e) => set('lat', Number(maskCoordinate(e.target.value)))}
-                error={coordinateError(String(form.lat), 'lat')}
+                value={form.lat}
+                onChange={(e) => set('lat', maskCoordinate(e.target.value))}
+                error={coordinateError(form.lat, 'lat')}
               />
               <Input
                 label="Longitude"
                 inputMode="decimal"
-                value={String(form.lng)}
-                onChange={(e) => set('lng', Number(maskCoordinate(e.target.value)))}
-                error={coordinateError(String(form.lng), 'lng')}
+                value={form.lng}
+                onChange={(e) => set('lng', maskCoordinate(e.target.value))}
+                error={coordinateError(form.lng, 'lng')}
               />
             </div>
             <Input

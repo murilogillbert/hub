@@ -42,6 +42,7 @@
   padding: 10px var(--space-2);
   background: transparent;
   font-size: var(--font-md);
+  color: var(--color-text);
 }
 
 .input-field__hint {
