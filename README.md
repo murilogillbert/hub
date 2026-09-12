@@ -15,7 +15,7 @@ Pré-requisitos: Node 20+ e um projeto no [supabase.com](https://supabase.com) (
 # 1. Configure o .env (raiz do repo)
 cp .env.example .env
 # Cole no .env: DATABASE_URL/DIRECT_URL (Project Settings -> Database) e
-# SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY (Project Settings -> API). Crie
+# SUPABASE_URL/SUPABASE_SECRET_KEY (Project Settings -> API). Crie
 # também um bucket público no Storage (ex.: "uploads") — veja o .env.example
 # para o passo a passo completo.
 
@@ -32,6 +32,49 @@ npm run dev                     # http://localhost:5173
 
 Contas demo (seed): `cliente@demo.com` · `parceiro@demo.com` ·
 `admin@demo.com` — senha **`Demo@123`**.
+
+## Deploy (Vercel + Supabase)
+
+O front e o backend viram **dois projetos separados na Vercel**, apontando pro
+mesmo repositório GitHub — não dá pra ter dois "Root Directory" num projeto só.
+
+**1. Banco/Storage (Supabase)** — já feito se você seguiu o passo a passo do
+`.env.example`. Duas pegadinhas:
+- A senha do Postgres precisa estar **url-encoded** na connection string se
+  tiver caracteres como `@`, `#`, `!`, `/`, `?` (ex.: `@` vira `%40`, `#` vira
+  `%23`) — senão a URL fica ambígua.
+- `DATABASE_URL` deve ser a connection string do **Transaction pooler**
+  (porta 6543, `?pgbouncer=true`) — a direta (porta 5432) só serve pra
+  `DIRECT_URL`, usada nas migrations. Copie as duas em Project Settings →
+  Database → Connection string.
+
+**2. Projeto da Vercel para o front** — Root Directory = `/` (raiz do repo),
+Framework Preset = **Vite** (não "VitePress" — é outra ferramenta, de sites de
+documentação). Env var: `VITE_API_BASE_URL` apontando pro domínio do projeto
+do backend (passo 3), ex. `https://hub-api.vercel.app/api/v1`.
+
+**3. Projeto da Vercel para o backend** — novo projeto apontando pro mesmo
+repo, Root Directory = `backend/`, Framework Preset = **Other** (a Vercel
+detecta `backend/api/index.ts` como function automaticamente — ver
+`backend/vercel.json`, que já configura o rewrite de todas as rotas pra essa
+function e o Cron Job de reconciliação de PIX). Env vars: todas as do
+`.env.example` (`DATABASE_URL`, `DIRECT_URL`, `SUPABASE_*`, `JWT_SECRET`,
+`CORS_ORIGINS` apontando pro domínio do front, `CRON_SECRET` com qualquer
+valor aleatório, etc.). Depois do primeiro deploy, rode as migrations contra
+o Supabase de produção a partir da sua máquina:
+```bash
+cd backend
+npm run prisma:deploy   # aplica as migrations (não cria uma nova)
+```
+
+> ⚠️ Hospedagem serverless (Vercel) não mantém processo contínuo — o job de
+> reconciliação de PIX (que localmente roda num `setInterval`) vira um
+> **Cron Job** batendo em `/api/v1/internal/reconcile-payments` a cada 5
+> minutos. Se o seu plano da Vercel só permitir execuções diárias de cron,
+> ajuste `backend/vercel.json` — o checkout de PIX também sincroniza sozinho
+> quando o cliente consulta o status do pagamento, então um cron mais
+> espaçado só atrasa a confirmação de pedidos abandonados, não quebra o
+> fluxo normal.
 
 > O botão flutuante `⚙` (canto inferior direito) faz **quick-login** real nas 3
 > contas demo para navegar entre as áreas. A tela `/login` também funciona com

@@ -4,7 +4,12 @@
 // Postgres/Supabase); o Prisma Client continua expondo camelCase no código.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // "native" para rodar local (Windows/Mac/Linux); "rhel-openssl-3.0.x" é o
+  // binário que as funções serverless da Vercel (Amazon Linux) precisam.
+  // Sem isso, o Prisma Client falha em runtime na Vercel com "Query Engine
+  // not found for this platform".
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {

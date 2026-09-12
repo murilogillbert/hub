@@ -47,11 +47,19 @@ export const config = {
   },
   supabase: {
     url: process.env.SUPABASE_URL ?? '',
-    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
+    // Supabase vem migrando de "service_role" (JWT) para "secret key"
+    // (sb_secret_...) — aceitamos os dois nomes, o novo tem prioridade.
+    serviceRoleKey: process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
     storageBucket: process.env.SUPABASE_STORAGE_BUCKET ?? 'uploads',
   },
   uploads: {
     maxImageBytes: parseIntEnv(process.env.STORAGE_MAX_IMAGE_BYTES, 5 * 1024 * 1024),
+  },
+  cron: {
+    // Vercel injeta essa mesma string no header Authorization das chamadas
+    // de Cron Job — comparamos pra garantir que só a Vercel (ou quem tiver o
+    // segredo) consegue disparar a reconciliação de pagamentos.
+    secret: process.env.CRON_SECRET ?? '',
   },
   affiliate: {
     // URL do formulário (Formbricks) pro cliente final. O código do afiliado é
