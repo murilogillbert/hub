@@ -27,6 +27,20 @@ export function createApp() {
   app.set('trust proxy', 1);
 
   app.use(helmet());
+
+  // Private Network Access: navegadores modernos bloqueiam uma página
+  // pública (https://..., fora da rede local) de acessar um endereço
+  // loopback/rede privada (localhost:5000 rodando na sua máquina) a menos
+  // que o servidor autorize explicitamente esse acesso no preflight — é uma
+  // checagem separada do CORS normal (Access-Control-Allow-Origin não
+  // resolve sozinho). Só se aplica de fato quando o navegador manda o
+  // header de request; não afeta chamadas normais same-network.
+  app.use((req, res, next) => {
+    if (req.headers['access-control-request-private-network']) {
+      res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    }
+    next();
+  });
   app.use(cors({ origin: config.corsOrigins, credentials: false }));
   app.use(express.json());
 
