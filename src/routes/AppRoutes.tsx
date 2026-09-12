@@ -1,7 +1,8 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ClientLayout } from '@shared/components/Layouts/ClientLayout';
-import { PartnerLayout } from '@shared/components/Layouts/PartnerLayout';
+import { PartnerLayout, PartnerIndexRedirect } from '@shared/components/Layouts/PartnerLayout';
 import { AdminLayout } from '@shared/components/Layouts/AdminLayout';
+import { FinanceiroLayout } from '@shared/components/Layouts/FinanceiroLayout';
 import { RequireRole, RedirectIfAuthenticated } from '@shared/components/RouteGuards';
 import { StepUpGuard } from '@shared/components/StepUpGuard/StepUpGuard';
 
@@ -17,6 +18,7 @@ import { ProfilePage } from '@features/client/pages/ProfilePage';
 import { OrderDetailPage } from '@features/client/pages/OrderDetailPage';
 import { CashbackPage } from '@features/client/pages/CashbackPage';
 import { LucroRealPage } from '@features/client/pages/LucroRealPage';
+import { AffiliateLandingPage } from '@features/affiliate/pages/AffiliateLandingPage';
 
 import { LoginPage } from '@features/auth/pages/LoginPage';
 import { RegisterChoicePage } from '@features/auth/pages/RegisterChoicePage';
@@ -27,6 +29,10 @@ import { PartnerCatalogPage } from '@features/partner/pages/PartnerCatalogPage';
 import { PartnerRedeemPage } from '@features/partner/pages/PartnerRedeemPage';
 import { PartnerMetricsPage } from '@features/partner/pages/PartnerMetricsPage';
 import { PartnerStoresPage } from '@features/partner/pages/PartnerStoresPage';
+import { AffiliateWalletPage } from '@features/partner/pages/affiliate/AffiliateWalletPage';
+import { AffiliateWithdrawalsPage } from '@features/partner/pages/affiliate/AffiliateWithdrawalsPage';
+import { AffiliateMaterialsPage } from '@features/partner/pages/affiliate/AffiliateMaterialsPage';
+import { AffiliateLinkPage } from '@features/partner/pages/affiliate/AffiliateLinkPage';
 
 import { AdminDashboardPage } from '@features/admin/pages/AdminDashboardPage';
 import { AdminSalesPage } from '@features/admin/pages/AdminSalesPage';
@@ -37,6 +43,12 @@ import { AdminUsersPage } from '@features/admin/pages/AdminUsersPage';
 import { AdminIntegrationsPage } from '@features/admin/pages/AdminIntegrationsPage';
 import { AdminCategoriesPage } from '@features/admin/pages/AdminCategoriesPage';
 import { AdminAuditPage } from '@features/admin/pages/AdminAuditPage';
+import { AdminAffiliateApplicationsPage } from '@features/admin/pages/AdminAffiliateApplicationsPage';
+import { AdminCampaignMaterialsPage } from '@features/admin/pages/AdminCampaignMaterialsPage';
+import { AdminApiKeysPage } from '@features/admin/pages/AdminApiKeysPage';
+
+import { FinanceiroWithdrawalsPage } from '@features/financeiro/pages/FinanceiroWithdrawalsPage';
+import { FinanceiroAffiliatesPage } from '@features/financeiro/pages/FinanceiroAffiliatesPage';
 
 export function AppRoutes() {
   return (
@@ -47,6 +59,7 @@ export function AppRoutes() {
         <Route path="/produtos" element={<CatalogPage />} />
         <Route path="/catalogo" element={<CatalogPage />} />
         <Route path="/lucro-real-motorista" element={<LucroRealPage />} />
+        <Route path="/afiliados" element={<AffiliateLandingPage />} />
 
         {/* Auth: 1 tela de login, cadastro com seletor + 2 telas */}
         <Route
@@ -101,7 +114,7 @@ export function AppRoutes() {
       {/* Partner area */}
       <Route element={<RequireRole roles={['partner', 'admin']} />}>
         <Route path="/parceiro" element={<PartnerLayout />}>
-          <Route index element={<Navigate to="catalogo" replace />} />
+          <Route index element={<PartnerIndexRedirect />} />
           <Route path="catalogo" element={<PartnerCatalogPage />} />
           <Route path="unidades" element={<PartnerStoresPage />} />
           <Route path="venda" element={<PartnerRedeemPage />} />
@@ -113,6 +126,11 @@ export function AppRoutes() {
               </StepUpGuard>
             }
           />
+          {/* Programa de afiliados solar (Partner.kind = solar_affiliate) */}
+          <Route path="afiliado/carteira" element={<AffiliateWalletPage />} />
+          <Route path="afiliado/saque" element={<AffiliateWithdrawalsPage />} />
+          <Route path="afiliado/materiais" element={<AffiliateMaterialsPage />} />
+          <Route path="afiliado/link" element={<AffiliateLinkPage />} />
         </Route>
       </Route>
 
@@ -128,6 +146,17 @@ export function AppRoutes() {
           <Route path="categorias" element={<AdminCategoriesPage />} />
           <Route path="integracoes" element={<AdminIntegrationsPage />} />
           <Route path="auditoria" element={<AdminAuditPage />} />
+          <Route path="afiliados/solicitacoes" element={<AdminAffiliateApplicationsPage />} />
+          <Route path="afiliados/materiais" element={<AdminCampaignMaterialsPage />} />
+          <Route path="afiliados/chaves-api" element={<AdminApiKeysPage />} />
+        </Route>
+      </Route>
+
+      {/* Financeiro area */}
+      <Route element={<RequireRole roles={['financeiro', 'admin']} />}>
+        <Route path="/financeiro" element={<FinanceiroLayout />}>
+          <Route index element={<FinanceiroWithdrawalsPage />} />
+          <Route path="afiliados" element={<FinanceiroAffiliatesPage />} />
         </Route>
       </Route>
 

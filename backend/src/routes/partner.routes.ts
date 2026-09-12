@@ -2,8 +2,14 @@ import { Router } from 'express';
 import { productUpsertSchema, storeUpsertSchema } from '../dtos/catalog.dto.js';
 import { envelope } from '../dtos/common.dto.js';
 import { redeemRequestSchema } from '../dtos/orders.dto.js';
+import { requestWithdrawalSchema } from '../dtos/affiliate.dto.js';
+import { AppError } from '../errors.js';
+import { prisma } from '../infra/prisma.js';
 import { ROLES, partnerId, requireAuth, requireRole, userId } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
+import { toAffiliatePartnerDto } from '../mappings.js';
+import * as affiliateWalletService from '../services/affiliateWalletService.js';
+import * as campaignMaterialService from '../services/campaignMaterialService.js';
 import * as partnerService from '../services/partnerService.js';
 import * as storeService from '../services/storeService.js';
 
@@ -52,4 +58,43 @@ partnerRouter.get('/metrics', ...guard, async (req, res) => {
 partnerRouter.post('/redeem', ...guard, validateBody(redeemRequestSchema), async (req, res) => {
   const confirm = req.query.confirm === 'true';
   res.json(envelope(await partnerService.redeem(partnerId(req), userId(req), req.body.code, confirm)));
+});
+
+// ---------- Programa de afiliados (kind = SolarAffiliate) ----------
+
+/** Perfil do parceiro logado — usado pelo front pra decidir qual menu mostrar
+ * (loja do marketplace vs. área do afiliado). */
+partnerRouter.get('/me', ...guard, async (req, res) => {
+  const partner = await prisma.partner.findUnique({ where: { id: partnerId(req) } });
+  if (!partner) throw new AppError('Parceiro não encontrado.', 404);
+  res.json(envelope(toAffiliatePartnerDto(partner)));
+});
+
+partnerRouter.get('/affiliate/entries', ...guard, async (req, res) => {
+  res.json(envelope(await affiliateWalletService.listEntries(partnerId(req))));
+});
+
+partnerRouter.get('/affiliate/withdrawals', ...guard, async (req, res) => {
+  res.json(envelope(await affiliateWalletService.myWithdrawals(partnerId(req))));
+});
+
+partnerRouter.post('/affiliate/withdrawals', ...guard, validateBody(requestWithdrawalSchema), async (req, res) => {
+  res.json(envelope(await affiliateWalletService.requestWithdrawal(partnerId(req), req.body.amount, req.body.note)));
+});
+
+partnerRouter.get('/affiliate/materials', ...guard, async (_req, res) => {
+  res.json(envelope(await campaignMaterialService.listActive()));
+});
+
+partnerRouter.get('/affiliate/link', ...guard, async (req, res) => {
+  const partner = await prisma.partner.findUnique({ where: { id: partnerId(req) } });
+  if (!partner) throw new AppError('Parceiro não encontrado.', 404);
+  res.json(
+    envelope({
+      code: partner.referralCode,
+      linkViews: partner.linkViews,
+      linkLeads: partner.linkLeads,
+      linkSales: partner.linkSales,
+    }),
+  );
 });

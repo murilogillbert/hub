@@ -352,7 +352,7 @@ export interface AdminUserUpdate {
   name: string;
   email: string;
   phone?: string;
-  role: 'client' | 'partner' | 'admin';
+  role: 'client' | 'partner' | 'admin' | 'financeiro';
   cashbackBalance: number;
   partnerId?: string | null;
 }
@@ -475,6 +475,32 @@ export const adminApi = {
     api.put<Category>(`/admin/categories/${id}`, { name, active }),
   deleteCategory: (id: string) =>
     api.del<void>(`/admin/categories/${id}`),
+
+  // ---- Programa de afiliados ----
+  affiliateApplications: (status?: string) =>
+    api.get<AffiliateApplication[]>(
+      `/admin/affiliate-applications${status ? `?status=${status}` : ''}`,
+    ),
+  approveAffiliateApplication: (id: string) =>
+    api.post<AffiliateApplication>(`/admin/affiliate-applications/${id}/approve`),
+  rejectAffiliateApplication: (id: string) =>
+    api.post<AffiliateApplication>(`/admin/affiliate-applications/${id}/reject`),
+  campaignMaterials: () => api.get<CampaignMaterial[]>('/admin/campaign-materials'),
+  createCampaignMaterial: (body: {
+    title: string;
+    description?: string;
+    fileUrl: string;
+    active?: boolean;
+  }) => api.post<CampaignMaterial>('/admin/campaign-materials', body),
+  updateCampaignMaterial: (
+    id: string,
+    body: { title: string; description?: string; fileUrl: string; active: boolean },
+  ) => api.put<CampaignMaterial>(`/admin/campaign-materials/${id}`, body),
+  deleteCampaignMaterial: (id: string) => api.del<void>(`/admin/campaign-materials/${id}`),
+  serviceApiKeys: () => api.get<ServiceApiKey[]>('/admin/service-api-keys'),
+  createServiceApiKey: (body: { label: string; scopes: string[] }) =>
+    api.post<ServiceApiKey & { key: string }>('/admin/service-api-keys', body),
+  revokeServiceApiKey: (id: string) => api.del<void>(`/admin/service-api-keys/${id}`),
 };
 
 export interface IntegrationField {
@@ -513,6 +539,114 @@ export interface LucroSubmissionPayload {
   score: number;
   temperature: 'cold' | 'warm' | 'hot' | 'frio' | 'morno' | 'quente';
 }
+
+// ---- Programa de afiliados ----
+export interface AffiliateApplication {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  city: string;
+  state: string;
+  message: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  resolvedAt?: string | null;
+}
+export interface AffiliatePartner {
+  id: string;
+  name: string;
+  kind: 'marketplace' | 'solar_affiliate';
+  referralCode: string | null;
+  commissionBalance: number;
+  linkViews: number;
+  linkLeads: number;
+  linkSales: number;
+  active: boolean;
+  ownedByCompany: boolean;
+}
+export interface CommissionEntry {
+  id: string;
+  partnerId: string;
+  type: 'credit' | 'debit';
+  amount: number;
+  description: string;
+  externalReference?: string | null;
+  createdAt: string;
+}
+export interface WithdrawalRequest {
+  id: string;
+  partnerId: string;
+  partnerName: string;
+  amount: number;
+  status: 'pending' | 'approved' | 'rejected' | 'paid';
+  note: string;
+  requestedAt: string;
+  resolvedAt?: string | null;
+}
+export interface CampaignMaterial {
+  id: string;
+  title: string;
+  description: string;
+  fileUrl: string;
+  active: boolean;
+  createdAt: string;
+}
+export interface ServiceApiKey {
+  id: string;
+  label: string;
+  keyPreview: string;
+  scopes: string[];
+  active: boolean;
+  lastUsedAt?: string | null;
+  createdAt: string;
+}
+export interface AffiliateLink {
+  code: string | null;
+  linkViews: number;
+  linkLeads: number;
+  linkSales: number;
+}
+
+/** Landing "quero ser afiliado" — sem login. */
+export const affiliateApplicationApi = {
+  apply: (body: {
+    name: string;
+    email: string;
+    phone?: string;
+    city?: string;
+    state?: string;
+    message?: string;
+  }) => api.postPublic<AffiliateApplication>('/affiliate-applications', body),
+};
+
+/** Área do afiliado logado (Partner.kind = solar_affiliate). */
+export const affiliateApi = {
+  me: () => api.get<AffiliatePartner>('/partner/me'),
+  entries: () => api.get<CommissionEntry[]>('/partner/affiliate/entries'),
+  withdrawals: () => api.get<WithdrawalRequest[]>('/partner/affiliate/withdrawals'),
+  requestWithdrawal: (amount: number, note?: string) =>
+    api.post<WithdrawalRequest>('/partner/affiliate/withdrawals', { amount, note }),
+  materials: () => api.get<CampaignMaterial[]>('/partner/affiliate/materials'),
+  link: () => api.get<AffiliateLink>('/partner/affiliate/link'),
+};
+
+/** Área do financeiro (role financeiro/admin). */
+export const financeiroApi = {
+  affiliates: () => api.get<AffiliatePartner[]>('/financeiro/affiliates'),
+  affiliateEntries: (partnerId: string) =>
+    api.get<CommissionEntry[]>(`/financeiro/affiliates/${partnerId}/entries`),
+  adjustBalance: (
+    partnerId: string,
+    body: { type: 'credit' | 'debit'; amount: number; description: string },
+  ) => api.post<CommissionEntry>(`/financeiro/affiliates/${partnerId}/adjust-balance`, body),
+  withdrawals: (status?: string) =>
+    api.get<WithdrawalRequest[]>(`/financeiro/withdrawals${status ? `?status=${status}` : ''}`),
+  approveWithdrawal: (id: string, note?: string) =>
+    api.post<WithdrawalRequest>(`/financeiro/withdrawals/${id}/approve`, { note }),
+  rejectWithdrawal: (id: string, note?: string) =>
+    api.post<WithdrawalRequest>(`/financeiro/withdrawals/${id}/reject`, { note }),
+};
 
 export const assistantApi = {
   createLead: (body: unknown) =>

@@ -53,4 +53,11 @@ export const config = {
   uploads: {
     maxImageBytes: parseIntEnv(process.env.STORAGE_MAX_IMAGE_BYTES, 5 * 1024 * 1024),
   },
+  affiliate: {
+    // URL do formulário (Formbricks) pro cliente final. O código do afiliado é
+    // anexado como querystring (?consultor=CODE) — ainda não confirmado com o
+    // cliente o formato exato que o Formbricks vai aceitar; só esta linha muda
+    // quando o formato for definido.
+    formUrl: process.env.AFFILIATE_FORM_URL ?? '',
+  },
 };

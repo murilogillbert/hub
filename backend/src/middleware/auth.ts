@@ -14,6 +14,7 @@ export const ROLES = {
   client: ['Client', 'Admin'],
   partner: ['Partner', 'Admin'],
   admin: ['Admin'],
+  financeiro: ['Financeiro', 'Admin'],
 } as const;
 
 declare global {

@@ -150,6 +150,10 @@
   font-size: var(--font-sm);
 }
 
+.admin-success-banner {
+  background: var(--color-lime-soft);
+}
+
 .admin-integrations {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -7,21 +7,29 @@ import { validateBody } from '../middleware/validate.js';
 import * as authService from '../services/authService.js';
 
 export const authRouter = Router();
-authRouter.use(authRateLimiter);
 
-authRouter.post('/register', validateBody(registerSchema), async (req, res) => {
+// Rate limit só nas rotas de força-bruta (registro/login/refresh). "/me" é
+// uma checagem de sessão chamada a cada carregamento de página — se ficasse
+// no mesmo balde, poucas navegações rápidas (ou StrictMode em dev) já
+// esgotam o limite e o front, ao ver a falha, encerraria a sessão à toa.
+authRouter.post('/register', authRateLimiter, validateBody(registerSchema), async (req, res) => {
   res.json(envelope(await authService.register(req.body)));
 });
 
-authRouter.post('/register/partner', validateBody(partnerRegisterSchema), async (req, res) => {
-  res.json(envelope(await authService.registerPartner(req.body)));
-});
+authRouter.post(
+  '/register/partner',
+  authRateLimiter,
+  validateBody(partnerRegisterSchema),
+  async (req, res) => {
+    res.json(envelope(await authService.registerPartner(req.body)));
+  },
+);
 
-authRouter.post('/login', validateBody(loginSchema), async (req, res) => {
+authRouter.post('/login', authRateLimiter, validateBody(loginSchema), async (req, res) => {
   res.json(envelope(await authService.login(req.body)));
 });
 
-authRouter.post('/refresh', validateBody(refreshSchema), async (req, res) => {
+authRouter.post('/refresh', authRateLimiter, validateBody(refreshSchema), async (req, res) => {
   res.json(envelope(await authService.refresh(req.body.refreshToken)));
 });
 

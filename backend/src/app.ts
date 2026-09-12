@@ -4,12 +4,16 @@ import helmet from 'helmet';
 import { config } from './config.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { adminRouter } from './routes/admin.routes.js';
+import { affiliatePublicRouter } from './routes/affiliatePublic.routes.js';
 import { assistantRouter } from './routes/assistant.routes.js';
 import { authRouter } from './routes/auth.routes.js';
 import { catalogRouter } from './routes/catalog.routes.js';
 import { clientRouter } from './routes/client.routes.js';
+import { financeiroRouter } from './routes/financeiro.routes.js';
 import { meRouter } from './routes/me.routes.js';
 import { partnerRouter } from './routes/partner.routes.js';
+import { redirectRouter } from './routes/redirect.routes.js';
+import { serviceRouter } from './routes/service.routes.js';
 import { uploadsRouter } from './routes/uploads.routes.js';
 import { webhookRouter } from './routes/webhook.routes.js';
 
@@ -27,13 +31,20 @@ export function createApp() {
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
+  // Link curto de indicação do afiliado — fora de /api/v1 de propósito
+  // (pensado pra ser compartilhado como hub.com/r/CODE).
+  app.use(redirectRouter);
+
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1', catalogRouter);
   app.use('/api/v1', clientRouter);
   app.use('/api/v1', meRouter);
+  app.use('/api/v1', affiliatePublicRouter);
   app.use('/api/v1/assistant', assistantRouter);
   app.use('/api/v1/partner', partnerRouter);
   app.use('/api/v1/admin', adminRouter);
+  app.use('/api/v1/financeiro', financeiroRouter);
+  app.use('/api/v1/service', serviceRouter);
   app.use('/api/v1/payments/webhook', webhookRouter);
   app.use('/api/v1/uploads', uploadsRouter);
 

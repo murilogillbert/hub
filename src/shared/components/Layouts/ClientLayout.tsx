@@ -94,6 +94,9 @@ export function ClientLayout({ children }: ClientLayoutProps) {
           <Link to="/lucro-real-motorista" className="layout-client__footer-link">
             Motorista, descubra se seu dia compensou →
           </Link>
+          <Link to="/afiliados" className="layout-client__footer-link">
+            Quero ser afiliado (energia solar) →
+          </Link>
           <small className="text-soft">Hub de parceiros com cashback</small>
         </div>
       </footer>

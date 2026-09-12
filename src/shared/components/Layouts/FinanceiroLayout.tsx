@@ -4,7 +4,7 @@ import { SidebarUser } from '@shared/components/SidebarUser/SidebarUser';
 import { Logo } from '@shared/components/Logo/Logo';
 import './Layouts.css';
 
-export function AdminLayout() {
+export function FinanceiroLayout() {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 
@@ -13,7 +13,7 @@ export function AdminLayout() {
       <aside className="layout-internal__sidebar">
         <div className="layout-internal__bar">
           <div className="layout-internal__brand">
-            <Logo subtitle="Administração" size={34} />
+            <Logo subtitle="Financeiro" size={34} />
           </div>
           <button
             type="button"
@@ -29,20 +29,10 @@ export function AdminLayout() {
           className={`layout-internal__nav ${open ? 'is-open' : ''}`}
           onClick={close}
         >
-          <NavLink to="/admin" end>
-            📊 Dashboard
+          <NavLink to="/financeiro" end>
+            💸 Saques
           </NavLink>
-          <NavLink to="/admin/vendas">💳 Análise de vendas</NavLink>
-          <NavLink to="/admin/parceiros">🤝 Parceiros</NavLink>
-          <NavLink to="/admin/repasses">💸 Repasses</NavLink>
-          <NavLink to="/admin/unidades">Unidades</NavLink>
-          <NavLink to="/admin/usuarios">👥 Usuários</NavLink>
-          <NavLink to="/admin/categorias">🏷️ Categorias</NavLink>
-          <NavLink to="/admin/integracoes">🔌 Integrações</NavLink>
-          <NavLink to="/admin/auditoria">Auditoria</NavLink>
-          <NavLink to="/admin/afiliados/solicitacoes">🧑‍💼 Afiliados</NavLink>
-          <NavLink to="/admin/afiliados/materiais">📦 Materiais de campanha</NavLink>
-          <NavLink to="/admin/afiliados/chaves-api">🔑 Chaves de API</NavLink>
+          <NavLink to="/financeiro/afiliados">🤝 Afiliados</NavLink>
         </nav>
         <SidebarUser />
       </aside>

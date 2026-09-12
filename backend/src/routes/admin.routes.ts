@@ -4,11 +4,15 @@ import { categoryUpsertSchema, partnerUpsertSchema, storeUpsertSchema } from '..
 import { envelope } from '../dtos/common.dto.js';
 import { adminUserCreateSchema, adminUserUpdateSchema } from '../dtos/auth.dto.js';
 import { updateSettingSchema } from '../dtos/settings.dto.js';
+import { campaignMaterialSchema, createApiKeySchema } from '../dtos/affiliate.dto.js';
 import { ROLES, requireAuth, requireRole, userId } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
 import * as adminService from '../services/adminService.js';
+import * as affiliateApplicationService from '../services/affiliateApplicationService.js';
 import * as assistantService from '../services/assistantService.js';
+import * as campaignMaterialService from '../services/campaignMaterialService.js';
 import * as categoryService from '../services/categoryService.js';
+import * as serviceApiKeyService from '../services/serviceApiKeyService.js';
 import * as settingsService from '../services/settingsService.js';
 import * as storeService from '../services/storeService.js';
 
@@ -113,6 +117,45 @@ adminRouter.put('/users/:id', ...guard, validateBody(adminUserUpdateSchema), asy
 
 adminRouter.get('/leads', ...guard, async (_req, res) => {
   res.json(envelope(await assistantService.listLeads()));
+});
+
+// ---------- Programa de afiliados ----------
+adminRouter.get('/affiliate-applications', ...guard, async (req, res) => {
+  res.json(envelope(await affiliateApplicationService.list(req.query.status as string | undefined)));
+});
+adminRouter.post('/affiliate-applications/:id/approve', ...guard, async (req, res) => {
+  res.json(envelope(await affiliateApplicationService.approve(req.params.id as string, userId(req))));
+});
+adminRouter.post('/affiliate-applications/:id/reject', ...guard, async (req, res) => {
+  res.json(envelope(await affiliateApplicationService.reject(req.params.id as string, userId(req))));
+});
+
+adminRouter.get('/campaign-materials', ...guard, async (_req, res) => {
+  res.json(envelope(await campaignMaterialService.listAll()));
+});
+adminRouter.post('/campaign-materials', ...guard, validateBody(campaignMaterialSchema), async (req, res) => {
+  res.json(envelope(await campaignMaterialService.create(req.body)));
+});
+adminRouter.put('/campaign-materials/:id', ...guard, validateBody(campaignMaterialSchema), async (req, res) => {
+  res.json(envelope(await campaignMaterialService.update(req.params.id as string, req.body)));
+});
+adminRouter.delete('/campaign-materials/:id', ...guard, async (req, res) => {
+  await campaignMaterialService.remove(req.params.id as string);
+  res.status(204).send();
+});
+
+// ---------- Chaves de API de serviço (n8n, energia-solar-api, ...) ----------
+adminRouter.get('/service-api-keys', ...guard, async (_req, res) => {
+  res.json(envelope(await serviceApiKeyService.list()));
+});
+adminRouter.post('/service-api-keys', ...guard, validateBody(createApiKeySchema), async (req, res) => {
+  const { key, dto } = await serviceApiKeyService.create(req.body);
+  // A chave em texto puro só existe nesta resposta — nunca mais é recuperável.
+  res.json(envelope({ ...dto, key }));
+});
+adminRouter.delete('/service-api-keys/:id', ...guard, async (req, res) => {
+  await serviceApiKeyService.revoke(req.params.id as string);
+  res.status(204).send();
 });
 
 adminRouter.get('/audit-logs', ...guard, async (req, res) => {

@@ -81,7 +81,16 @@ export interface NotificationDto {
   createdAt: Date;
 }
 
-const roleEnum = z.enum(['client', 'partner', 'admin', 'Client', 'Partner', 'Admin']);
+const roleEnum = z.enum([
+  'client',
+  'partner',
+  'admin',
+  'financeiro',
+  'Client',
+  'Partner',
+  'Admin',
+  'Financeiro',
+]);
 
 export const adminUserCreateSchema = z.object({
   name: z.string().min(1),

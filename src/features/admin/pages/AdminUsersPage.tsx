@@ -12,7 +12,7 @@ import { adminApi } from '@shared/api/endpoints';
 import { User, Partner } from '@shared/types';
 import './AdminPages.css';
 
-type Role = 'client' | 'partner' | 'admin';
+type Role = 'client' | 'partner' | 'admin' | 'financeiro';
 
 interface EditState {
   id: string;
@@ -332,6 +332,7 @@ export function AdminUsersPage() {
                       <option value="client">Cliente</option>
                       <option value="partner">Parceiro</option>
                       <option value="admin">Admin</option>
+                      <option value="financeiro">Financeiro</option>
                     </select>
                   </div>
                 </div>

@@ -3,6 +3,14 @@ import type { UserDto, NotificationDto } from './dtos/auth.dto.js';
 import type { ProductDto, PartnerDto, StoreDto, CategoryDto } from './dtos/catalog.dto.js';
 import type { OrderDto, OrderItemDto, CashbackEntryDto } from './dtos/orders.dto.js';
 import type { AuditLogDto } from './dtos/admin.dto.js';
+import type {
+  AffiliateApplicationDto,
+  AffiliatePartnerDto,
+  CampaignMaterialDto,
+  CommissionEntryDto,
+  ServiceApiKeyDto,
+  WithdrawalRequestDto,
+} from './dtos/affiliate.dto.js';
 
 type UserRow = Prisma.UserGetPayload<{}>;
 export function toUserDto(u: UserRow): UserDto {
@@ -204,4 +212,101 @@ export function parsePaymentMethod(s: string): 'Pix' | 'CreditCard' | 'DebitCard
   if (v === 'credit_card' || v === 'credit') return 'CreditCard';
   if (v === 'debit_card' || v === 'debit') return 'DebitCard';
   return 'Pix';
+}
+
+// ---------- Afiliados (programa solar) ----------
+type AffiliatePartnerRow = Prisma.PartnerGetPayload<{}>;
+export function toAffiliatePartnerDto(p: AffiliatePartnerRow): AffiliatePartnerDto {
+  return {
+    id: p.id,
+    name: p.name,
+    kind: p.kind === 'SolarAffiliate' ? 'solar_affiliate' : 'marketplace',
+    referralCode: p.referralCode,
+    commissionBalance: p.commissionBalance.toNumber(),
+    linkViews: p.linkViews,
+    linkLeads: p.linkLeads,
+    linkSales: p.linkSales,
+    active: p.active,
+    ownedByCompany: p.ownedByCompany,
+  };
+}
+
+type CommissionEntryRow = Prisma.AffiliateCommissionEntryGetPayload<{}>;
+export function toCommissionEntryDto(e: CommissionEntryRow): CommissionEntryDto {
+  return {
+    id: e.id,
+    partnerId: e.partnerId,
+    type: e.type === 'Credit' ? 'credit' : 'debit',
+    amount: e.amount.toNumber(),
+    description: e.description,
+    externalReference: e.externalReference,
+    createdAt: e.createdAt,
+  };
+}
+
+type WithdrawalRequestRow = Prisma.WithdrawalRequestGetPayload<{ include: { partner: true } }>;
+export function toWithdrawalRequestDto(w: WithdrawalRequestRow): WithdrawalRequestDto {
+  return {
+    id: w.id,
+    partnerId: w.partnerId,
+    partnerName: w.partner.name,
+    amount: w.amount.toNumber(),
+    status: w.status.toLowerCase(),
+    note: w.note,
+    requestedAt: w.requestedAt,
+    resolvedAt: w.resolvedAt,
+  };
+}
+
+type CampaignMaterialRow = Prisma.CampaignMaterialGetPayload<{}>;
+export function toCampaignMaterialDto(m: CampaignMaterialRow): CampaignMaterialDto {
+  return {
+    id: m.id,
+    title: m.title,
+    description: m.description,
+    fileUrl: m.fileUrl,
+    active: m.active,
+    createdAt: m.createdAt,
+  };
+}
+
+type AffiliateApplicationRow = Prisma.AffiliateApplicationGetPayload<{}>;
+export function toAffiliateApplicationDto(a: AffiliateApplicationRow): AffiliateApplicationDto {
+  return {
+    id: a.id,
+    name: a.name,
+    email: a.email,
+    phone: a.phone,
+    city: a.city,
+    state: a.state,
+    message: a.message,
+    status: a.status.toLowerCase(),
+    createdAt: a.createdAt,
+    resolvedAt: a.resolvedAt,
+  };
+}
+
+const APPLICATION_STATUS_VALUES = ['Pending', 'Approved', 'Rejected'] as const;
+export function tryParseApplicationStatus(s: string | undefined): (typeof APPLICATION_STATUS_VALUES)[number] | undefined {
+  if (!s) return undefined;
+  return APPLICATION_STATUS_VALUES.find((v) => v.toLowerCase() === s.toLowerCase());
+}
+
+const WITHDRAWAL_STATUS_VALUES = ['Pending', 'Approved', 'Rejected', 'Paid'] as const;
+export function tryParseWithdrawalStatus(s: string | undefined): (typeof WITHDRAWAL_STATUS_VALUES)[number] | undefined {
+  if (!s) return undefined;
+  return WITHDRAWAL_STATUS_VALUES.find((v) => v.toLowerCase() === s.toLowerCase());
+}
+
+type ServiceApiKeyRow = Prisma.ServiceApiKeyGetPayload<{}>;
+export function toServiceApiKeyDto(k: ServiceApiKeyRow): ServiceApiKeyDto {
+  return {
+    id: k.id,
+    label: k.label,
+    keyPreview: k.keyPreview,
+    scopes: k.scopes,
+    active: k.active,
+    lastUsedAt: k.lastUsedAt,
+    createdAt: k.createdAt,
+  };
 }

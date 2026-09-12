@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { User, UserRole } from '@shared/types';
 import { authApi } from '@shared/api/endpoints';
-import { setUnauthorizedHandler, tokenStore } from '@shared/api/client';
+import { ApiError, setUnauthorizedHandler, tokenStore } from '@shared/api/client';
 
 export interface RegisterClientInput {
   name: string;
@@ -49,7 +49,11 @@ export function routeForRole(role: UserRole): string {
     case 'admin':
       return '/admin';
     case 'partner':
-      return '/parceiro/catalogo';
+      // /parceiro (índice) decide entre catálogo (loja) e carteira
+      // (afiliado solar) — ver PartnerIndexRedirect.
+      return '/parceiro';
+    case 'financeiro':
+      return '/financeiro';
     case 'client':
       return '/';
     default:
@@ -85,7 +89,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authApi
       .me()
       .then(setUserState)
-      .catch(() => tokenStore.clear())
+      .catch((err) => {
+        // Só encerra a sessão se o token de fato for inválido (401 — e
+        // nesse caso o próprio client.ts já limpou o token via
+        // onUnauthorized). Qualquer outra falha (429 de rate limit, rede
+        // instável, 500) é transitória — não deve deslogar o usuário.
+        if (!(err instanceof ApiError) || err.status !== 401) return;
+      })
       .finally(() => setLoading(false));
   }, []);
 

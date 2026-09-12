@@ -17,6 +17,32 @@ enum UserRole {
   Client
   Partner
   Admin
+  Financeiro
+}
+
+/// Distingue lojas do marketplace de afiliados do programa solar — mesma
+/// entidade Partner, comportamento e telas diferentes por tipo.
+enum PartnerKind {
+  Marketplace
+  SolarAffiliate
+}
+
+enum CommissionEntryType {
+  Credit
+  Debit
+}
+
+enum WithdrawalStatus {
+  Pending
+  Approved
+  Rejected
+  Paid
+}
+
+enum ApplicationStatus {
+  Pending
+  Approved
+  Rejected
 }
 
 enum ProductKind {
@@ -100,11 +126,24 @@ model Partner {
   /// dividido (split) e o líquido cai direto na conta dele.
   asaasWalletId  String?        @map("asaas_wallet_id") @db.VarChar(64)
   joinedAt       DateTime       @default(now()) @map("joined_at")
-  users          User[]
-  products       Product[]
-  stores         PartnerStore[]
-  orderItems     OrderItem[]
-  payouts        PartnerPayout[]
+
+  /// Programa de afiliados solar (kind = SolarAffiliate) — não usado por lojas.
+  kind               PartnerKind @default(Marketplace)
+  referralCode       String?     @unique @map("referral_code")
+  commissionBalance  Decimal     @default(0) @db.Decimal(12, 2) @map("commission_balance")
+  linkViews          Int         @default(0) @map("link_views")
+  linkLeads          Int         @default(0) @map("link_leads")
+  linkSales          Int         @default(0) @map("link_sales")
+  /// Conta especial operada por integração (bot próprio), sem usuário humano.
+  ownedByCompany     Boolean     @default(false) @map("owned_by_company")
+
+  users              User[]
+  products           Product[]
+  stores             PartnerStore[]
+  orderItems         OrderItem[]
+  payouts            PartnerPayout[]
+  commissionEntries  AffiliateCommissionEntry[]
+  withdrawalRequests WithdrawalRequest[]
 
   @@map("partners")
 }
@@ -352,4 +391,85 @@ model AuditLog {
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@map("audit_logs")
+}
+
+/// Lançamento no livro-caixa de comissão de um afiliado (espelha CashbackEntry).
+/// externalReference garante idempotência quando outro sistema (energia-solar-api)
+/// credita/debita via API de serviço — reenvios do n8n não duplicam o lançamento.
+model AffiliateCommissionEntry {
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId         String              @map("partner_id") @db.Uuid
+  partner           Partner             @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  type              CommissionEntryType
+  amount            Decimal             @db.Decimal(12, 2)
+  description       String              @db.VarChar(240)
+  externalReference String?             @unique @map("external_reference")
+  createdBy         String?             @map("created_by") @db.Uuid
+  createdAt         DateTime            @default(now()) @map("created_at")
+
+  @@index([partnerId, createdAt])
+  @@map("affiliate_commission_entries")
+}
+
+/// Pedido de saque de um afiliado — autoatendimento + aprovação do financeiro.
+model WithdrawalRequest {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId   String            @map("partner_id") @db.Uuid
+  partner     Partner           @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  amount      Decimal           @db.Decimal(12, 2)
+  status      WithdrawalStatus  @default(Pending)
+  note        String            @default("") @db.VarChar(400)
+  requestedAt DateTime          @default(now()) @map("requested_at")
+  resolvedAt  DateTime?         @map("resolved_at")
+  resolvedBy  String?           @map("resolved_by") @db.Uuid
+
+  @@index([partnerId, requestedAt])
+  @@map("withdrawal_requests")
+}
+
+/// Biblioteca de materiais de campanha (arquivos) disponível a todo afiliado ativo.
+model CampaignMaterial {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String   @db.VarChar(160)
+  description String   @default("")
+  fileUrl     String   @map("file_url")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("campaign_materials")
+}
+
+/// Inscrição pública "quero ser afiliado" — aprovada pelo Admin, que então cria
+/// User+Partner(kind=SolarAffiliate) e envia e-mail de boas-vindas.
+model AffiliateApplication {
+  id         String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String             @db.VarChar(160)
+  email      String             @db.VarChar(180)
+  phone      String             @default("")
+  city       String             @default("")
+  state      String             @default("")
+  message    String             @default("")
+  status     ApplicationStatus  @default(Pending)
+  createdAt  DateTime           @default(now()) @map("created_at")
+  resolvedAt DateTime?          @map("resolved_at")
+  resolvedBy String?            @map("resolved_by") @db.Uuid
+
+  @@index([status, createdAt])
+  @@map("affiliate_applications")
+}
+
+/// Chave de API para integrações servidor-a-servidor (n8n, energia-solar-api, ...)
+/// chamando as rotas /api/v1/service/*. Nunca guardamos a chave em texto puro.
+model ServiceApiKey {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  label      String    @db.VarChar(120)
+  hashedKey  String    @unique @map("hashed_key")
+  /// prefixo exibido na UI pra identificar a chave sem guardar o valor completo.
+  keyPreview String    @map("key_preview") @db.VarChar(16)
+  scopes     String[]
+  active     Boolean   @default(true)
+  lastUsedAt DateTime? @map("last_used_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@map("service_api_keys")
 }
