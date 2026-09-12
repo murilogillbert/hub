@@ -4,23 +4,28 @@ Hub onde parceiros vendem produtos físicos, digitais e vouchers para uma base d
 clientes cadastrados. A plataforma ganha uma taxa por venda; o cliente ganha
 cashback que é abatido nas próximas compras.
 
-> **Sistema dinâmico e funcional**: React + TS no front, **.NET 10 + EF Core**
-> no back, **SQL Server em Docker**. Dados reais, sem mocks em runtime.
+> **Sistema dinâmico e funcional**: React + TS no front, **Node + Express +
+> Prisma** no back, **Postgres no Supabase**. Dados reais, sem mocks em runtime.
 
 ## Como rodar (full-stack local)
 
-Pré-requisitos: Docker, .NET SDK 10, Node 20+.
+Pré-requisitos: Node 20+ e um projeto no [supabase.com](https://supabase.com) (gratuito).
 
 ```bash
-# 1. Banco (SQL Server em Docker, porta 1435 p/ não conflitar)
+# 1. Configure o .env (raiz do repo)
 cp .env.example .env
-docker compose up -d            # aguarde ~30s (healthcheck)
+# Cole no .env: DATABASE_URL/DIRECT_URL (Project Settings -> Database) e
+# SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY (Project Settings -> API). Crie
+# também um bucket público no Storage (ex.: "uploads") — veja o .env.example
+# para o passo a passo completo.
 
-# 2. Backend .NET (migrations + seed automáticos no boot)
+# 2. Backend (aplica as migrations + seed automáticos no boot)
 cd backend
-dotnet run --project src/OpenDriverHub.Api    # http://localhost:5000
+npm install
+npm run prisma:migrate          # cria as tabelas no Supabase
+npm run dev                     # http://localhost:5000
 
-# 3. Frontend (em outro terminal)
+# 3. Frontend (em outro terminal, na raiz do repo)
 npm install
 npm run dev                     # http://localhost:5173
 ```
@@ -30,7 +35,7 @@ Contas demo (seed): `cliente@demo.com` · `parceiro@demo.com` ·
 
 > O botão flutuante `⚙` (canto inferior direito) faz **quick-login** real nas 3
 > contas demo para navegar entre as áreas. A tela `/login` também funciona com
-> qualquer conta cadastrada (cadastro real cria usuário no SQL).
+> qualquer conta cadastrada (cadastro real cria usuário no banco).
 
 ## Stack
 
@@ -40,20 +45,26 @@ Contas demo (seed): `cliente@demo.com` · `parceiro@demo.com` ·
 - Camada de API tipada (`src/shared/api`) com JWT + refresh automático
 - CSS puro modular · react-leaflet/OSM · qrcode.react · html5-qrcode
 
-**Backend** (`backend/`, Clean Architecture)
-- **.NET 10 + ASP.NET Core Web API**, EF Core 10 (code-first + migrations)
-- **SQL Server 2022** (Docker), seed idempotente
-- **JWT + roles** (Client/Partner/Admin) + policies de autorização
-- Pagamento: gateway **mock** (PIX confirma via `BackgroundService` de
-  reconciliação ~8s) + **Mercado Pago sandbox** plugável (`Payment:Provider`)
+**Backend** (`backend/`)
+- **Node + Express 5 + TypeScript**, **Prisma** como ORM (code-first + migrations)
+- **Postgres no Supabase**, seed idempotente
+- **JWT + roles** (Client/Partner/Admin) + middlewares de autorização
+- Upload de imagens direto no **Supabase Storage**
+- Pagamento: gateway **mock** (PIX confirma via job de reconciliação ~5s) +
+  **Mercado Pago** e **Asaas** (sandbox/produção) plugáveis (`PAYMENT_PROVIDER`)
 - Resgate de voucher **transacional** (status + cashback + estoque + auditoria)
 
 ```
-backend/src/
-  OpenDriverHub.Domain          entidades, enums, regras de comissão
-  OpenDriverHub.Application     DTOs, interfaces de serviço e portas
-  OpenDriverHub.Infrastructure  EF DbContext, auth, gateways, services, seed
-  OpenDriverHub.Api             controllers, Program.cs, middleware
+backend/
+  prisma/schema.prisma   modelos, enums, relações e índices
+  src/domain/            regras puras (comissão/cashback, distância geográfica)
+  src/dtos/              validação de request (zod) + tipos de resposta
+  src/infra/             prisma client, auth (JWT/bcrypt), gateways de
+                         pagamento, Supabase Storage, settings provider
+  src/services/          regras de negócio por área (auth/catalog/orders/
+                         partner/payments/reviews/admin/assistant/...)
+  src/routes/            um Router do Express por área do contrato HTTP
+  src/jobs/               reconciliação periódica de pagamentos PIX
 ```
 
 Endpoints sob `/api/v1` — auth, products, stores, partners, orders,
@@ -184,28 +195,15 @@ src/
    líquida, top parceiros, configura integrações (WhatsApp/e-mail), gerencia
    parceiros e usuários.
 
-## Modelo de receita (como está modelado nos mocks)
+## Modelo de receita
 
 - Cliente paga `P` pelo voucher.
-- Plataforma retém `taxa%` (default 10% no mock — ver `PLATFORM_FEE_PERCENT`
-  em `PartnerRedeemPage.tsx`).
+- Plataforma retém `taxa%` (definida por parceiro, `Partner.feePercent`).
 - Cashback do produto é `cashback%` de `P` e fica creditado no cliente.
 - Parceiro recebe `P - taxa - cashback`.
-- Saldo de cashback do cliente é abatido em compras futuras (saldo aparece no
-  header e no perfil — a lógica de abatimento real ficará no back-end).
-
-## Próximos passos (back-end)
-
-Quando for plugar o .NET, a única camada que muda é `shared/mocks/*` — cada
-arquivo vira um client HTTP / serviço. Os componentes consomem via os types em
-`shared/types/`, então o contrato fica claro:
-
-- `GET /products`, `GET /products/:id`
-- `POST /orders` (gera código + QR no servidor)
-- `POST /orders/:code/redeem` (parceiro: aplica taxa, libera cashback)
-- `GET /partners/me/metrics`
-- `GET /admin/metrics`
-- `POST /integrations/{whatsapp|email}`
+- Saldo de cashback do cliente é abatido em compras futuras (regras puras em
+  [backend/src/domain/commissionRules.ts](backend/src/domain/commissionRules.ts),
+  aplicadas de verdade no resgate e no pagamento — nada disso é mock).
 
 ## Observações
 

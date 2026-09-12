@@ -1,3 +1,11 @@
+> ⚠️ **Documento histórico.** Este era o plano original de implantação,
+> escrito antes do primeiro backend (.NET) existir. O backend real que foi
+> construído (e que depois foi reescrito para Node/Express/Prisma/Supabase)
+> já diverge bastante daqui — ganhou Reviews, Categorias, Repasses (payouts),
+> gateway Asaas, pedidos multi-parceiro, entre outros. Para a arquitetura e
+> o "como rodar" **atuais**, veja o [README.md](README.md). Mantido só como
+> registro do raciocínio inicial.
+
 # Plano de Implantação — OpenDriverHub (sistema dinâmico e funcional)
 
 > Objetivo: transformar o front mockado atual (`C:/hub`) em uma aplicação

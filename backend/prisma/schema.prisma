@@ -1,0 +1,355 @@
+// OpenDriverHub — schema Postgres (Supabase). Porta 1:1 o modelo do antigo
+// AppDbContext.cs (EF Core / SQL Server): mesmas entidades, relações,
+// cascades e índices. Nomes de coluna/tabela em snake_case (idiomático em
+// Postgres/Supabase); o Prisma Client continua expondo camelCase no código.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  Client
+  Partner
+  Admin
+}
+
+enum ProductKind {
+  Physical
+  Digital
+  Voucher
+}
+
+enum OrderStatus {
+  PendingPayment
+  Paid
+  Redeemed
+  Cancelled
+}
+
+enum PaymentStatus {
+  Pending
+  Approved
+  Rejected
+  Cancelled
+  Refunded
+}
+
+enum PaymentMethod {
+  Pix
+  CreditCard
+  DebitCard
+}
+
+enum CategoryType {
+  Product
+  Store
+}
+
+enum LeadTemperature {
+  Frio
+  Morno
+  Quente
+}
+
+enum CashbackEntryType {
+  Earned
+  Used
+}
+
+model User {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String    @db.VarChar(160)
+  email           String    @unique @db.VarChar(180)
+  passwordHash    String    @map("password_hash")
+  role            UserRole  @default(Client)
+  cashbackBalance Decimal   @default(0) @db.Decimal(12, 2) @map("cashback_balance")
+  avatarUrl       String?   @map("avatar_url")
+  phone           String?
+  notifyWhatsApp  Boolean   @default(true) @map("notify_whatsapp")
+  notifyEmail     Boolean   @default(true) @map("notify_email")
+  notifyPromo     Boolean   @default(false) @map("notify_promo")
+  partnerId       String?   @map("partner_id") @db.Uuid
+  partner         Partner?  @relation(fields: [partnerId], references: [id])
+  createdAt       DateTime  @default(now()) @map("created_at")
+  orders          Order[]
+  cashbackEntries CashbackEntry[]
+  reviews         Review[]
+
+  @@map("users")
+}
+
+model Partner {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String         @db.VarChar(160)
+  segment        String
+  logoUrl        String         @default("") @map("logo_url")
+  cnpj           String         @default("")
+  city           String         @default("")
+  state          String         @default("")
+  lat            Float          @default(0)
+  lng            Float          @default(0)
+  active         Boolean        @default(true)
+  feePercent     Decimal        @default(10) @db.Decimal(5, 2) @map("fee_percent")
+  /// Carteira do parceiro no Asaas (walletId). Quando presente, o pagamento é
+  /// dividido (split) e o líquido cai direto na conta dele.
+  asaasWalletId  String?        @map("asaas_wallet_id") @db.VarChar(64)
+  joinedAt       DateTime       @default(now()) @map("joined_at")
+  users          User[]
+  products       Product[]
+  stores         PartnerStore[]
+  orderItems     OrderItem[]
+  payouts        PartnerPayout[]
+
+  @@map("partners")
+}
+
+model PartnerStore {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId String   @map("partner_id") @db.Uuid
+  partner   Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  name      String
+  address   String
+  city      String   @db.VarChar(120)
+  state     String   @db.VarChar(40)
+  lat       Float
+  lng       Float
+  category  String
+  imageUrl  String   @default("") @map("image_url")
+
+  @@map("partner_stores")
+}
+
+/// Categoria de produto ou de loja — definida e gerida pelo Admin.
+model Category {
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String       @db.VarChar(80)
+  type      CategoryType @default(Product)
+  active    Boolean      @default(true)
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  @@unique([name, type])
+  @@map("categories")
+}
+
+model Product {
+  id               String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId        String      @map("partner_id") @db.Uuid
+  partner          Partner     @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  title            String      @db.VarChar(200)
+  description      String
+  price            Decimal     @db.Decimal(12, 2)
+  cashbackPercent  Decimal     @db.Decimal(5, 2) @map("cashback_percent")
+  kind             ProductKind
+  imageUrl         String      @default("") @map("image_url")
+  category         String      @default("")
+  rating           Float       @default(0)
+  stock            Int         @default(0)
+  active           Boolean     @default(true)
+  createdAt        DateTime    @default(now()) @map("created_at")
+  orderItems       OrderItem[]
+  reviews          Review[]
+
+  @@index([partnerId])
+  @@map("products")
+}
+
+model Order {
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code              String              @unique @db.VarChar(40)
+  customerId        String              @map("customer_id") @db.Uuid
+  customer          User                @relation(fields: [customerId], references: [id])
+  paidPrice         Decimal             @default(0) @db.Decimal(12, 2) @map("paid_price")
+  cashbackEarned    Decimal             @default(0) @db.Decimal(12, 2) @map("cashback_earned")
+  cashbackUsed      Decimal             @default(0) @db.Decimal(12, 2) @map("cashback_used")
+  status            OrderStatus         @default(PendingPayment)
+  paymentMethod     PaymentMethod?      @map("payment_method")
+  paymentReference  String?             @map("payment_reference")
+  externalPaymentId String?             @map("external_payment_id")
+  voucherCode       String?             @map("voucher_code")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  paidAt            DateTime?           @map("paid_at")
+  redeemedAt        DateTime?           @map("redeemed_at")
+  items             OrderItem[]
+  payments          PaymentTransaction[]
+  cashbackEntries   CashbackEntry[]
+  reviews           Review[]
+
+  @@index([customerId, status])
+  @@map("orders")
+}
+
+/// Item de um pedido. Cada item pertence a um parceiro; o resgate é feito
+/// por parceiro (cada parceiro resgata só os seus itens do voucher).
+model OrderItem {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId         String    @map("order_id") @db.Uuid
+  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId       String    @map("product_id") @db.Uuid
+  product         Product   @relation(fields: [productId], references: [id])
+  partnerId       String    @map("partner_id") @db.Uuid
+  partner         Partner   @relation(fields: [partnerId], references: [id])
+  productTitle    String    @db.VarChar(200) @map("product_title") // snapshot
+  imageUrl        String    @default("") @map("image_url")          // snapshot
+  category        String    @default("")                            // snapshot
+  unitPrice       Decimal   @db.Decimal(12, 2) @map("unit_price")
+  quantity        Int       @default(1)
+  cashbackPercent Decimal   @db.Decimal(5, 2) @map("cashback_percent")
+  lineTotal       Decimal   @db.Decimal(12, 2) @map("line_total")
+  cashbackEarned  Decimal   @db.Decimal(12, 2) @map("cashback_earned")
+  redeemedAt      DateTime? @map("redeemed_at")
+
+  @@index([orderId])
+  @@index([partnerId])
+  @@map("order_items")
+}
+
+model PaymentTransaction {
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId           String        @map("order_id") @db.Uuid
+  order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider          String        @default("mock")
+  externalReference String?       @map("external_reference")
+  externalPaymentId String?       @map("external_payment_id")
+  method            PaymentMethod
+  amount            Decimal       @db.Decimal(12, 2)
+  status            PaymentStatus
+  statusDetail      String?       @map("status_detail")
+  responsePayload   String?       @map("response_payload")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  lastSyncedAt      DateTime?     @map("last_synced_at")
+
+  @@index([externalPaymentId])
+  @@map("payment_transactions")
+}
+
+model CashbackEntry {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String            @map("user_id") @db.Uuid
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderId     String?           @map("order_id") @db.Uuid
+  order       Order?            @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  type        CashbackEntryType
+  amount      Decimal           @db.Decimal(12, 2)
+  description String            @db.VarChar(240)
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@map("cashback_entries")
+}
+
+/// Avaliação de um produto por um cliente que já resgatou.
+model Review {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  orderId   String   @map("order_id") @db.Uuid
+  order     Order    @relation(fields: [orderId], references: [id])
+  rating    Int // 1..5
+  comment   String   @default("") @db.VarChar(1000)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([productId, userId])
+  @@map("reviews")
+}
+
+model AssistantLead {
+  id           String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String?           @map("user_id") @db.Uuid
+  profile      String?
+  category     String?
+  goal         String?
+  mainIntent   String?           @map("main_intent")
+  score        Int               @default(0)
+  temperature  LeadTemperature   @default(Frio)
+  createdAt    DateTime          @default(now()) @map("created_at")
+  interactions BotInteraction[]
+
+  @@map("assistant_leads")
+}
+
+model BotInteraction {
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leadId       String?         @map("lead_id") @db.Uuid
+  lead         AssistantLead?  @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  userMessage  String          @map("user_message")
+  botResponse  String          @map("bot_response")
+  step         String          @default("")
+  createdAt    DateTime        @default(now()) @map("created_at")
+
+  @@map("bot_interactions")
+}
+
+model Notification {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  title     String
+  message   String
+  channel   String    @default("interno")
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@map("notifications")
+}
+
+/// Evento de webhook de pagamento recebido (rastreabilidade + dedupe).
+model PaymentEvent {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider     String   @default("mercado_pago")
+  eventType    String   @map("event_type")
+  externalId   String?  @map("external_id")
+  orderId      String?  @map("order_id") @db.Uuid
+  status       String
+  rawPayload   String?  @map("raw_payload")
+  processedAt  DateTime @default(now()) @map("processed_at")
+
+  @@map("payment_events")
+}
+
+/// Credencial/configuração de integração editável em runtime. Quando
+/// presente, sobrepõe o valor do .env.
+model IntegrationSetting {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key       String   @unique @db.VarChar(120)
+  value     String   @db.VarChar(1024)
+  updatedBy String?  @map("updated_by") @db.Uuid
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  @@map("integration_settings")
+}
+
+/// Repasse (pagamento) lançado pelo admin a um parceiro, referente a um
+/// período do que foi resgatado. É o que define o "Recebido" do parceiro.
+model PartnerPayout {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId   String   @map("partner_id") @db.Uuid
+  partner     Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  amount      Decimal  @db.Decimal(12, 2)
+  periodStart DateTime @map("period_start")
+  periodEnd   DateTime @map("period_end")
+  note        String   @default("") @db.VarChar(400)
+  createdBy   String?  @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([partnerId, createdAt])
+  @@map("partner_payouts")
+}
+
+model AuditLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorId     String?  @map("actor_id") @db.Uuid
+  action      String
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id")
+  payloadJson String?  @map("payload_json")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+}

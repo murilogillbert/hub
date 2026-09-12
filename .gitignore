@@ -8,10 +8,8 @@ dist-ssr
 vite.config.js
 vite.config.d.ts
 
-# --- .NET ---
-backend/**/bin/
-backend/**/obj/
-backend/**/wwwroot/uploads/
+# --- Backend (Prisma) ---
+backend/generated/
 
 # --- Segredos / ambiente ---
 .env

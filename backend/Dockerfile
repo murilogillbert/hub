@@ -1,19 +1,20 @@
-# OpenDriverHub API — build multi-stage .NET 10
-# Contexto de build = raiz do repositório hub (ver docker-compose do opendriver-prod).
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+# OpenDriverHub API — build multi-stage Node/Express/Prisma
+# Contexto de build = raiz do repositório hub.
+FROM node:20-alpine AS build
 WORKDIR /src
+COPY backend/package*.json ./
+RUN npm ci
 COPY backend/ .
-RUN dotnet publish src/OpenDriverHub.Api/OpenDriverHub.Api.csproj \
-    -c Release -o /app /p:UseAppHost=false
+RUN npx prisma generate
+RUN npm run build
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+FROM node:20-alpine AS runtime
 WORKDIR /app
-# curl para o healthcheck do docker-compose
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
-COPY --from=build /app .
-ENV ASPNETCORE_URLS=http://+:8080
-ENV ASPNETCORE_ENVIRONMENT=Production
-EXPOSE 8080
-ENTRYPOINT ["dotnet", "OpenDriverHub.Api.dll"]
+ENV NODE_ENV=production
+COPY --from=build /src/package*.json ./
+RUN npm ci --omit=dev
+COPY --from=build /src/prisma ./prisma
+COPY --from=build /src/node_modules/.prisma ./node_modules/.prisma
+COPY --from=build /src/dist ./dist
+EXPOSE 5000
+CMD ["node", "dist/server.js"]
