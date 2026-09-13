@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { productUpsertSchema, storeUpsertSchema } from '../dtos/catalog.dto.js';
+import { productUpsertSchema, storeUpsertSchema, updateMyPartnerProfileSchema } from '../dtos/catalog.dto.js';
 import { envelope } from '../dtos/common.dto.js';
 import { redeemRequestSchema } from '../dtos/orders.dto.js';
 import { requestWithdrawalSchema, updatePixKeySchema } from '../dtos/affiliate.dto.js';
@@ -69,6 +69,18 @@ partnerRouter.get('/me', ...guard, async (req, res) => {
   if (!partner) throw new AppError('Parceiro não encontrado.', 404);
   res.json(envelope(toAffiliatePartnerDto(partner)));
 });
+
+/** Autoatendimento: loja edita nome/segmento/CNPJ/logo/localização; afiliado
+ * edita só localização (cidade/estado). feePercent/active/asaasWalletId
+ * continuam exclusivos do Admin (AdminPartnersPage). */
+partnerRouter.put(
+  '/profile',
+  ...guard,
+  validateBody(updateMyPartnerProfileSchema),
+  async (req, res) => {
+    res.json(envelope(await partnerService.updateMyProfile(partnerId(req), req.body)));
+  },
+);
 
 partnerRouter.get('/affiliate/entries', ...guard, async (req, res) => {
   res.json(envelope(await affiliateWalletService.listEntries(partnerId(req))));

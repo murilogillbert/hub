@@ -46,6 +46,7 @@ export function PartnerLayout() {
               <NavLink to="/parceiro/afiliado/saque">Solicitar saque</NavLink>
               <NavLink to="/parceiro/afiliado/materiais">📦 Materiais</NavLink>
               <NavLink to="/parceiro/afiliado/link">🔗 Meu link</NavLink>
+              <NavLink to="/parceiro/perfil">👤 Meu perfil</NavLink>
             </>
           ) : (
             <>
@@ -55,6 +56,7 @@ export function PartnerLayout() {
               <NavLink to="/parceiro/unidades">Unidades</NavLink>
               <NavLink to="/parceiro/venda">📷 Resgate / Venda</NavLink>
               <NavLink to="/parceiro/metricas">📊 Métricas</NavLink>
+              <NavLink to="/parceiro/perfil">👤 Meu perfil</NavLink>
             </>
           )}
         </nav>

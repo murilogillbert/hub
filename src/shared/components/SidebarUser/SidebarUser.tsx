@@ -1,114 +1,33 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@shared/hooks/useAuth';
-import { authApi } from '@shared/api/endpoints';
-import { Input } from '@shared/components/Input/Input';
-import { Button } from '@shared/components/Button/Button';
-import { Modal } from '@shared/components/Modal/Modal';
+import { resolveImageUrl } from '@shared/api/client';
 import './SidebarUser.css';
 
+const PROFILE_ROUTE_BY_ROLE: Record<string, string> = {
+  partner: '/parceiro/perfil',
+  admin: '/admin/perfil',
+  financeiro: '/financeiro/perfil',
+};
+
+/** Cartão do usuário logado no rodapé do menu lateral — leva pra tela de
+ * perfil completa da área atual (Admin/Parceiro/Financeiro têm cada uma a
+ * sua, todas construídas com os mesmos blocos de src/shared/components/AccountSettings). */
 export function SidebarUser() {
-  const { user, setUser } = useAuth();
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    if (open && user) {
-      setName(user.name);
-      setEmail(user.email);
-      setPhone(user.phone ?? '');
-      setError(null);
-      setSaved(false);
-    }
-  }, [open, user]);
-
+  const { user } = useAuth();
   if (!user) return null;
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setBusy(true);
-    try {
-      const updated = await authApi.updateProfile({ name, email, phone });
-      setUser(updated);
-      setSaved(true);
-      window.setTimeout(() => setOpen(false), 900);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao salvar.');
-    } finally {
-      setBusy(false);
-    }
-  };
+  const profileRoute = PROFILE_ROUTE_BY_ROLE[user.role] ?? '/';
 
   return (
-    <>
-      <button
-        type="button"
-        className="layout-internal__user sidebar-user"
-        onClick={() => setOpen(true)}
-        title="Editar minhas informacoes"
-      >
-        <img src={user.avatarUrl} alt={user.name} />
-        <div>
-          <strong>{user.name}</strong>
-          <small>{user.email}</small>
-        </div>
-        <span className="sidebar-user__edit" aria-hidden>
-          ✎
-        </span>
-      </button>
-
-      <Modal
-        open={open}
-        title="Minhas informações"
-        onClose={() => setOpen(false)}
-        closeDisabled={busy}
-      >
-        <form onSubmit={handleSubmit} className="stack">
-          <div className="sidebar-user__id">
-            <img src={user.avatarUrl} alt={user.name} />
-            <span className="badge badge-primary">{user.role}</span>
-          </div>
-          <Input
-            label="Nome"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-          <Input
-            label="E-mail"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Input
-            label="Telefone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="(11) 99999-0000"
-          />
-          {error && <small className="input-field__error">{error}</small>}
-          {saved && <span className="badge badge-accent">✓ Salvo</span>}
-          <div className="row">
-            <Button type="submit" disabled={busy}>
-              {busy ? 'Salvando...' : 'Salvar'}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setOpen(false)}
-              disabled={busy}
-            >
-              Cancelar
-            </Button>
-          </div>
-        </form>
-      </Modal>
-    </>
+    <Link to={profileRoute} className="layout-internal__user sidebar-user" title="Meu perfil">
+      <img src={resolveImageUrl(user.avatarUrl) || user.avatarUrl} alt={user.name} />
+      <div>
+        <strong>{user.name}</strong>
+        <small>{user.email}</small>
+      </div>
+      <span className="sidebar-user__edit" aria-hidden>
+        →
+      </span>
+    </Link>
   );
 }

@@ -45,6 +45,14 @@ export interface AffiliatePartnerDto {
   ownedByCompany: boolean;
   pixKey: string | null;
   pixKeyType: string | null;
+  // Dados de perfil/loja (autoatendimento — ver PUT /partner/profile).
+  segment: string;
+  logoUrl: string;
+  cnpj: string;
+  city: string;
+  state: string;
+  lat: number;
+  lng: number;
 }
 
 export const updatePixKeySchema = z.object({

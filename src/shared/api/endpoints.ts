@@ -348,7 +348,21 @@ export const partnerApi = {
       `/partner/redeem?confirm=${confirm}`,
       { code },
     ),
+  updateProfile: (body: UpdateMyPartnerProfile) =>
+    api.put<AffiliatePartner>('/partner/profile', body),
 };
+
+/** Autoatendimento: loja manda tudo, afiliado manda só city/state. */
+export interface UpdateMyPartnerProfile {
+  name?: string;
+  segment?: string;
+  logoUrl?: string;
+  cnpj?: string;
+  city?: string;
+  state?: string;
+  lat?: number;
+  lng?: number;
+}
 
 // ---- Admin ----
 export interface PartnerUpsert {
@@ -584,6 +598,13 @@ export interface AffiliatePartner {
   ownedByCompany: boolean;
   pixKey: string | null;
   pixKeyType: PixKeyType | null;
+  segment: string;
+  logoUrl: string;
+  cnpj: string;
+  city: string;
+  state: string;
+  lat: number;
+  lng: number;
 }
 export interface CommissionEntry {
   id: string;

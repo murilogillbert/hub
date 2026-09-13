@@ -33,6 +33,7 @@ export function FinanceiroLayout() {
             💸 Saques
           </NavLink>
           <NavLink to="/financeiro/afiliados">🤝 Afiliados</NavLink>
+          <NavLink to="/financeiro/perfil">👤 Meu perfil</NavLink>
         </nav>
         <SidebarUser />
       </aside>

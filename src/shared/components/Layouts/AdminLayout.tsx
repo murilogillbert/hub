@@ -43,6 +43,7 @@ export function AdminLayout() {
           <NavLink to="/admin/afiliados/solicitacoes">🧑‍💼 Afiliados</NavLink>
           <NavLink to="/admin/afiliados/materiais">📦 Materiais de campanha</NavLink>
           <NavLink to="/admin/afiliados/chaves-api">🔑 Chaves de API</NavLink>
+          <NavLink to="/admin/perfil">👤 Meu perfil</NavLink>
         </nav>
         <SidebarUser />
       </aside>

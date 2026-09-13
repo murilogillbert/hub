@@ -61,6 +61,22 @@ export const partnerUpsertSchema = z.object({
 });
 export type PartnerUpsertRequest = z.infer<typeof partnerUpsertSchema>;
 
+/** Autoatendimento: o próprio parceiro/afiliado edita seus dados — mesmos
+ * campos de partnerUpsertSchema, exceto feePercent/active/asaasWalletId
+ * (exclusivos do Admin). Tudo opcional: um afiliado manda só city/state,
+ * uma loja manda tudo. */
+export const updateMyPartnerProfileSchema = z.object({
+  name: z.string().min(1).optional(),
+  segment: z.string().min(1).optional(),
+  logoUrl: z.string().optional(),
+  cnpj: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
+  state: z.string().optional().nullable(),
+  lat: z.number().optional().nullable(),
+  lng: z.number().optional().nullable(),
+});
+export type UpdateMyPartnerProfileRequest = z.infer<typeof updateMyPartnerProfileSchema>;
+
 export interface StoreDto {
   id: string;
   partnerId: string;

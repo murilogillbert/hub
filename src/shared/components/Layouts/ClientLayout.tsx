@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '@shared/hooks/useAuth';
 import { useCart } from '@shared/context/CartContext';
 import { formatCurrency } from '@shared/utils/formatters';
+import { resolveImageUrl } from '@shared/api/client';
 import { FloatingAssistant } from '@features/assistant/components/FloatingAssistant';
 import { NotificationsBell } from '@shared/components/NotificationsBell/NotificationsBell';
 import { Logo } from '@shared/components/Logo/Logo';
@@ -65,7 +66,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
                 </span>
                 <NotificationsBell />
                 <Link to="/conta/perfil" className="layout-client__avatar">
-                  <img src={user.avatarUrl} alt={user.name} />
+                  <img src={resolveImageUrl(user.avatarUrl) || user.avatarUrl} alt={user.name} />
                 </Link>
                 <button onClick={handleLogout} className="layout-client__logout">
                   Sair

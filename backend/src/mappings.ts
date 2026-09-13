@@ -235,6 +235,13 @@ export function toAffiliatePartnerDto(p: AffiliatePartnerRow): AffiliatePartnerD
     ownedByCompany: p.ownedByCompany,
     pixKey: p.pixKey,
     pixKeyType: p.pixKeyType,
+    segment: p.segment,
+    logoUrl: p.logoUrl,
+    cnpj: p.cnpj,
+    city: p.city,
+    state: p.state,
+    lat: p.lat,
+    lng: p.lng,
   };
 }
 

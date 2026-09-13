@@ -223,3 +223,61 @@
     align-items: flex-start;
   }
 }
+
+/* Perfil (Admin/Financeiro) — mesmo padrão visual de ClientArea.css */
+.profile {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.profile > :first-child {
+  grid-column: 1 / -1;
+}
+
+.profile__top {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.profile__avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  object-fit: cover;
+}
+
+.profile__top strong {
+  display: block;
+  font-size: var(--font-lg);
+}
+
+.profile__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.profile__notif {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.profile__notif label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-sm);
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .profile {
+    grid-template-columns: 1fr;
+  }
+}

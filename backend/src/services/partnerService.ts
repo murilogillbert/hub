@@ -1,11 +1,34 @@
 import type { NamedValue, SeriesPoint } from '../dtos/common.dto.js';
-import type { ProductDto, ProductUpsertRequest } from '../dtos/catalog.dto.js';
+import type { ProductDto, ProductUpsertRequest, UpdateMyPartnerProfileRequest } from '../dtos/catalog.dto.js';
+import type { AffiliatePartnerDto } from '../dtos/affiliate.dto.js';
 import type { PartnerMetricsDto } from '../dtos/partner.dto.js';
 import type { RedeemResult } from '../dtos/orders.dto.js';
 import { partnerNet, platformFeeFor, round2 } from '../domain/commissionRules.js';
 import { AppError } from '../errors.js';
 import { prisma } from '../infra/prisma.js';
-import { parseProductKind, toProductDto } from '../mappings.js';
+import { parseProductKind, toAffiliatePartnerDto, toProductDto } from '../mappings.js';
+
+/** Autoatendimento: o próprio parceiro (loja ou afiliado) edita seus dados.
+ * feePercent/active/asaasWalletId ficam de fora de propósito — exclusivos do
+ * Admin (backend/src/services/adminService.ts updatePartner). */
+export async function updateMyProfile(partnerId: string, req: UpdateMyPartnerProfileRequest): Promise<AffiliatePartnerDto> {
+  const existing = await prisma.partner.findUnique({ where: { id: partnerId } });
+  if (!existing) throw new AppError('Parceiro não encontrado.', 404);
+  const updated = await prisma.partner.update({
+    where: { id: partnerId },
+    data: {
+      ...(req.name != null ? { name: req.name } : {}),
+      ...(req.segment != null ? { segment: req.segment } : {}),
+      ...(req.logoUrl != null ? { logoUrl: req.logoUrl } : {}),
+      ...(req.cnpj != null ? { cnpj: req.cnpj.trim() } : {}),
+      ...(req.city != null ? { city: req.city.trim() } : {}),
+      ...(req.state != null ? { state: req.state.trim() } : {}),
+      ...(req.lat != null ? { lat: req.lat } : {}),
+      ...(req.lng != null ? { lng: req.lng } : {}),
+    },
+  });
+  return toAffiliatePartnerDto(updated);
+}
 
 export async function myProducts(partnerId: string): Promise<ProductDto[]> {
   const rows = await prisma.product.findMany({

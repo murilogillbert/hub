@@ -32,6 +32,7 @@ import { PartnerCatalogPage } from '@features/partner/pages/PartnerCatalogPage';
 import { PartnerRedeemPage } from '@features/partner/pages/PartnerRedeemPage';
 import { PartnerMetricsPage } from '@features/partner/pages/PartnerMetricsPage';
 import { PartnerStoresPage } from '@features/partner/pages/PartnerStoresPage';
+import { PartnerProfilePage } from '@features/partner/pages/PartnerProfilePage';
 import { AffiliateWalletPage } from '@features/partner/pages/affiliate/AffiliateWalletPage';
 import { AffiliateWithdrawalsPage } from '@features/partner/pages/affiliate/AffiliateWithdrawalsPage';
 import { AffiliateMaterialsPage } from '@features/partner/pages/affiliate/AffiliateMaterialsPage';
@@ -49,9 +50,11 @@ import { AdminAuditPage } from '@features/admin/pages/AdminAuditPage';
 import { AdminAffiliateApplicationsPage } from '@features/admin/pages/AdminAffiliateApplicationsPage';
 import { AdminCampaignMaterialsPage } from '@features/admin/pages/AdminCampaignMaterialsPage';
 import { AdminApiKeysPage } from '@features/admin/pages/AdminApiKeysPage';
+import { AdminProfilePage } from '@features/admin/pages/AdminProfilePage';
 
 import { FinanceiroWithdrawalsPage } from '@features/financeiro/pages/FinanceiroWithdrawalsPage';
 import { FinanceiroAffiliatesPage } from '@features/financeiro/pages/FinanceiroAffiliatesPage';
+import { FinanceiroProfilePage } from '@features/financeiro/pages/FinanceiroProfilePage';
 
 export function AppRoutes() {
   return (
@@ -144,6 +147,7 @@ export function AppRoutes() {
           <Route path="afiliado/saque" element={<AffiliateWithdrawalsPage />} />
           <Route path="afiliado/materiais" element={<AffiliateMaterialsPage />} />
           <Route path="afiliado/link" element={<AffiliateLinkPage />} />
+          <Route path="perfil" element={<PartnerProfilePage />} />
         </Route>
       </Route>
 
@@ -162,6 +166,7 @@ export function AppRoutes() {
           <Route path="afiliados/solicitacoes" element={<AdminAffiliateApplicationsPage />} />
           <Route path="afiliados/materiais" element={<AdminCampaignMaterialsPage />} />
           <Route path="afiliados/chaves-api" element={<AdminApiKeysPage />} />
+          <Route path="perfil" element={<AdminProfilePage />} />
         </Route>
       </Route>
 
@@ -170,6 +175,7 @@ export function AppRoutes() {
         <Route path="/financeiro" element={<FinanceiroLayout />}>
           <Route index element={<FinanceiroWithdrawalsPage />} />
           <Route path="afiliados" element={<FinanceiroAffiliatesPage />} />
+          <Route path="perfil" element={<FinanceiroProfilePage />} />
         </Route>
       </Route>
 
