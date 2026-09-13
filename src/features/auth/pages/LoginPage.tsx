@@ -75,11 +75,6 @@ export function LoginPage() {
           </Button>
         </form>
         <p className="auth-page__alt">
-          Contas demo: <code>cliente@demo.com</code> ·{' '}
-          <code>parceiro@demo.com</code> · <code>admin@demo.com</code> (senha{' '}
-          <code>Demo@123</code>)
-        </p>
-        <p className="auth-page__alt">
           Ainda não tem conta? <Link to="/cadastro">Cadastre-se</Link>
         </p>
       </div>

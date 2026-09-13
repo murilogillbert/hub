@@ -1,4 +1,3 @@
-import crypto from 'node:crypto';
 import type { AffiliateApplicationDto, AffiliateApplicationInput } from '../dtos/affiliate.dto.js';
 import type { ApplicationStatus } from '@prisma/client';
 import { AppError } from '../errors.js';
@@ -9,14 +8,14 @@ import { toAffiliateApplicationDto, tryParseApplicationStatus } from '../mapping
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
+// Senha padrão de todo novo afiliado aprovado — o e-mail de boas-vindas
+// instrui a trocar no primeiro acesso.
+const DEFAULT_AFFILIATE_PASSWORD = '123456';
+
 function generateReferralCode(): string {
   let out = '';
   for (let i = 0; i < 7; i++) out += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
   return out;
-}
-
-function generateTempPassword(): string {
-  return crypto.randomBytes(9).toString('base64url');
 }
 
 export async function apply(req: AffiliateApplicationInput): Promise<AffiliateApplicationDto> {
@@ -68,7 +67,6 @@ export async function approve(id: string, actorId: string): Promise<AffiliateApp
   if (await prisma.user.findUnique({ where: { email: app.email } }))
     throw new AppError('Já existe uma conta com este e-mail.', 409);
 
-  const tempPassword = generateTempPassword();
   let referralCode = generateReferralCode();
   while (await prisma.partner.findUnique({ where: { referralCode } })) referralCode = generateReferralCode();
 
@@ -89,7 +87,7 @@ export async function approve(id: string, actorId: string): Promise<AffiliateApp
       data: {
         name: app.name,
         email: app.email,
-        passwordHash: hashPassword(tempPassword),
+        passwordHash: hashPassword(DEFAULT_AFFILIATE_PASSWORD),
         role: 'Partner',
         phone: app.phone || null,
         partnerId: partner.id,
@@ -109,8 +107,8 @@ export async function approve(id: string, actorId: string): Promise<AffiliateApp
       `<p>Olá, ${app.name}!</p>
        <p>Sua inscrição como afiliado foi aprovada. Acesse a plataforma com:</p>
        <p><strong>E-mail:</strong> ${app.email}<br/>
-          <strong>Senha temporária:</strong> ${tempPassword}</p>
-       <p>Recomendamos trocar a senha no primeiro acesso.</p>`,
+          <strong>Senha temporária:</strong> ${DEFAULT_AFFILIATE_PASSWORD}</p>
+       <p>Por segurança, troque essa senha assim que fizer login pela primeira vez.</p>`,
     );
   } catch (err) {
     // Aprovação já foi persistida; falha no e-mail não deve derrubar a
