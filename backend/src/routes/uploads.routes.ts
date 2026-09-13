@@ -2,7 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { envelope } from '../dtos/common.dto.js';
 import { AppError } from '../errors.js';
-import { uploadImage } from '../infra/storage/supabaseStorage.js';
+import { uploadImage } from '../infra/storage/minioStorage.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });

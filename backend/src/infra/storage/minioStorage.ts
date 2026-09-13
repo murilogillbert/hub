@@ -1,16 +1,21 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import crypto from 'node:crypto';
 import { config } from '../../config.js';
 import { AppError } from '../../errors.js';
 
 // Criado sob demanda (não no boot): assim a API sobe normalmente mesmo antes
-// do projeto Supabase existir — só o upload de imagem fica indisponível.
-let supabase: SupabaseClient | null = null;
-function client(): SupabaseClient {
-  if (!config.supabase.url || !config.supabase.serviceRoleKey)
-    throw new AppError('Supabase Storage não configurado (defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY).', 503);
-  supabase ??= createClient(config.supabase.url, config.supabase.serviceRoleKey);
-  return supabase;
+// do bucket existir — só o upload de imagem fica indisponível.
+let s3: S3Client | null = null;
+function client(): S3Client {
+  if (!config.minio.endpoint || !config.minio.accessKey || !config.minio.secretKey)
+    throw new AppError('Storage não configurado (defina MINIO_ENDPOINT, MINIO_ACCESS_KEY e MINIO_SECRET_KEY).', 503);
+  s3 ??= new S3Client({
+    endpoint: config.minio.endpoint,
+    region: 'us-east-1',
+    forcePathStyle: true,
+    credentials: { accessKeyId: config.minio.accessKey, secretAccessKey: config.minio.secretKey },
+  });
+  return s3;
 }
 
 const MAGIC_BYTES: { ext: string; contentType: string; matches: (h: Buffer) => boolean }[] = [
@@ -40,7 +45,7 @@ const MAGIC_BYTES: { ext: string; contentType: string; matches: (h: Buffer) => b
 ];
 
 /** Detecta o tipo pelos magic bytes (não confia no content-type do cliente),
- * sobe o buffer pro bucket do Supabase Storage e devolve a URL pública. */
+ * sobe o buffer pro bucket do MinIO e devolve a URL pública. */
 export async function uploadImage(buffer: Buffer): Promise<string> {
   if (buffer.length === 0) throw new AppError('Nenhum arquivo enviado.', 400);
   if (buffer.length > config.uploads.maxImageBytes)
@@ -55,12 +60,19 @@ export async function uploadImage(buffer: Buffer): Promise<string> {
   if (!kind) throw new AppError('Formato não suportado. Use JPEG, PNG ou WEBP.', 415);
 
   const name = `${crypto.randomUUID()}.${kind.ext}`;
-  const sb = client();
-  const { error } = await sb.storage
-    .from(config.supabase.storageBucket)
-    .upload(name, buffer, { contentType: kind.contentType, upsert: false });
-  if (error) throw new AppError(`Falha no upload: ${error.message}`, 502);
+  try {
+    await client().send(
+      new PutObjectCommand({
+        Bucket: config.minio.bucket,
+        Key: name,
+        Body: buffer,
+        ContentType: kind.contentType,
+      }),
+    );
+  } catch (err) {
+    throw new AppError(`Falha no upload: ${err instanceof Error ? err.message : String(err)}`, 502);
+  }
 
-  const { data } = sb.storage.from(config.supabase.storageBucket).getPublicUrl(name);
-  return data.publicUrl;
+  const base = config.minio.publicUrl || config.minio.endpoint;
+  return `${base.replace(/\/$/, '')}/${config.minio.bucket}/${name}`;
 }
