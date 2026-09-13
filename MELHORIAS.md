@@ -24,23 +24,21 @@ implementação.
   a inscrição), o risco é baixo, mas vale considerar unificar com o fluxo de
   verificação se um dia isso for automatizado sem revisão humana.
 
-## Pode ficar para a primeira semana pós-lançamento
+## Resolvidas
 
-- **CRUD de parceiro no admin**: o backend já tem `deletePartner` (soft-delete)
-  pronto e funcionando, mas nenhuma tela usa — hoje só dá pra pausar/reativar
-  parceiro pelo admin. Se fizer sentido remover parceiros de vez, é só expor o
-  botão que já existe.
-- **Erro da calculadora "Lucro Real" é 100% silencioso**: se o envio pro backend
-  falhar, o cliente nem percebe (o diagnóstico local aparece igual, por decisão
-  de design). Bom pra não travar a experiência, mas significa que uma falha no
-  backend nesse canal de captação de lead só aparece se alguém for olhar os logs
-  do servidor.
-- **Texto/comentário desatualizado sobre troca de gateway de pagamento**: o
-  código comenta que o admin troca o provedor de pagamento (mock/Mercado
-  Pago/Asaas) sem precisar reiniciar, mas na prática isso vem de uma variável de
-  ambiente fixa no boot — trocar de fato exige redeploy. Não afeta ninguém hoje
-  (só um comentário incorreto no código), mas vale corrigir antes que confunda
-  alguém no futuro.
+- ~~CRUD de parceiro no admin~~ — investigando mais a fundo, `deletePartner`
+  hoje só faz `active: false`, exatamente o que "Pausar" já faz — não é uma
+  exclusão de verdade. Decidido não expor um botão duplicado; pausar/reativar
+  já cobre o caso de uso. Se um dia fizer sentido uma exclusão que se comporte
+  diferente de pausar, é um trabalho novo, não só "expor um botão".
+- ~~Erro da calculadora "Lucro Real" é 100% silencioso~~ — agora mostra um
+  toast discreto ("Seu resultado está pronto, mas não conseguimos salvar seus
+  dados agora") quando o envio ao backend falha, sem travar o diagnóstico local
+  que já aparece na tela.
+- ~~Texto/comentário desatualizado sobre troca de gateway de pagamento~~ —
+  comentário corrigido em `backend/src/infra/paymentGateways/index.ts`.
+
+## Pode ficar para a primeira semana pós-lançamento
 
 ## Ideias maiores (avaliar depois, com mais tempo)
 

@@ -4,8 +4,11 @@ import { MercadoPagoGateway } from './mercadoPago.js';
 import { MockPaymentGateway } from './mock.js';
 import type { IPaymentGateway } from './types.js';
 
-/** Gateway de pagamento selecionado por PAYMENT_PROVIDER. Convivem 3
- * implementações; o admin troca o provider sem recompilar (Payment:Provider). */
+/** Gateway de pagamento selecionado por PAYMENT_PROVIDER (env, lido uma vez no
+ * boot) — convivem 3 implementações. Trocar o provider em produção exige
+ * mudar a env var e redeployar; não há troca em runtime pelo Admin →
+ * Integrações (diferente das credenciais de cada gateway, essas sim
+ * editáveis ali sem redeploy). */
 export let paymentGateway: IPaymentGateway =
   config.paymentProvider === 'mercadopago'
     ? new MercadoPagoGateway()

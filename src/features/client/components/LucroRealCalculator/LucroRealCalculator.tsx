@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Input } from '@shared/components/Input/Input';
 import { Button } from '@shared/components/Button/Button';
 import { formatCurrency } from '@shared/utils/formatters';
+import { useToast } from '@shared/components/Toaster/ToastContext';
 import { assistantApi } from '@shared/api/endpoints';
 
 /** Texto e versão do termo de consentimento — persistidos no AuditLog
@@ -35,6 +36,7 @@ export function LucroRealCalculator({
   whatsappNumber = '5511999999999',
   intro,
 }: LucroRealCalculatorProps) {
+  const toast = useToast();
   const [form, setForm] = useState<LucroInput>(EMPTY_LUCRO_INPUT);
   const [contato, setContato] = useState({ nome: '', whatsapp: '', cidade: '' });
   const [consentimento, setConsentimento] = useState(false);
@@ -64,7 +66,8 @@ export function LucroRealCalculator({
     // Endpoint dedicado: persiste contato + consentimento auditável (texto
     // exato + versão + timestamp + IP via back) no AuditLog, e cria um
     // AssistantLead minimalista para o ranking do admin.
-    // Falha silenciosa: o diagnóstico local já está pronto na tela.
+    // O diagnóstico local já fica pronto na tela mesmo se isso falhar — só
+    // avisamos discretamente, sem travar a experiência do motorista.
     try {
       const score = scoreFromLucroHora(r.lucroHora);
       await assistantApi.submitLucroReal({
@@ -80,7 +83,7 @@ export function LucroRealCalculator({
         temperature: temperatureFromScore(score),
       });
     } catch {
-      /* ignore — diagnostico local já está pronto */
+      toast.error('Seu resultado está pronto, mas não conseguimos salvar seus dados agora.');
     } finally {
       setSubmitting(false);
       // Rolagem suave até o resultado.
