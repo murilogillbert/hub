@@ -96,4 +96,54 @@ describe('paymentService.process', () => {
     expect(entries.some((e) => e.type === 'Used' && e.amount.toNumber() === 15)).toBe(true);
     expect(entries.some((e) => e.type === 'Earned' && e.amount.toNumber() === 5)).toBe(true);
   });
+
+  it('blocks checkout when the gateway is Asaas and the customer has no CPF saved', async () => {
+    __setPaymentGatewayForTests({ ...new ApprovedGateway(), provider: 'asaas' });
+    try {
+      const { process } = await import('../src/services/paymentService.js');
+      const partner = await db.prisma.partner.create({ data: { name: 'Cafe 2', segment: 'Food', active: true } });
+      const customer = await db.prisma.user.create({
+        data: { name: 'Bia', email: 'bia@example.com', passwordHash: 'x' },
+      });
+      const product = await db.prisma.product.create({
+        data: {
+          partnerId: partner.id,
+          title: 'Combo 2',
+          description: 'Cafe',
+          price: 50,
+          cashbackPercent: 10,
+          kind: 'Voucher',
+          category: 'Food',
+          stock: 10,
+        },
+      });
+      const order = await db.prisma.order.create({
+        data: {
+          code: 'CPF123',
+          customerId: customer.id,
+          paidPrice: 50,
+          status: 'PendingPayment',
+          items: {
+            create: [
+              {
+                productId: product.id,
+                partnerId: partner.id,
+                productTitle: product.title,
+                category: product.category,
+                unitPrice: 50,
+                quantity: 1,
+                cashbackPercent: 10,
+                lineTotal: 50,
+                cashbackEarned: 5,
+              },
+            ],
+          },
+        },
+      });
+
+      await expect(process(customer.id, { orderId: order.id, method: 'pix', card: null })).rejects.toThrow(/CPF/);
+    } finally {
+      __setPaymentGatewayForTests(new ApprovedGateway());
+    }
+  });
 });

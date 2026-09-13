@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export const pixKeyTypeSchema = z.enum(['CPF', 'CNPJ', 'Email', 'Phone', 'Random']);
+
 // ---------- Inscrição pública "quero ser afiliado" ----------
 export const affiliateApplicationSchema = z.object({
   name: z.string().min(1),
@@ -41,7 +43,15 @@ export interface AffiliatePartnerDto {
   linkSales: number;
   active: boolean;
   ownedByCompany: boolean;
+  pixKey: string | null;
+  pixKeyType: string | null;
 }
+
+export const updatePixKeySchema = z.object({
+  pixKey: z.string().min(1),
+  pixKeyType: pixKeyTypeSchema,
+});
+export type UpdatePixKeyRequest = z.infer<typeof updatePixKeySchema>;
 
 export interface CommissionEntryDto {
   id: string;
@@ -57,6 +67,9 @@ export interface CommissionEntryDto {
 export const requestWithdrawalSchema = z.object({
   amount: z.number().positive(),
   note: z.string().optional(),
+  // Se ausente, usa a chave Pix salva no perfil do afiliado (Partner.pixKey).
+  pixKey: z.string().optional(),
+  pixKeyType: pixKeyTypeSchema.optional(),
 });
 export type RequestWithdrawalRequest = z.infer<typeof requestWithdrawalSchema>;
 
@@ -72,6 +85,8 @@ export interface WithdrawalRequestDto {
   amount: number;
   status: string;
   note: string;
+  pixKey: string | null;
+  pixKeyType: string | null;
   requestedAt: Date;
   resolvedAt: Date | null;
 }

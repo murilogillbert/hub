@@ -83,6 +83,7 @@ export class AsaasGateway implements IPaymentGateway {
     amount: number,
     method: PaymentMethodCode,
     card: CardInput | null | undefined,
+    remoteIp?: string,
   ): Promise<PaymentStatusSnapshot> {
     const { baseUrl, headers } = await baseUrlAndHeaders();
     const reference = codes.reference(order.id);
@@ -102,10 +103,13 @@ export class AsaasGateway implements IPaymentGateway {
     if (splits.length > 0) body.split = splits;
 
     if (method !== 'Pix') {
-      if (!card?.token)
-        throw new AppError('Pagamento com cartão no Asaas requer o token do cartão (tokenização).', 400);
-      body.creditCardToken = card.token;
-      body.remoteIp = '127.0.0.1';
+      if (!card) throw new AppError('Dados do cartão ausentes.', 400);
+      // Já vem tokenizado (ex.: futura integração com SDK client-side)? Usa
+      // direto. Senão, tokeniza agora mesmo — a Asaas expõe isso como uma
+      // chamada de API de servidor, não exige SDK no navegador.
+      const token = card.token ?? (await this.tokenizeCard(customerId, card, order, remoteIp));
+      body.creditCardToken = token;
+      body.remoteIp = remoteIp ?? '127.0.0.1';
     }
 
     const resp = await fetch(`${baseUrl}payments`, { method: 'POST', headers, body: JSON.stringify(body) });
@@ -173,15 +177,18 @@ export class AsaasGateway implements IPaymentGateway {
     headers: Record<string, string>,
     order: OrderForPayment,
   ): Promise<string> {
-    // cpfCnpj: em sandbox o PIX exige CPF/CNPJ no cliente. Permitimos um CPF
-    // de teste padrão via setting para o fluxo ser testável ponta a ponta.
+    // cpfCnpj: o Asaas exige CPF/CNPJ no cliente pra Pix. Usa o CPF real
+    // salvo no cadastro; só cai no CPF de teste (Asaas:DefaultCpfCnpj) se o
+    // cliente ainda não tiver um salvo — paymentService.process() já bloqueia
+    // esse caso antes de chegar aqui quando o gateway ativo é o Asaas.
     const defaultCpf = await getSetting('Asaas:DefaultCpfCnpj');
     const body: Record<string, unknown> = {
       name: order.customer?.name ?? 'Cliente OpenDriverHub',
       email: order.customer?.email,
       externalReference: order.customerId,
     };
-    if (defaultCpf) body.cpfCnpj = defaultCpf;
+    const cpfCnpj = order.customer?.cpf || defaultCpf;
+    if (cpfCnpj) body.cpfCnpj = cpfCnpj;
 
     const resp = await fetch(`${baseUrl}customers`, { method: 'POST', headers, body: JSON.stringify(body) });
     const raw = (await resp.json().catch(() => ({}))) as Record<string, any>;
@@ -189,6 +196,54 @@ export class AsaasGateway implements IPaymentGateway {
     const id = raw.id as string | undefined;
     if (!id) throw new AppError('Asaas não retornou o id do cliente.', 502);
     return id;
+  }
+
+  /** Tokeniza o cartão via API do Asaas (POST /creditCard/tokenizeCreditCard)
+   * — chamada de servidor pra servidor, não exige SDK no navegador. O número
+   * do cartão passa pelo nosso backend só até aqui; nunca é persistido. */
+  private async tokenizeCard(
+    customerId: string,
+    card: CardInput,
+    order: OrderForPayment,
+    remoteIp: string | undefined,
+  ): Promise<string> {
+    const { baseUrl, headers } = await baseUrlAndHeaders();
+    const [expiryMonth, expiryYearRaw] = card.expiry.split('/').map((s) => s.trim());
+    const expiryYear = expiryYearRaw?.length === 2 ? `20${expiryYearRaw}` : expiryYearRaw;
+    if (!expiryMonth || !expiryYear)
+      throw new AppError('Validade do cartão inválida (use MM/AA).', 400);
+
+    const defaultCpf = await getSetting('Asaas:DefaultCpfCnpj');
+    const body = {
+      customer: customerId,
+      creditCard: {
+        holderName: card.holder,
+        number: card.number.replace(/\s+/g, ''),
+        expiryMonth,
+        expiryYear,
+        ccv: card.cvv,
+      },
+      creditCardHolderInfo: {
+        name: card.holder,
+        email: order.customer?.email,
+        cpfCnpj: order.customer?.cpf || defaultCpf,
+        postalCode: card.postalCode,
+        addressNumber: card.addressNumber,
+        phone: order.customer?.phone ?? undefined,
+      },
+      remoteIp: remoteIp ?? '127.0.0.1',
+    };
+
+    const resp = await fetch(`${baseUrl}creditCard/tokenizeCreditCard`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    });
+    const raw = (await resp.json().catch(() => ({}))) as Record<string, any>;
+    if (!resp.ok) throw new AppError(`Asaas (cartão): ${extractError(raw)}`, 400);
+    const token = raw.creditCardToken as string | undefined;
+    if (!token) throw new AppError('Asaas não retornou o token do cartão.', 502);
+    return token;
   }
 
   private async fetchPix(

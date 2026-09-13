@@ -158,6 +158,7 @@ export const authApi = {
     name: string;
     email: string;
     phone?: string;
+    cpf?: string;
     avatarUrl?: string;
   }) => api.put<User>('/me/profile', body),
   updateNotifications: (body: {
@@ -168,6 +169,14 @@ export const authApi = {
   notifications: () => api.get<AppNotification[]>('/me/notifications'),
   changePassword: (body: { currentPassword: string; newPassword: string }) =>
     api.put<void>('/me/password', body),
+  resendVerification: (email: string) =>
+    api.postPublic<{ message: string }>('/auth/verify-email/resend', { email }),
+  confirmEmailVerification: (token: string) =>
+    api.postPublic<{ message: string }>('/auth/verify-email/confirm', { token }),
+  forgotPassword: (email: string) =>
+    api.postPublic<{ message: string }>('/auth/forgot-password', { email }),
+  resetPassword: (token: string, newPassword: string) =>
+    api.postPublic<{ message: string }>('/auth/reset-password', { token, newPassword }),
 };
 
 // ---- Catalog ----
@@ -274,7 +283,14 @@ export const paymentsApi = {
   process: (body: {
     orderId: string;
     method: 'pix' | 'credit_card' | 'debit_card';
-    card?: { number: string; holder: string; expiry: string; cvv: string } | null;
+    card?: {
+      number: string;
+      holder: string;
+      expiry: string;
+      cvv: string;
+      postalCode?: string;
+      addressNumber?: string;
+    } | null;
   }) => api.post<PaymentSnapshot>('/payments/process', body),
   status: (orderId: string) =>
     api.get<PaymentSnapshot>(`/orders/${orderId}/payment-status`),
@@ -553,6 +569,8 @@ export interface AffiliateApplication {
   createdAt: string;
   resolvedAt?: string | null;
 }
+export type PixKeyType = 'CPF' | 'CNPJ' | 'Email' | 'Phone' | 'Random';
+
 export interface AffiliatePartner {
   id: string;
   name: string;
@@ -564,6 +582,8 @@ export interface AffiliatePartner {
   linkSales: number;
   active: boolean;
   ownedByCompany: boolean;
+  pixKey: string | null;
+  pixKeyType: PixKeyType | null;
 }
 export interface CommissionEntry {
   id: string;
@@ -581,6 +601,8 @@ export interface WithdrawalRequest {
   amount: number;
   status: 'pending' | 'approved' | 'rejected' | 'paid';
   note: string;
+  pixKey: string | null;
+  pixKeyType: PixKeyType | null;
   requestedAt: string;
   resolvedAt?: string | null;
 }
@@ -625,8 +647,14 @@ export const affiliateApi = {
   me: () => api.get<AffiliatePartner>('/partner/me'),
   entries: () => api.get<CommissionEntry[]>('/partner/affiliate/entries'),
   withdrawals: () => api.get<WithdrawalRequest[]>('/partner/affiliate/withdrawals'),
-  requestWithdrawal: (amount: number, note?: string) =>
-    api.post<WithdrawalRequest>('/partner/affiliate/withdrawals', { amount, note }),
+  requestWithdrawal: (
+    amount: number,
+    note?: string,
+    pixKey?: string,
+    pixKeyType?: PixKeyType,
+  ) => api.post<WithdrawalRequest>('/partner/affiliate/withdrawals', { amount, note, pixKey, pixKeyType }),
+  updatePixKey: (pixKey: string, pixKeyType: PixKeyType) =>
+    api.put<AffiliatePartner>('/partner/affiliate/pix-key', { pixKey, pixKeyType }),
   materials: () => api.get<CampaignMaterial[]>('/partner/affiliate/materials'),
   link: () => api.get<AffiliateLink>('/partner/affiliate/link'),
 };

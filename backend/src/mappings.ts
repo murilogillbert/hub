@@ -23,6 +23,11 @@ export function toUserDto(u: UserRow): UserDto {
     avatarUrl: u.avatarUrl,
     partnerId: u.partnerId,
     phone: u.phone,
+    cpf: u.cpf,
+    emailVerifiedAt: u.emailVerifiedAt,
+    notifyWhatsApp: u.notifyWhatsApp,
+    notifyEmail: u.notifyEmail,
+    notifyPromo: u.notifyPromo,
   };
 }
 
@@ -228,6 +233,8 @@ export function toAffiliatePartnerDto(p: AffiliatePartnerRow): AffiliatePartnerD
     linkSales: p.linkSales,
     active: p.active,
     ownedByCompany: p.ownedByCompany,
+    pixKey: p.pixKey,
+    pixKeyType: p.pixKeyType,
   };
 }
 
@@ -253,6 +260,8 @@ export function toWithdrawalRequestDto(w: WithdrawalRequestRow): WithdrawalReque
     amount: w.amount.toNumber(),
     status: w.status.toLowerCase(),
     note: w.note,
+    pixKey: w.pixKey,
+    pixKeyType: w.pixKeyType,
     requestedAt: w.requestedAt,
     resolvedAt: w.resolvedAt,
   };

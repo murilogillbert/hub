@@ -2,10 +2,10 @@ import { Router } from 'express';
 import { productUpsertSchema, storeUpsertSchema } from '../dtos/catalog.dto.js';
 import { envelope } from '../dtos/common.dto.js';
 import { redeemRequestSchema } from '../dtos/orders.dto.js';
-import { requestWithdrawalSchema } from '../dtos/affiliate.dto.js';
+import { requestWithdrawalSchema, updatePixKeySchema } from '../dtos/affiliate.dto.js';
 import { AppError } from '../errors.js';
 import { prisma } from '../infra/prisma.js';
-import { ROLES, partnerId, requireAuth, requireRole, userId } from '../middleware/auth.js';
+import { ROLES, partnerId, requireAuth, requireRole, requireVerifiedEmail, userId } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
 import { toAffiliatePartnerDto } from '../mappings.js';
 import * as affiliateWalletService from '../services/affiliateWalletService.js';
@@ -78,9 +78,36 @@ partnerRouter.get('/affiliate/withdrawals', ...guard, async (req, res) => {
   res.json(envelope(await affiliateWalletService.myWithdrawals(partnerId(req))));
 });
 
-partnerRouter.post('/affiliate/withdrawals', ...guard, validateBody(requestWithdrawalSchema), async (req, res) => {
-  res.json(envelope(await affiliateWalletService.requestWithdrawal(partnerId(req), req.body.amount, req.body.note)));
-});
+partnerRouter.post(
+  '/affiliate/withdrawals',
+  ...guard,
+  requireVerifiedEmail,
+  validateBody(requestWithdrawalSchema),
+  async (req, res) => {
+    res.json(
+      envelope(
+        await affiliateWalletService.requestWithdrawal(
+          partnerId(req),
+          req.body.amount,
+          req.body.note,
+          req.body.pixKey,
+          req.body.pixKeyType,
+        ),
+      ),
+    );
+  },
+);
+
+partnerRouter.put(
+  '/affiliate/pix-key',
+  ...guard,
+  validateBody(updatePixKeySchema),
+  async (req, res) => {
+    res.json(
+      envelope(await affiliateWalletService.updatePixKey(partnerId(req), req.body.pixKey, req.body.pixKeyType)),
+    );
+  },
+);
 
 partnerRouter.get('/affiliate/materials', ...guard, async (_req, res) => {
   res.json(envelope(await campaignMaterialService.listActive()));

@@ -15,9 +15,15 @@ describe('affiliateWalletService', () => {
     await db.stop();
   });
 
-  async function createAffiliate(commissionBalance = 100) {
+  async function createAffiliate(commissionBalance = 100, withPixKey = true) {
     return db.prisma.partner.create({
-      data: { name: 'Consultor Teste', segment: 'Afiliado Solar', kind: 'SolarAffiliate', commissionBalance },
+      data: {
+        name: 'Consultor Teste',
+        segment: 'Afiliado Solar',
+        kind: 'SolarAffiliate',
+        commissionBalance,
+        ...(withPixKey ? { pixKey: '11122233344', pixKeyType: 'CPF' as const } : {}),
+      },
     });
   }
 
@@ -97,5 +103,35 @@ describe('affiliateWalletService', () => {
     const { requestWithdrawal } = await import('../src/services/affiliateWalletService.js');
     const partner = await db.prisma.partner.create({ data: { name: 'Loja X', segment: 'Cafeteria' } });
     await expect(requestWithdrawal(partner.id, 10)).rejects.toThrow(/não é afiliado/);
+  });
+
+  it('requestWithdrawal blocks when the affiliate has no Pix key saved and none is given', async () => {
+    const { requestWithdrawal } = await import('../src/services/affiliateWalletService.js');
+    const partner = await createAffiliate(100, false);
+    await expect(requestWithdrawal(partner.id, 10)).rejects.toThrow(/chave Pix/);
+  });
+
+  it('requestWithdrawal falls back to the profile Pix key when no override is given', async () => {
+    const { requestWithdrawal } = await import('../src/services/affiliateWalletService.js');
+    const partner = await createAffiliate(100);
+    const request = await requestWithdrawal(partner.id, 10);
+    expect(request.pixKey).toBe('11122233344');
+    expect(request.pixKeyType).toBe('CPF');
+  });
+
+  it('requestWithdrawal snapshots an override Pix key instead of the profile one', async () => {
+    const { requestWithdrawal } = await import('../src/services/affiliateWalletService.js');
+    const partner = await createAffiliate(100);
+    const request = await requestWithdrawal(partner.id, 10, undefined, 'outra@chave.com', 'Email');
+    expect(request.pixKey).toBe('outra@chave.com');
+    expect(request.pixKeyType).toBe('Email');
+  });
+
+  it("updatePixKey persists the affiliate's default payout key", async () => {
+    const { updatePixKey } = await import('../src/services/affiliateWalletService.js');
+    const partner = await createAffiliate(100, false);
+    const updated = await updatePixKey(partner.id, '  chave-aleatoria-123  ', 'Random');
+    expect(updated.pixKey).toBe('chave-aleatoria-123');
+    expect(updated.pixKeyType).toBe('Random');
   });
 });

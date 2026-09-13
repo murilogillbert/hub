@@ -69,6 +69,9 @@ export function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+          <Link to="/esqueci-senha" className="auth-page__forgot">
+            Esqueci minha senha
+          </Link>
           {error && <small className="input-field__error">{error}</small>}
           <Button type="submit" size="lg" fullWidth disabled={busy}>
             {busy ? 'Entrando...' : 'Entrar'}

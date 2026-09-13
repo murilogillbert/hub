@@ -3,6 +3,7 @@ import { NavLink, Navigate, Outlet } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { SidebarUser } from '@shared/components/SidebarUser/SidebarUser';
 import { Logo } from '@shared/components/Logo/Logo';
+import { VerifyEmailBanner } from '@shared/components/VerifyEmailBanner/VerifyEmailBanner';
 import { affiliateApi } from '@shared/api/endpoints';
 import './Layouts.css';
 
@@ -60,6 +61,7 @@ export function PartnerLayout() {
         <SidebarUser />
       </aside>
       <main className="layout-internal__main">
+        <VerifyEmailBanner />
         <Outlet />
       </main>
     </div>

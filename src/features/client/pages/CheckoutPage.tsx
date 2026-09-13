@@ -10,6 +10,7 @@ import { useAuth } from '@shared/hooks/useAuth';
 import { useCart } from '@shared/context/CartContext';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { formatCurrency } from '@shared/utils/formatters';
+import { maskCep } from '@shared/utils/masks';
 import {
   catalogApi,
   ordersApi,
@@ -25,12 +26,12 @@ const METHODS: { id: Method; label: string; description: string }[] = [
   {
     id: 'credit_card',
     label: 'Cartão de Crédito',
-    description: 'Processado via Mercado Pago',
+    description: 'Aprovação processada com segurança',
   },
   {
     id: 'debit_card',
     label: 'Cartão de Débito',
-    description: 'Aprovação imediata · Mercado Pago',
+    description: 'Aprovação processada com segurança',
   },
 ];
 
@@ -78,7 +79,14 @@ export function CheckoutPage() {
 
   const [method, setMethod] = useState<Method>('pix');
   const [useCashbackOpt, setUseCashbackOpt] = useState(false);
-  const [card, setCard] = useState({ number: '', holder: '', expiry: '', cvv: '' });
+  const [card, setCard] = useState({
+    number: '',
+    holder: '',
+    expiry: '',
+    cvv: '',
+    postalCode: '',
+    addressNumber: '',
+  });
   const [phase, setPhase] = useState<Phase>('form');
   const [snapshot, setSnapshot] = useState<PaymentSnapshot | null>(null);
   const [pixVisibleUntil, setPixVisibleUntil] = useState<Date | null>(null);
@@ -223,10 +231,10 @@ export function CheckoutPage() {
       <div className="checkout__left">
         <div className="row-between">
           <h2>Pagamento</h2>
-          <span className="badge badge-primary">via Mercado Pago</span>
+          <span className="badge badge-primary">🔒 Ambiente seguro</span>
         </div>
         <p className="text-muted">
-          Checkout integrado ao gateway de pagamento.
+          Pagamento processado com segurança.
         </p>
 
         {phase === 'form' && total <= 0 && (
@@ -266,12 +274,11 @@ export function CheckoutPage() {
               <div className="checkout__card stack">
                 <Input
                   label="Número do cartão"
-                  placeholder="5031 4332 1540 6351"
+                  placeholder="0000 0000 0000 0000"
                   value={card.number}
                   onChange={(e) =>
                     setCard((c) => ({ ...c, number: e.target.value }))
                   }
-                  hint="Use 5031 4332 1540 6351 para simular recusa"
                   required
                 />
                 <Input
@@ -298,6 +305,26 @@ export function CheckoutPage() {
                     value={card.cvv}
                     onChange={(e) =>
                       setCard((c) => ({ ...c, cvv: e.target.value }))
+                    }
+                    required
+                  />
+                </div>
+                <div className="row">
+                  <Input
+                    label="CEP do titular"
+                    placeholder="00000-000"
+                    value={card.postalCode}
+                    onChange={(e) =>
+                      setCard((c) => ({ ...c, postalCode: maskCep(e.target.value) }))
+                    }
+                    required
+                  />
+                  <Input
+                    label="Número do endereço"
+                    placeholder="123"
+                    value={card.addressNumber}
+                    onChange={(e) =>
+                      setCard((c) => ({ ...c, addressNumber: e.target.value }))
                     }
                     required
                   />

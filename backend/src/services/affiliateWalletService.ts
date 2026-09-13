@@ -1,12 +1,19 @@
+import type { PixKeyType } from '@prisma/client';
 import type {
   AdjustBalanceRequest,
+  AffiliatePartnerDto,
   CommissionEntryDto,
   WithdrawalRequestDto,
 } from '../dtos/affiliate.dto.js';
 import { round2 } from '../domain/commissionRules.js';
 import { AppError } from '../errors.js';
 import { prisma } from '../infra/prisma.js';
-import { toCommissionEntryDto, toWithdrawalRequestDto, tryParseWithdrawalStatus } from '../mappings.js';
+import {
+  toAffiliatePartnerDto,
+  toCommissionEntryDto,
+  toWithdrawalRequestDto,
+  tryParseWithdrawalStatus,
+} from '../mappings.js';
 
 async function ensureAffiliate(partnerId: string) {
   const partner = await prisma.partner.findUnique({ where: { id: partnerId } });
@@ -24,7 +31,13 @@ export async function listEntries(partnerId: string): Promise<CommissionEntryDto
   return rows.map(toCommissionEntryDto);
 }
 
-export async function requestWithdrawal(partnerId: string, amount: number, note?: string): Promise<WithdrawalRequestDto> {
+export async function requestWithdrawal(
+  partnerId: string,
+  amount: number,
+  note?: string,
+  pixKeyOverride?: string,
+  pixKeyTypeOverride?: PixKeyType,
+): Promise<WithdrawalRequestDto> {
   const partner = await ensureAffiliate(partnerId);
   const value = round2(amount);
   if (value <= 0) throw new AppError('Valor deve ser maior que zero.', 400);
@@ -39,11 +52,29 @@ export async function requestWithdrawal(partnerId: string, amount: number, note?
   if (value + alreadyPending > partner.commissionBalance.toNumber())
     throw new AppError('Valor acima do saldo disponível (considerando saques já pendentes).', 400);
 
+  // Chave Pix: usa a informada nesta requisição, senão a salva no perfil.
+  const pixKey = pixKeyOverride ?? partner.pixKey ?? undefined;
+  const pixKeyType = pixKeyOverride ? pixKeyTypeOverride : (partner.pixKeyType ?? undefined);
+  if (!pixKey || !pixKeyType) throw new AppError('Cadastre sua chave Pix antes de solicitar um saque.', 400);
+
   const row = await prisma.withdrawalRequest.create({
-    data: { partnerId, amount: value, note: (note ?? '').trim() },
+    data: { partnerId, amount: value, note: (note ?? '').trim(), pixKey, pixKeyType },
     include: { partner: true },
   });
   return toWithdrawalRequestDto(row);
+}
+
+export async function updatePixKey(
+  partnerId: string,
+  pixKey: string,
+  pixKeyType: PixKeyType,
+): Promise<AffiliatePartnerDto> {
+  await ensureAffiliate(partnerId);
+  const updated = await prisma.partner.update({
+    where: { id: partnerId },
+    data: { pixKey: pixKey.trim(), pixKeyType },
+  });
+  return toAffiliatePartnerDto(updated);
 }
 
 export async function myWithdrawals(partnerId: string): Promise<WithdrawalRequestDto[]> {

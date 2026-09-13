@@ -6,6 +6,7 @@ import { formatCurrency } from '@shared/utils/formatters';
 import { FloatingAssistant } from '@features/assistant/components/FloatingAssistant';
 import { NotificationsBell } from '@shared/components/NotificationsBell/NotificationsBell';
 import { Logo } from '@shared/components/Logo/Logo';
+import { VerifyEmailBanner } from '@shared/components/VerifyEmailBanner/VerifyEmailBanner';
 import './Layouts.css';
 
 interface ClientLayoutProps {
@@ -83,6 +84,8 @@ export function ClientLayout({ children }: ClientLayoutProps) {
           </div>
         </div>
       </header>
+
+      <VerifyEmailBanner />
 
       <main className="layout-client__main">
         <div className="container">{children ?? <Outlet />}</div>

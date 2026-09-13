@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { AppError } from '../errors.js';
 import { verifyAccessToken } from '../infra/auth/jwt.js';
+import { prisma } from '../infra/prisma.js';
 
 export interface AuthContext {
   userId: string;
@@ -47,6 +48,18 @@ export function requireRole(...roles: string[]) {
     if (!roles.includes(req.auth.role)) throw new AppError('Acesso negado.', 403);
     next();
   };
+}
+
+/** Exige e-mail verificado — usado só nas ações que envolvem dinheiro
+ * (pagamento, saque). Consulta o banco em vez de confiar numa claim do JWT
+ * porque o access token vive até 2h e o usuário pode verificar o e-mail
+ * nesse meio-tempo. */
+export async function requireVerifiedEmail(req: Request, _res: Response, next: NextFunction): Promise<void> {
+  if (!req.auth) throw new AppError('Não autenticado.', 401);
+  const user = await prisma.user.findUnique({ where: { id: req.auth.userId } });
+  if (!user?.emailVerifiedAt)
+    throw new AppError('Confirme seu e-mail antes de continuar.', 403);
+  next();
 }
 
 export function userId(req: Request): string {

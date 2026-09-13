@@ -9,14 +9,39 @@ import type {
   UpdateProfileRequest,
   UserDto,
 } from '../dtos/auth.dto.js';
+import { config } from '../config.js';
 import { AppError } from '../errors.js';
 import { hashPassword, verifyPassword } from '../infra/auth/passwordHasher.js';
 import { issueTokens, validateRefreshToken } from '../infra/auth/jwt.js';
+import { issueToken, consumeToken } from '../infra/auth/verificationTokens.js';
+import { sendEmail } from '../infra/email/emailFacade.js';
 import { prisma } from '../infra/prisma.js';
 import { toNotificationDto, toUserDto } from '../mappings.js';
 
+const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
+const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
+
 function dicebearAvatar(seed: string, style: 'avataaars' | 'icons' = 'avataaars', extra = ''): string {
   return `https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(seed)}${extra}`;
+}
+
+/** Dispara o e-mail de verificação — nunca bloqueia o fluxo que a chamou
+ * (mesmo padrão do e-mail de boas-vindas do afiliado). */
+async function sendVerificationEmail(userId: string, name: string, email: string): Promise<void> {
+  try {
+    const rawToken = await issueToken(userId, 'EmailVerification', EMAIL_VERIFICATION_TTL_MS);
+    const link = `${config.frontendUrl}/verificar-email?token=${encodeURIComponent(rawToken)}`;
+    await sendEmail(
+      email,
+      'Confirme seu e-mail',
+      `<p>Olá, ${name}!</p>
+       <p>Confirme seu e-mail pra liberar pagamentos e saques na plataforma:</p>
+       <p><a href="${link}">${link}</a></p>
+       <p>Esse link expira em 24 horas.</p>`,
+    );
+  } catch (err) {
+    console.warn('Falha ao enviar e-mail de verificação', err);
+  }
 }
 
 function build(user: Parameters<typeof toUserDto>[0]): AuthResponse {
@@ -41,9 +66,11 @@ export async function register(req: RegisterRequest): Promise<AuthResponse> {
       passwordHash: hashPassword(req.password),
       role: 'Client',
       phone: req.phone,
+      cpf: req.cpf?.trim() || null,
       avatarUrl: dicebearAvatar(req.name),
     },
   });
+  await sendVerificationEmail(user.id, user.name, user.email);
   return build(user);
 }
 
@@ -80,6 +107,7 @@ export async function registerPartner(req: PartnerRegisterRequest): Promise<Auth
     });
   });
 
+  await sendVerificationEmail(user.id, user.name, user.email);
   return build(user);
 }
 
@@ -114,6 +142,7 @@ export async function updateProfile(userId: string, req: UpdateProfileRequest): 
       name: req.name.trim(),
       email: req.email.trim().toLowerCase(),
       phone: req.phone,
+      ...(req.cpf?.trim() ? { cpf: req.cpf.trim() } : {}),
       ...(req.avatarUrl?.trim() ? { avatarUrl: req.avatarUrl.trim() } : {}),
     },
   });
@@ -146,4 +175,53 @@ export async function notifications(userId: string): Promise<NotificationDto[]> 
     take: 20,
   });
   return rows.map(toNotificationDto);
+}
+
+export async function resendVerification(email: string): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
+  // Não revela se o e-mail existe ou já está verificado — resposta genérica
+  // pro chamador em ambos os casos, só dispara o e-mail quando faz sentido.
+  if (user && !user.emailVerifiedAt) await sendVerificationEmail(user.id, user.name, user.email);
+}
+
+export async function confirmEmailVerification(token: string): Promise<void> {
+  const userId = await consumeToken(token, 'EmailVerification');
+  if (!userId) throw new AppError('Link inválido ou expirado.', 400);
+  await prisma.user.update({ where: { id: userId }, data: { emailVerifiedAt: new Date() } });
+}
+
+export async function forgotPassword(email: string): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
+  // Mesma resposta pro chamador exista ou não a conta — evita enumeração de
+  // e-mails cadastrados.
+  if (!user) return;
+  try {
+    const rawToken = await issueToken(user.id, 'PasswordReset', PASSWORD_RESET_TTL_MS);
+    const link = `${config.frontendUrl}/redefinir-senha?token=${encodeURIComponent(rawToken)}`;
+    await sendEmail(
+      user.email,
+      'Redefinir sua senha',
+      `<p>Olá, ${user.name}!</p>
+       <p>Recebemos um pedido pra redefinir sua senha. Se foi você, clique no link abaixo:</p>
+       <p><a href="${link}">${link}</a></p>
+       <p>Esse link expira em 1 hora. Se não foi você, pode ignorar este e-mail.</p>`,
+    );
+  } catch (err) {
+    console.warn('Falha ao enviar e-mail de redefinição de senha', err);
+  }
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<void> {
+  const userId = await consumeToken(token, 'PasswordReset');
+  if (!userId) throw new AppError('Link inválido ou expirado.', 400);
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new AppError('Usuário não encontrado.', 404);
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      passwordHash: hashPassword(newPassword),
+      // Provou controle da caixa de entrada — conta pra verificação de e-mail.
+      emailVerifiedAt: user.emailVerifiedAt ?? new Date(),
+    },
+  });
 }

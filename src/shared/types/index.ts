@@ -8,6 +8,11 @@ export interface User {
   cashbackBalance: number;
   avatarUrl?: string;
   phone?: string;
+  cpf?: string | null;
+  emailVerifiedAt?: string | null;
+  notifyWhatsApp?: boolean;
+  notifyEmail?: boolean;
+  notifyPromo?: boolean;
   partnerId?: string;
 }
 

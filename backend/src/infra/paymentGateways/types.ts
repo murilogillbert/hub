@@ -14,7 +14,12 @@ export interface CardInput {
   holder: string;
   expiry: string;
   cvv: string;
-  // Fluxo real Mercado Pago/Asaas: token gerado no front via SDK (PCI-safe).
+  // CEP + número do endereço do titular — exigidos pelo Asaas na
+  // tokenização (creditCardHolderInfo).
+  postalCode?: string;
+  addressNumber?: string;
+  // Mercado Pago: token gerado no front via SDK. Asaas: token gerado pelo
+  // nosso próprio backend via tokenizeCreditCard (ver asaas.ts).
   token?: string;
   paymentMethodId?: string;
   installments?: number;
@@ -47,6 +52,7 @@ export interface IPaymentGateway {
     amount: number,
     method: PaymentMethodCode,
     card: CardInput | null | undefined,
+    remoteIp?: string,
   ): Promise<PaymentStatusSnapshot>;
   sync(order: OrderForPayment): Promise<PaymentStatusSnapshot | null>;
 }

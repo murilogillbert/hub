@@ -15,6 +15,11 @@ export const maskCnpj = (value: string) =>
     .replace(/(\d{3})(\d)/, '$1/$2')
     .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
 
+export const maskCep = (value: string) =>
+  onlyDigits(value)
+    .slice(0, 8)
+    .replace(/(\d{5})(\d)/, '$1-$2');
+
 export const maskPhone = (value: string) => {
   const digits = onlyDigits(value).slice(0, 11);
   if (digits.length <= 10) {

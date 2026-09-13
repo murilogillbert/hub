@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { envelope } from '../dtos/common.dto.js';
 import { createOrderSchema, processPaymentSchema } from '../dtos/orders.dto.js';
 import { createReviewSchema } from '../dtos/reviews.dto.js';
-import { ROLES, requireAuth, requireRole, userId } from '../middleware/auth.js';
+import { ROLES, requireAuth, requireRole, requireVerifiedEmail, userId } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
 import * as orderService from '../services/orderService.js';
 import * as paymentService from '../services/paymentService.js';
@@ -41,9 +41,15 @@ clientRouter.post('/reviews', ...guard, validateBody(createReviewSchema), async 
   res.json(envelope(await reviewService.create(userId(req), req.body)));
 });
 
-clientRouter.post('/payments/process', ...guard, validateBody(processPaymentSchema), async (req, res) => {
-  res.json(envelope(await paymentService.process(userId(req), req.body)));
-});
+clientRouter.post(
+  '/payments/process',
+  ...guard,
+  requireVerifiedEmail,
+  validateBody(processPaymentSchema),
+  async (req, res) => {
+    res.json(envelope(await paymentService.process(userId(req), req.body, req.ip)));
+  },
+);
 
 clientRouter.get('/orders/:id/payment-status', ...guard, async (req, res) => {
   res.json(envelope(await paymentService.status(req.params.id as string)));

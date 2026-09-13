@@ -24,6 +24,9 @@ import { LoginPage } from '@features/auth/pages/LoginPage';
 import { RegisterChoicePage } from '@features/auth/pages/RegisterChoicePage';
 import { RegisterClientPage } from '@features/auth/pages/RegisterClientPage';
 import { RegisterPartnerPage } from '@features/auth/pages/RegisterPartnerPage';
+import { ForgotPasswordPage } from '@features/auth/pages/ForgotPasswordPage';
+import { ResetPasswordPage } from '@features/auth/pages/ResetPasswordPage';
+import { VerifyEmailPage } from '@features/auth/pages/VerifyEmailPage';
 
 import { PartnerCatalogPage } from '@features/partner/pages/PartnerCatalogPage';
 import { PartnerRedeemPage } from '@features/partner/pages/PartnerRedeemPage';
@@ -94,6 +97,16 @@ export function AppRoutes() {
             </RedirectIfAuthenticated>
           }
         />
+        <Route
+          path="/esqueci-senha"
+          element={
+            <RedirectIfAuthenticated>
+              <ForgotPasswordPage />
+            </RedirectIfAuthenticated>
+          }
+        />
+        <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
+        <Route path="/verificar-email" element={<VerifyEmailPage />} />
 
         <Route path="/produto/:id" element={<ProductPage />} />
         <Route path="/carrinho" element={<CartPage />} />

@@ -25,12 +25,21 @@ function parseStatus(s: string): 'Pending' | 'Approved' | 'Rejected' | 'Cancelle
   }
 }
 
-export async function process(customerId: string, req: ProcessPaymentRequest): Promise<PaymentStatusSnapshot> {
+export async function process(
+  customerId: string,
+  req: ProcessPaymentRequest,
+  remoteIp?: string,
+): Promise<PaymentStatusSnapshot> {
   const order = await prisma.order.findFirst({ where: { id: req.orderId, customerId }, include: orderInclude });
   if (!order) throw new AppError('Pedido não encontrado.', 404);
   if (order.status !== 'PendingPayment') throw new AppError('Pedido não está aguardando pagamento.', 409);
 
   const method = parsePaymentMethod(req.method);
+
+  // Asaas exige CPF/CNPJ do cliente pra criar a cobrança — sem isso ele cairia
+  // no CPF de teste (Asaas:DefaultCpfCnpj), o que corrompe o cliente real lá.
+  if (paymentGateway.provider === 'asaas' && !order.customer.cpf)
+    throw new AppError('Complete seu CPF no perfil antes de pagar.', 400);
 
   // Valor cobrado = preço − cashback abatido (mín. 0).
   const chargeAmount = Math.max(0, order.paidPrice.toNumber() - order.cashbackUsed.toNumber());
@@ -49,7 +58,13 @@ export async function process(customerId: string, req: ProcessPaymentRequest): P
       pix: null,
     };
   } else {
-    snap = await paymentGateway.process({ ...order, paymentMethod: method }, chargeAmount, method, req.card);
+    snap = await paymentGateway.process(
+      { ...order, paymentMethod: method },
+      chargeAmount,
+      method,
+      req.card,
+      remoteIp,
+    );
   }
 
   // approve() é quem transiciona pra "Paid" (+ credita/debita cashback);

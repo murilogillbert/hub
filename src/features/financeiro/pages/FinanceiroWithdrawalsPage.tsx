@@ -86,6 +86,7 @@ export function FinanceiroWithdrawalsPage() {
               <tr>
                 <th>Afiliado</th>
                 <th>Valor</th>
+                <th>Chave Pix</th>
                 <th>Observação</th>
                 <th>Solicitado em</th>
                 <th>Status</th>
@@ -99,6 +100,7 @@ export function FinanceiroWithdrawalsPage() {
                     <strong>{w.partnerName}</strong>
                   </td>
                   <td className="text-accent">{formatCurrency(w.amount)}</td>
+                  <td>{w.pixKey ? `${w.pixKeyType}: ${w.pixKey}` : '—'}</td>
                   <td>{w.note || '—'}</td>
                   <td>{formatDateTime(w.requestedAt)}</td>
                   <td>

@@ -50,6 +50,19 @@ enum ApplicationStatus {
   Rejected
 }
 
+enum PixKeyType {
+  CPF
+  CNPJ
+  Email
+  Phone
+  Random
+}
+
+enum AuthTokenPurpose {
+  EmailVerification
+  PasswordReset
+}
+
 enum ProductKind {
   Physical
   Digital
@@ -105,14 +118,34 @@ model User {
   notifyWhatsApp  Boolean   @default(true) @map("notify_whatsapp")
   notifyEmail     Boolean   @default(true) @map("notify_email")
   notifyPromo     Boolean   @default(false) @map("notify_promo")
+  cpf             String?   @db.VarChar(20)
+  emailVerifiedAt DateTime? @map("email_verified_at")
   partnerId       String?   @map("partner_id") @db.Uuid
   partner         Partner?  @relation(fields: [partnerId], references: [id])
   createdAt       DateTime  @default(now()) @map("created_at")
   orders          Order[]
   cashbackEntries CashbackEntry[]
   reviews         Review[]
+  authTokens      AuthToken[]
 
   @@map("users")
+}
+
+/// Token de uso único para verificação de e-mail e redefinição de senha.
+/// Guardamos só o hash (SHA-256) — o token bruto nunca é persistido, só sai
+/// no link do e-mail.
+model AuthToken {
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purpose   AuthTokenPurpose
+  tokenHash String           @unique @map("token_hash")
+  expiresAt DateTime         @map("expires_at")
+  usedAt    DateTime?        @map("used_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  @@index([userId, purpose])
+  @@map("auth_tokens")
 }
 
 model Partner {
@@ -141,6 +174,9 @@ model Partner {
   linkSales          Int         @default(0) @map("link_sales")
   /// Conta especial operada por integração (bot próprio), sem usuário humano.
   ownedByCompany     Boolean     @default(false) @map("owned_by_company")
+  /// Chave Pix padrão do afiliado, reaproveitada em todo pedido de saque.
+  pixKey             String?     @map("pix_key")
+  pixKeyType         PixKeyType? @map("pix_key_type")
 
   users              User[]
   products           Product[]
@@ -424,6 +460,11 @@ model WithdrawalRequest {
   amount      Decimal           @db.Decimal(12, 2)
   status      WithdrawalStatus  @default(Pending)
   note        String            @default("") @db.VarChar(400)
+  /// Snapshot da chave Pix usada neste saque (pode ser a do perfil do
+  /// afiliado ou uma informada só para esta solicitação) — auditoria do
+  /// financeiro mesmo que o afiliado troque a chave depois.
+  pixKey      String?           @map("pix_key")
+  pixKeyType  PixKeyType?       @map("pix_key_type")
   requestedAt DateTime          @default(now()) @map("requested_at")
   resolvedAt  DateTime?         @map("resolved_at")
   resolvedBy  String?           @map("resolved_by") @db.Uuid

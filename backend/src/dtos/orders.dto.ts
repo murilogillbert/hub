@@ -61,6 +61,10 @@ export const cardInputSchema = z.object({
   holder: z.string().default(''),
   expiry: z.string().default(''),
   cvv: z.string().default(''),
+  // CEP + número do endereço do titular — exigidos pelo Asaas na tokenização
+  // do cartão (creditCardHolderInfo).
+  postalCode: z.string().optional(),
+  addressNumber: z.string().optional(),
   token: z.string().optional(),
   paymentMethodId: z.string().optional(),
   installments: z.number().int().optional(),

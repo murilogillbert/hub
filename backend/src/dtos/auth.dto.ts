@@ -38,6 +38,7 @@ export const updateProfileSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   phone: z.string().optional(),
+  cpf: z.string().optional(),
   avatarUrl: z.string().optional(),
 });
 export type UpdateProfileRequest = z.infer<typeof updateProfileSchema>;
@@ -55,6 +56,27 @@ export const changePasswordSchema = z.object({
 });
 export type ChangePasswordRequest = z.infer<typeof changePasswordSchema>;
 
+export const resendVerificationSchema = z.object({
+  email: z.string().email(),
+});
+export type ResendVerificationRequest = z.infer<typeof resendVerificationSchema>;
+
+export const confirmVerificationSchema = z.object({
+  token: z.string().min(10),
+});
+export type ConfirmVerificationRequest = z.infer<typeof confirmVerificationSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+export type ForgotPasswordRequest = z.infer<typeof forgotPasswordSchema>;
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(10),
+  newPassword: z.string().min(6),
+});
+export type ResetPasswordRequest = z.infer<typeof resetPasswordSchema>;
+
 export interface UserDto {
   id: string;
   name: string;
@@ -64,6 +86,11 @@ export interface UserDto {
   avatarUrl: string | null;
   partnerId: string | null;
   phone: string | null;
+  cpf: string | null;
+  emailVerifiedAt: Date | null;
+  notifyWhatsApp: boolean;
+  notifyEmail: boolean;
+  notifyPromo: boolean;
 }
 
 export interface AuthResponse {

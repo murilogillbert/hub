@@ -5,7 +5,7 @@ import { Input } from '@shared/components/Input/Input';
 import { Button } from '@shared/components/Button/Button';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { formatCurrency } from '@shared/utils/formatters';
-import { isValidPhone, maskPhone } from '@shared/utils/masks';
+import { isValidCpf, isValidPhone, maskCpf, maskPhone } from '@shared/utils/masks';
 import { authApi, uploadsApi } from '@shared/api/endpoints';
 import { resolveImageUrl } from '@shared/api/client';
 import './ClientArea.css';
@@ -16,7 +16,12 @@ export function ProfilePage() {
   const [name, setName] = useState(user?.name ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
   const [phone, setPhone] = useState(user?.phone ?? '');
-  const [notif, setNotif] = useState({ whatsapp: true, email: true, promo: false });
+  const [cpf, setCpf] = useState(user?.cpf ?? '');
+  const [notif, setNotif] = useState({
+    whatsapp: user?.notifyWhatsApp ?? true,
+    email: user?.notifyEmail ?? true,
+    promo: user?.notifyPromo ?? false,
+  });
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [password, setPassword] = useState({
     currentPassword: '',
@@ -25,6 +30,7 @@ export function ProfilePage() {
   });
   const [avatarBusy, setAvatarBusy] = useState(false);
   const phoneError = phone && !isValidPhone(phone) ? 'Telefone incompleto.' : undefined;
+  const cpfError = cpf && !isValidCpf(cpf) ? 'CPF incompleto.' : undefined;
 
   const uploadAvatar = async (file: File) => {
     setAvatarBusy(true);
@@ -46,9 +52,9 @@ export function ProfilePage() {
   };
 
   const saveProfile = async () => {
-    if (phoneError) return;
+    if (phoneError || cpfError) return;
     try {
-      const updated = await authApi.updateProfile({ name, email, phone });
+      const updated = await authApi.updateProfile({ name, email, phone, cpf });
       setUser(updated);
       setSavedMsg('Perfil atualizado!');
       toast.success('Perfil atualizado.');
@@ -148,6 +154,12 @@ export function ProfilePage() {
               value={phone}
               onChange={(e) => setPhone(maskPhone(e.target.value))}
               error={phoneError}
+            />
+            <Input
+              label="CPF"
+              value={cpf}
+              onChange={(e) => setCpf(maskCpf(e.target.value))}
+              error={cpfError}
             />
             <div className="row" style={{ marginTop: 12 }}>
               <Button onClick={saveProfile}>Salvar alteracoes</Button>

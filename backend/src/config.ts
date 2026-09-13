@@ -32,6 +32,11 @@ export const config = {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean),
+  // URL pública do front — usada pra montar links em e-mail (verificação,
+  // redefinição de senha). Sem FRONTEND_URL, cai no primeiro CORS_ORIGINS.
+  frontendUrl: (process.env.FRONTEND_URL ?? process.env.CORS_ORIGINS ?? 'http://localhost:5173')
+    .split(',')[0]
+    .trim(),
   rateLimit: {
     authPermitLimit: parseIntEnv(process.env.RATE_LIMIT_AUTH_PERMIT, 5),
     authWindowSeconds: parseIntEnv(process.env.RATE_LIMIT_AUTH_WINDOW_SECONDS, 60),
