@@ -53,6 +53,7 @@ export interface AffiliatePartnerDto {
   state: string;
   lat: number;
   lng: number;
+  evolutionInstance: string | null;
 }
 
 export const updatePixKeySchema = z.object({
@@ -152,4 +153,7 @@ export interface AffiliateLookupDto {
   name: string;
   active: boolean;
   whatsappPhone: string | null;
+  // Instância do afiliado no Evolution API — pro energia-solar-api saber de
+  // qual WhatsApp mandar a proposta em PDF.
+  evolutionInstance: string | null;
 }

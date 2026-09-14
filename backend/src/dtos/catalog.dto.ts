@@ -44,6 +44,7 @@ export interface PartnerDto {
   lat: number;
   lng: number;
   asaasWalletId: string | null;
+  evolutionInstance: string | null;
 }
 
 export const partnerUpsertSchema = z.object({
@@ -58,6 +59,9 @@ export const partnerUpsertSchema = z.object({
   lat: z.number().optional().nullable(),
   lng: z.number().optional().nullable(),
   asaasWalletId: z.string().optional().nullable(),
+  // Instância do afiliado no Evolution API — só relevante pra Partner.kind =
+  // SolarAffiliate, mas fica no mesmo upsert de sempre (igual asaasWalletId).
+  evolutionInstance: z.string().optional().nullable(),
 });
 export type PartnerUpsertRequest = z.infer<typeof partnerUpsertSchema>;
 

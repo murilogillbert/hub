@@ -377,6 +377,7 @@ export interface PartnerUpsert {
   lat?: number;
   lng?: number;
   asaasWalletId?: string;
+  evolutionInstance?: string;
 }
 export interface AdminUserUpdate {
   name: string;
@@ -605,6 +606,7 @@ export interface AffiliatePartner {
   state: string;
   lat: number;
   lng: number;
+  evolutionInstance: string | null;
 }
 export interface CommissionEntry {
   id: string;

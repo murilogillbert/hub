@@ -221,6 +221,7 @@ export async function createPartner(req: PartnerUpsertRequest): Promise<PartnerD
       lat: req.lat ?? 0,
       lng: req.lng ?? 0,
       asaasWalletId: req.asaasWalletId?.trim() ? req.asaasWalletId.trim() : null,
+      evolutionInstance: req.evolutionInstance?.trim() ? req.evolutionInstance.trim() : null,
     },
   });
   return toPartnerDto(p);
@@ -245,6 +246,9 @@ export async function updatePartner(id: string, req: PartnerUpsertRequest): Prom
       // null = não mexe; string vazia = limpa (volta a repasse manual).
       ...(req.asaasWalletId !== undefined
         ? { asaasWalletId: req.asaasWalletId?.trim() ? req.asaasWalletId.trim() : null }
+        : {}),
+      ...(req.evolutionInstance !== undefined
+        ? { evolutionInstance: req.evolutionInstance?.trim() ? req.evolutionInstance.trim() : null }
         : {}),
     },
   });

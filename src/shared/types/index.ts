@@ -92,6 +92,7 @@ export interface Partner {
   lat: number;
   lng: number;
   asaasWalletId?: string | null;
+  evolutionInstance?: string | null;
 }
 
 export type OrderStatus = 'paid' | 'pending' | 'redeemed' | 'cancelled';

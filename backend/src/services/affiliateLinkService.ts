@@ -19,6 +19,7 @@ export async function lookup(code: string): Promise<AffiliateLookupDto> {
     name: partner.name,
     active: partner.active,
     whatsappPhone: partner.users[0]?.phone ?? null,
+    evolutionInstance: partner.evolutionInstance,
   };
 }
 

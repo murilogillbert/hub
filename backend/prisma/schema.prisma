@@ -163,6 +163,11 @@ model Partner {
   /// Carteira do parceiro no Asaas (walletId). Quando presente, o pagamento é
   /// dividido (split) e o líquido cai direto na conta dele.
   asaasWalletId  String?        @map("asaas_wallet_id") @db.VarChar(64)
+  /// Nome da instância do afiliado no Evolution API (WhatsApp self-hosted) —
+  /// usada pelo energia-solar-api pra mandar a proposta em PDF pelo WhatsApp
+  /// do próprio consultor. Preenchido manualmente pelo Admin por enquanto
+  /// (pareamento por QR code self-service fica pra uma etapa futura).
+  evolutionInstance String?     @map("evolution_instance") @db.VarChar(120)
   joinedAt       DateTime       @default(now()) @map("joined_at")
 
   /// Programa de afiliados solar (kind = SolarAffiliate) — não usado por lojas.

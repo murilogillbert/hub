@@ -23,6 +23,7 @@ interface PartnerForm {
   lat: string;
   lng: string;
   asaasWalletId: string;
+  evolutionInstance: string;
 }
 const EMPTY: PartnerForm = {
   name: '',
@@ -36,6 +37,7 @@ const EMPTY: PartnerForm = {
   lat: '0',
   lng: '0',
   asaasWalletId: '',
+  evolutionInstance: '',
 };
 
 export function AdminPartnersPage() {
@@ -95,6 +97,7 @@ export function AdminPartnersPage() {
         lat: p.lat,
         lng: p.lng,
         asaasWalletId: p.asaasWalletId ?? undefined,
+        evolutionInstance: p.evolutionInstance ?? undefined,
       }),
     onSuccess: invalidate,
   });
@@ -113,6 +116,7 @@ export function AdminPartnersPage() {
       lat: String(p.lat ?? 0),
       lng: String(p.lng ?? 0),
       asaasWalletId: p.asaasWalletId ?? '',
+      evolutionInstance: p.evolutionInstance ?? '',
     });
   };
 
@@ -239,6 +243,13 @@ export function AdminPartnersPage() {
               onChange={(e) => set('asaasWalletId', e.target.value)}
               placeholder="UUID da carteira do parceiro no Asaas (opcional)"
               hint="Com a carteira preenchida e o provider Asaas ativo, o líquido do parceiro cai direto na conta dele a cada venda. Vazio = repasse manual."
+            />
+            <Input
+              label="Instância Evolution API (WhatsApp do afiliado)"
+              value={form.evolutionInstance}
+              onChange={(e) => set('evolutionInstance', e.target.value)}
+              placeholder="Nome da instância pareada no Evolution API (opcional)"
+              hint="Só pra afiliados do programa solar — preencha depois que o consultor parear o próprio WhatsApp no painel do Evolution API. É de lá que o energia-solar-api manda a proposta em PDF."
             />
             <div className="row">
               <Button

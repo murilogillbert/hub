@@ -68,6 +68,7 @@ export function toPartnerDto(p: PartnerRow): PartnerDto {
     lat: p.lat,
     lng: p.lng,
     asaasWalletId: p.asaasWalletId,
+    evolutionInstance: p.evolutionInstance,
   };
 }
 
@@ -242,6 +243,7 @@ export function toAffiliatePartnerDto(p: AffiliatePartnerRow): AffiliatePartnerD
     state: p.state,
     lat: p.lat,
     lng: p.lng,
+    evolutionInstance: p.evolutionInstance,
   };
 }
 
