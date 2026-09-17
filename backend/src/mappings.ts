@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import type { UserDto, NotificationDto } from './dtos/auth.dto.js';
-import type { ProductDto, PartnerDto, StoreDto, CategoryDto } from './dtos/catalog.dto.js';
+import type { ProductDto, PartnerDto, StoreDto, CategoryDto, CategorySuggestionDto } from './dtos/catalog.dto.js';
 import type { OrderDto, OrderItemDto, CashbackEntryDto } from './dtos/orders.dto.js';
 import type { AuditLogDto } from './dtos/admin.dto.js';
 import type {
@@ -63,6 +63,7 @@ export function toPartnerDto(p: PartnerRow): PartnerDto {
     feePercent: p.feePercent.toNumber(),
     joinedAt: p.joinedAt,
     cnpj: p.cnpj,
+    documentType: p.documentType,
     city: p.city,
     state: p.state,
     lat: p.lat,
@@ -194,6 +195,28 @@ export function parseCategoryType(s: string | undefined): 'Product' | 'Store' {
   return (s ?? '').toLowerCase() === 'store' ? 'Store' : 'Product';
 }
 
+/** Só dígitos de um CPF (11) ou CNPJ (14) batem com o tipo informado. String
+ * vazia é sempre válida (documento é opcional). */
+export function isValidPartnerDocument(value: string, type: 'CPF' | 'CNPJ'): boolean {
+  const digits = value.replace(/\D/g, '');
+  if (!digits) return true;
+  return type === 'CPF' ? digits.length === 11 : digits.length === 14;
+}
+
+type CategorySuggestionRow = Prisma.CategorySuggestionGetPayload<{ include: { partner: true } }>;
+export function toCategorySuggestionDto(s: CategorySuggestionRow): CategorySuggestionDto {
+  return {
+    id: s.id,
+    name: s.name,
+    type: s.type.toLowerCase(),
+    status: s.status.toLowerCase(),
+    partnerId: s.partnerId,
+    partnerName: s.partner?.name ?? null,
+    createdAt: s.createdAt,
+    resolvedAt: s.resolvedAt,
+  };
+}
+
 export function parseProductKind(s: string): 'Physical' | 'Digital' | 'Voucher' {
   const v = s.toLowerCase();
   if (v === 'digital') return 'Digital';
@@ -239,6 +262,7 @@ export function toAffiliatePartnerDto(p: AffiliatePartnerRow): AffiliatePartnerD
     segment: p.segment,
     logoUrl: p.logoUrl,
     cnpj: p.cnpj,
+    documentType: p.documentType,
     city: p.city,
     state: p.state,
     lat: p.lat,

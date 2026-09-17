@@ -16,7 +16,7 @@ import { issueTokens, validateRefreshToken } from '../infra/auth/jwt.js';
 import { issueToken, consumeToken } from '../infra/auth/verificationTokens.js';
 import { sendEmail } from '../infra/email/emailFacade.js';
 import { prisma } from '../infra/prisma.js';
-import { toNotificationDto, toUserDto } from '../mappings.js';
+import { isValidPartnerDocument, toNotificationDto, toUserDto } from '../mappings.js';
 
 const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
@@ -78,14 +78,23 @@ export async function registerPartner(req: PartnerRegisterRequest): Promise<Auth
   const email = req.email.trim().toLowerCase();
   if (await prisma.user.findUnique({ where: { email } })) throw new AppError('E-mail já cadastrado.', 409);
 
+  const cnpj = (req.cnpj ?? '').trim();
+  if (!isValidPartnerDocument(cnpj, req.documentType))
+    throw new AppError(req.documentType === 'CPF' ? 'CPF inválido.' : 'CNPJ inválido.', 400);
+
+  const segment = req.segment.trim();
+  if (req.segmentIsSuggestion && !segment)
+    throw new AppError('Descreva o segmento sugerido.', 400);
+
   const user = await prisma.$transaction(async (tx) => {
     const partner = await tx.partner.create({
       data: {
         name: req.storeName.trim(),
-        segment: req.segment.trim(),
+        segment,
         feePercent: 10,
         active: true,
-        cnpj: (req.cnpj ?? '').trim(),
+        cnpj,
+        documentType: req.documentType,
         city: (req.city ?? '').trim(),
         state: (req.state ?? '').trim(),
         lat: req.lat ?? 0,
@@ -93,6 +102,14 @@ export async function registerPartner(req: PartnerRegisterRequest): Promise<Auth
         logoUrl: dicebearAvatar(req.storeName, 'icons', '&backgroundType=gradientLinear'),
       },
     });
+
+    // Segmento "Outro" — registra a sugestão pra avaliação do Admin, mas não
+    // bloqueia o cadastro: a loja já nasce com o segmento sugerido preenchido.
+    if (req.segmentIsSuggestion) {
+      await tx.categorySuggestion.create({
+        data: { name: segment, type: 'Store', partnerId: partner.id },
+      });
+    }
 
     return tx.user.create({
       data: {

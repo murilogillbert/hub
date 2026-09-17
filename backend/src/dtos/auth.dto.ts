@@ -16,7 +16,12 @@ export const partnerRegisterSchema = z.object({
   phone: z.string().optional(),
   storeName: z.string().min(1),
   segment: z.string().min(1),
+  // Se true, `segment` não é um nome de categoria existente e sim um texto
+  // livre sugerido pelo usuário (opção "Outro") — vira uma CategorySuggestion
+  // pendente de avaliação do Admin.
+  segmentIsSuggestion: z.boolean().optional().default(false),
   cnpj: z.string().optional(),
+  documentType: z.enum(['CPF', 'CNPJ']).default('CNPJ'),
   city: z.string().optional(),
   state: z.string().optional(),
   lat: z.number().optional(),

@@ -12,6 +12,7 @@ import * as affiliateApplicationService from '../services/affiliateApplicationSe
 import * as assistantService from '../services/assistantService.js';
 import * as campaignMaterialService from '../services/campaignMaterialService.js';
 import * as categoryService from '../services/categoryService.js';
+import * as categorySuggestionService from '../services/categorySuggestionService.js';
 import * as serviceApiKeyService from '../services/serviceApiKeyService.js';
 import * as settingsService from '../services/settingsService.js';
 import * as storeService from '../services/storeService.js';
@@ -31,6 +32,17 @@ adminRouter.put('/categories/:id', ...guard, validateBody(categoryUpsertSchema),
 adminRouter.delete('/categories/:id', ...guard, async (req, res) => {
   await categoryService.remove(req.params.id as string);
   res.status(204).send();
+});
+
+// ---------- Sugestões de segmento/categoria ("Outro" no cadastro) ----------
+adminRouter.get('/category-suggestions', ...guard, async (req, res) => {
+  res.json(envelope(await categorySuggestionService.list(req.query.status as string | undefined)));
+});
+adminRouter.post('/category-suggestions/:id/approve', ...guard, async (req, res) => {
+  res.json(envelope(await categorySuggestionService.approve(req.params.id as string, userId(req))));
+});
+adminRouter.post('/category-suggestions/:id/reject', ...guard, async (req, res) => {
+  res.json(envelope(await categorySuggestionService.reject(req.params.id as string, userId(req))));
 });
 
 adminRouter.get('/integrations', ...guard, async (_req, res) => {

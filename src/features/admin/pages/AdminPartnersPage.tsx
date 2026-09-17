@@ -6,7 +6,7 @@ import { Input } from '@shared/components/Input/Input';
 import { QueryState } from '@shared/components/QueryState/QueryState';
 import { formatPercent } from '@shared/utils/formatters';
 import { useToast } from '@shared/components/Toaster/ToastContext';
-import { coordinateError, isValidCnpj, maskCnpj, maskCoordinate } from '@shared/utils/masks';
+import { coordinateError, isValidDocument, maskDocument, maskCoordinate, DocumentType } from '@shared/utils/masks';
 import { adminApi, catalogApi, PartnerUpsert } from '@shared/api/endpoints';
 import { Partner } from '@shared/types';
 import './AdminPages.css';
@@ -18,6 +18,7 @@ interface PartnerForm {
   feePercent: string;
   active: boolean;
   cnpj: string;
+  documentType: DocumentType;
   city: string;
   state: string;
   lat: string;
@@ -32,6 +33,7 @@ const EMPTY: PartnerForm = {
   feePercent: '10',
   active: true,
   cnpj: '',
+  documentType: 'CNPJ',
   city: '',
   state: '',
   lat: '0',
@@ -92,6 +94,7 @@ export function AdminPartnersPage() {
         feePercent: p.feePercent,
         active: !p.active,
         cnpj: p.cnpj,
+        documentType: p.documentType,
         city: p.city,
         state: p.state,
         lat: p.lat,
@@ -111,6 +114,7 @@ export function AdminPartnersPage() {
       feePercent: String(p.feePercent),
       active: p.active,
       cnpj: p.cnpj ?? '',
+      documentType: p.documentType ?? 'CNPJ',
       city: p.city ?? '',
       state: p.state ?? '',
       lat: String(p.lat ?? 0),
@@ -123,7 +127,7 @@ export function AdminPartnersPage() {
   const submit = () => {
     if (!form) return;
     if (
-      (form.cnpj && !isValidCnpj(form.cnpj)) ||
+      (form.cnpj && !isValidDocument(form.cnpj, form.documentType)) ||
       coordinateError(form.lat, 'lat') ||
       coordinateError(form.lng, 'lng')
     ) {
@@ -196,13 +200,39 @@ export function AdminPartnersPage() {
                 onChange={(e) => set('feePercent', maskCoordinate(e.target.value))}
               />
             </div>
-            <Input
-              label="CNPJ"
-              value={form.cnpj}
-              onChange={(e) => set('cnpj', maskCnpj(e.target.value))}
-              placeholder="00.000.000/0000-00"
-              error={form.cnpj && !isValidCnpj(form.cnpj) ? 'CNPJ incompleto.' : undefined}
-            />
+            <div className="row">
+              <div className="input-field" style={{ maxWidth: 160 }}>
+                <label className="input-field__label">Tipo de documento</label>
+                <div className="input-field__box">
+                  <select
+                    className="input-field__el"
+                    value={form.documentType}
+                    onChange={(e) => {
+                      const documentType = e.target.value as DocumentType;
+                      setForm((f) =>
+                        f ? { ...f, documentType, cnpj: maskDocument(f.cnpj, documentType) } : f,
+                      );
+                    }}
+                  >
+                    <option value="CNPJ">CNPJ</option>
+                    <option value="CPF">CPF</option>
+                  </select>
+                </div>
+              </div>
+              <Input
+                label={form.documentType}
+                value={form.cnpj}
+                onChange={(e) => set('cnpj', maskDocument(e.target.value, form.documentType))}
+                placeholder={form.documentType === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'}
+                error={
+                  form.cnpj && !isValidDocument(form.cnpj, form.documentType)
+                    ? form.documentType === 'CPF'
+                      ? 'CPF incompleto.'
+                      : 'CNPJ incompleto.'
+                    : undefined
+                }
+              />
+            </div>
             <div className="row">
               <Input
                 label="Cidade"
@@ -279,7 +309,7 @@ export function AdminPartnersPage() {
               <tr>
                 <th>Parceiro</th>
                 <th>Segmento</th>
-                <th>CNPJ</th>
+                <th>Documento</th>
                 <th>Local</th>
                 <th>Taxa</th>
                 <th>Status</th>
@@ -296,7 +326,7 @@ export function AdminPartnersPage() {
                     </div>
                   </td>
                   <td>{p.segment}</td>
-                  <td>{p.cnpj || '—'}</td>
+                  <td>{p.cnpj ? `${p.documentType}: ${p.cnpj}` : '—'}</td>
                   <td>
                     {p.city ? `${p.city}/${p.state}` : 'Digital'}
                   </td>

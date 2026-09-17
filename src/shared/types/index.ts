@@ -87,6 +87,7 @@ export interface Partner {
   feePercent: number;
   joinedAt: string;
   cnpj: string;
+  documentType: 'CPF' | 'CNPJ';
   city: string;
   state: string;
   lat: number;

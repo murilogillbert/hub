@@ -147,7 +147,9 @@ export const authApi = {
     phone?: string;
     storeName: string;
     segment: string;
+    segmentIsSuggestion?: boolean;
     cnpj?: string;
+    documentType?: 'CPF' | 'CNPJ';
     city?: string;
     state?: string;
     lat?: number;
@@ -358,6 +360,7 @@ export interface UpdateMyPartnerProfile {
   segment?: string;
   logoUrl?: string;
   cnpj?: string;
+  documentType?: 'CPF' | 'CNPJ';
   city?: string;
   state?: string;
   lat?: number;
@@ -372,6 +375,7 @@ export interface PartnerUpsert {
   feePercent: number;
   active: boolean;
   cnpj?: string;
+  documentType?: 'CPF' | 'CNPJ';
   city?: string;
   state?: string;
   lat?: number;
@@ -506,6 +510,14 @@ export const adminApi = {
     api.put<Category>(`/admin/categories/${id}`, { name, active }),
   deleteCategory: (id: string) =>
     api.del<void>(`/admin/categories/${id}`),
+  categorySuggestions: (status?: string) =>
+    api.get<CategorySuggestion[]>(
+      `/admin/category-suggestions${status ? `?status=${status}` : ''}`,
+    ),
+  approveCategorySuggestion: (id: string) =>
+    api.post<CategorySuggestion>(`/admin/category-suggestions/${id}/approve`),
+  rejectCategorySuggestion: (id: string) =>
+    api.post<CategorySuggestion>(`/admin/category-suggestions/${id}/reject`),
 
   // ---- Programa de afiliados ----
   affiliateApplications: (status?: string) =>
@@ -602,11 +614,23 @@ export interface AffiliatePartner {
   segment: string;
   logoUrl: string;
   cnpj: string;
+  documentType: 'CPF' | 'CNPJ';
   city: string;
   state: string;
   lat: number;
   lng: number;
   evolutionInstance: string | null;
+}
+
+export interface CategorySuggestion {
+  id: string;
+  name: string;
+  type: 'product' | 'store';
+  status: 'pending' | 'approved' | 'rejected';
+  partnerId: string | null;
+  partnerName: string | null;
+  createdAt: string;
+  resolvedAt?: string | null;
 }
 export interface CommissionEntry {
   id: string;
