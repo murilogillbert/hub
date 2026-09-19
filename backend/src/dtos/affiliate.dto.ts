@@ -148,6 +148,16 @@ export const linkEventSchema = z.object({
 });
 export type LinkEventRequest = z.infer<typeof linkEventSchema>;
 
+// ---------- WhatsApp self-service (Evolution API) ----------
+export interface WhatsAppConnectDto {
+  status: 'connected' | 'qrcode';
+  qrCodeBase64?: string;
+}
+
+export interface WhatsAppStatusDto {
+  status: 'connected' | 'connecting' | 'disconnected';
+}
+
 export interface AffiliateLookupDto {
   code: string;
   name: string;

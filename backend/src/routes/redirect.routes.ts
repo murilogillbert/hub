@@ -15,6 +15,6 @@ redirectRouter.get('/r/:code', async (req, res) => {
 
   await affiliateLinkService.recordClick(code);
   const url = new URL(config.affiliate.formUrl);
-  url.searchParams.set('consultor', code);
+  url.searchParams.set('affiliateCode', code);
   res.redirect(302, url.toString());
 });

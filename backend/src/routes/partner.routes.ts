@@ -12,6 +12,7 @@ import * as affiliateWalletService from '../services/affiliateWalletService.js';
 import * as campaignMaterialService from '../services/campaignMaterialService.js';
 import * as partnerService from '../services/partnerService.js';
 import * as storeService from '../services/storeService.js';
+import * as whatsappConnectService from '../services/whatsappConnectService.js';
 
 export const partnerRouter = Router();
 const guard = [requireAuth, requireRole(...ROLES.partner)] as const;
@@ -123,6 +124,19 @@ partnerRouter.put(
 
 partnerRouter.get('/affiliate/materials', ...guard, async (_req, res) => {
   res.json(envelope(await campaignMaterialService.listActive()));
+});
+
+partnerRouter.post('/affiliate/whatsapp/connect', ...guard, async (req, res) => {
+  res.json(envelope(await whatsappConnectService.connect(partnerId(req))));
+});
+
+partnerRouter.get('/affiliate/whatsapp/status', ...guard, async (req, res) => {
+  res.json(envelope(await whatsappConnectService.status(partnerId(req))));
+});
+
+partnerRouter.delete('/affiliate/whatsapp', ...guard, async (req, res) => {
+  await whatsappConnectService.disconnect(partnerId(req));
+  res.status(204).send();
 });
 
 partnerRouter.get('/affiliate/link', ...guard, async (req, res) => {

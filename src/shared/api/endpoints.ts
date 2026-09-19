@@ -652,6 +652,13 @@ export interface AffiliateLink {
   linkLeads: number;
   linkSales: number;
 }
+export interface WhatsAppConnect {
+  status: 'connected' | 'qrcode';
+  qrCodeBase64?: string;
+}
+export interface WhatsAppStatus {
+  status: 'connected' | 'connecting' | 'disconnected';
+}
 
 /** Landing "quero ser afiliado" — sem login. */
 export const affiliateApplicationApi = {
@@ -680,6 +687,9 @@ export const affiliateApi = {
     api.put<AffiliatePartner>('/partner/affiliate/pix-key', { pixKey, pixKeyType }),
   materials: () => api.get<CampaignMaterial[]>('/partner/affiliate/materials'),
   link: () => api.get<AffiliateLink>('/partner/affiliate/link'),
+  connectWhatsApp: () => api.post<WhatsAppConnect>('/partner/affiliate/whatsapp/connect'),
+  whatsappStatus: () => api.get<WhatsAppStatus>('/partner/affiliate/whatsapp/status'),
+  disconnectWhatsApp: () => api.del('/partner/affiliate/whatsapp'),
 };
 
 /** Área do financeiro (role financeiro/admin). */

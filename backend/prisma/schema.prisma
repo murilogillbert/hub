@@ -165,8 +165,8 @@ model Partner {
   asaasWalletId  String?        @map("asaas_wallet_id") @db.VarChar(64)
   /// Nome da instância do afiliado no Evolution API (WhatsApp self-hosted) —
   /// usada pelo energia-solar-api pra mandar a proposta em PDF pelo WhatsApp
-  /// do próprio consultor. Preenchido manualmente pelo Admin por enquanto
-  /// (pareamento por QR code self-service fica pra uma etapa futura).
+  /// do próprio consultor. Preenchido pelo próprio afiliado ao parear o
+  /// WhatsApp (ver whatsappConnectService.ts), ou manualmente pelo Admin.
   evolutionInstance String?     @map("evolution_instance") @db.VarChar(120)
   joinedAt       DateTime       @default(now()) @map("joined_at")
 
