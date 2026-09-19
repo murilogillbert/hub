@@ -24,7 +24,9 @@ export interface RegisterPartnerInput {
   phone?: string;
   storeName: string;
   segment: string;
+  segmentIsSuggestion?: boolean;
   cnpj?: string;
+  documentType?: 'CPF' | 'CNPJ';
   city?: string;
   state?: string;
   lat?: number;

@@ -58,6 +58,14 @@ enum PixKeyType {
   Random
 }
 
+/// Tipo de documento fiscal do parceiro — CNPJ (loja formal) ou CPF (MEI/
+/// autônomo sem CNPJ). Partner.cnpj guarda os dígitos de qualquer um dos
+/// dois, conforme este campo (mesmo padrão de pixKey/pixKeyType).
+enum PartnerDocumentType {
+  CPF
+  CNPJ
+}
+
 enum AuthTokenPurpose {
   EmailVerification
   PasswordReset
@@ -153,7 +161,9 @@ model Partner {
   name           String         @db.VarChar(160)
   segment        String
   logoUrl        String         @default("") @map("logo_url")
+  /// Dígitos do CNPJ ou do CPF do parceiro — ver documentType.
   cnpj           String         @default("")
+  documentType   PartnerDocumentType @default(CNPJ) @map("document_type")
   city           String         @default("")
   state          String         @default("")
   lat            Float          @default(0)
@@ -190,6 +200,7 @@ model Partner {
   payouts            PartnerPayout[]
   commissionEntries  AffiliateCommissionEntry[]
   withdrawalRequests WithdrawalRequest[]
+  categorySuggestions CategorySuggestion[]
 
   @@map("partners")
 }
@@ -220,6 +231,24 @@ model Category {
 
   @@unique([name, type])
   @@map("categories")
+}
+
+/// Sugestão de novo segmento/categoria feita pelo próprio usuário (hoje só a
+/// loja no cadastro de parceiro, ao escolher "Outro") — fica pendente até o
+/// Admin avaliar e, se topar, promover a uma Category de verdade.
+model CategorySuggestion {
+  id         String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String            @db.VarChar(80)
+  type       CategoryType      @default(Store)
+  status     ApplicationStatus @default(Pending)
+  partnerId  String?           @map("partner_id") @db.Uuid
+  partner    Partner?          @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  createdAt  DateTime          @default(now()) @map("created_at")
+  resolvedAt DateTime?         @map("resolved_at")
+  resolvedBy String?           @map("resolved_by") @db.Uuid
+
+  @@index([status, createdAt])
+  @@map("category_suggestions")
 }
 
 model Product {

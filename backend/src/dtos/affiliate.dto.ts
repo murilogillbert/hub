@@ -49,6 +49,7 @@ export interface AffiliatePartnerDto {
   segment: string;
   logoUrl: string;
   cnpj: string;
+  documentType: string;
   city: string;
   state: string;
   lat: number;

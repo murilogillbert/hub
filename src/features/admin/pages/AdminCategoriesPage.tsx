@@ -4,9 +4,106 @@ import { Card } from '@shared/components/Card/Card';
 import { Button } from '@shared/components/Button/Button';
 import { Input } from '@shared/components/Input/Input';
 import { QueryState } from '@shared/components/QueryState/QueryState';
+import { useToast } from '@shared/components/Toaster/ToastContext';
 import { adminApi } from '@shared/api/endpoints';
 import { Category } from '@shared/types';
 import './AdminPages.css';
+
+/** Sugestões de segmento mandadas pela opção "Outro" no cadastro de
+ * parceiro — o Admin decide se vira uma categoria de loja de verdade. */
+function CategorySuggestionsCard() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const q = useQuery({
+    queryKey: ['admin-category-suggestions'],
+    queryFn: () => adminApi.categorySuggestions('pending'),
+  });
+  const suggestions = q.data ?? [];
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['admin-category-suggestions'] });
+    qc.invalidateQueries({ queryKey: ['admin-categories'] });
+    qc.invalidateQueries({ queryKey: ['catalog-filters'] });
+    qc.invalidateQueries({ queryKey: ['categories'] });
+  };
+  const approveMut = useMutation({
+    mutationFn: (id: string) => adminApi.approveCategorySuggestion(id),
+    onSuccess: () => {
+      toast.success('Sugestão aprovada — já virou categoria de loja.');
+      invalidate();
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : 'Falha ao aprovar.'),
+  });
+  const rejectMut = useMutation({
+    mutationFn: (id: string) => adminApi.rejectCategorySuggestion(id),
+    onSuccess: () => {
+      toast.success('Sugestão rejeitada.');
+      invalidate();
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : 'Falha ao rejeitar.'),
+  });
+
+  if (!q.isLoading && suggestions.length === 0) return null;
+
+  return (
+    <Card padded={false}>
+      <div style={{ padding: 'var(--space-4) var(--space-4) 0' }}>
+        <h3>Sugestões de segmento pendentes</h3>
+        <p className="text-muted">
+          Parceiros que escolheram "Outro" no cadastro e sugeriram um novo
+          segmento de loja. Aprovar cria a categoria; rejeitar só descarta a
+          sugestão (a loja continua com o segmento que ela sugeriu).
+        </p>
+      </div>
+      <QueryState
+        loading={q.isLoading}
+        error={q.error}
+        empty={suggestions.length === 0}
+        emptyLabel="Nenhuma sugestão pendente."
+        variant="list"
+      >
+        <table className="history__table">
+          <thead>
+            <tr>
+              <th>Sugestão</th>
+              <th>Loja</th>
+              <th>Data</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {suggestions.map((s) => (
+              <tr key={s.id}>
+                <td>{s.name}</td>
+                <td>{s.partnerName ?? '—'}</td>
+                <td>{new Date(s.createdAt).toLocaleDateString('pt-BR')}</td>
+                <td>
+                  <div className="row">
+                    <Button
+                      size="sm"
+                      onClick={() => approveMut.mutate(s.id)}
+                      disabled={approveMut.isPending || rejectMut.isPending}
+                    >
+                      Aprovar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => rejectMut.mutate(s.id)}
+                      disabled={approveMut.isPending || rejectMut.isPending}
+                    >
+                      Rejeitar
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </QueryState>
+    </Card>
+  );
+}
 
 export function AdminCategoriesPage() {
   const qc = useQueryClient();
@@ -62,6 +159,8 @@ export function AdminCategoriesPage() {
           </p>
         </div>
       </header>
+
+      <CategorySuggestionsCard />
 
       <Card>
         <form className="row" onSubmit={submit}>

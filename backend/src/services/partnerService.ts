@@ -21,6 +21,7 @@ export async function updateMyProfile(partnerId: string, req: UpdateMyPartnerPro
       ...(req.segment != null ? { segment: req.segment } : {}),
       ...(req.logoUrl != null ? { logoUrl: req.logoUrl } : {}),
       ...(req.cnpj != null ? { cnpj: req.cnpj.trim() } : {}),
+      ...(req.documentType != null ? { documentType: req.documentType } : {}),
       ...(req.city != null ? { city: req.city.trim() } : {}),
       ...(req.state != null ? { state: req.state.trim() } : {}),
       ...(req.lat != null ? { lat: req.lat } : {}),

@@ -9,10 +9,13 @@ import { catalogApi } from '@shared/api/endpoints';
 import {
   isValidPhone,
   maskPhone,
-  maskCnpj,
-  isValidCnpj,
+  maskDocument,
+  isValidDocument,
+  DocumentType,
 } from '@shared/utils/masks';
 import './AuthPages.css';
+
+const OTHER_SEGMENT = '__outro__';
 
 export function RegisterPartnerPage() {
   const navigate = useNavigate();
@@ -28,6 +31,8 @@ export function RegisterPartnerPage() {
     phone: '',
     storeName: '',
     segment: '',
+    segmentSuggestion: '',
+    documentType: 'CNPJ' as DocumentType,
     cnpj: '',
     city: '',
     state: '',
@@ -37,6 +42,7 @@ export function RegisterPartnerPage() {
   const [error, setError] = useState<string | null>(null);
   const [geo, setGeo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const isOtherSegment = form.segment === OTHER_SEGMENT;
 
   const geocode = async () => {
     const q = [form.city, form.state, 'Brasil']
@@ -80,8 +86,12 @@ export function RegisterPartnerPage() {
       setError('Telefone incompleto.');
       return;
     }
-    if (form.cnpj && !isValidCnpj(form.cnpj)) {
-      setError('CNPJ incompleto.');
+    if (form.cnpj && !isValidDocument(form.cnpj, form.documentType)) {
+      setError(form.documentType === 'CPF' ? 'CPF incompleto.' : 'CNPJ incompleto.');
+      return;
+    }
+    if (isOtherSegment && !form.segmentSuggestion.trim()) {
+      setError('Descreva o segmento que você gostaria de sugerir.');
       return;
     }
     setError(null);
@@ -93,8 +103,10 @@ export function RegisterPartnerPage() {
         password: form.password,
         phone: form.phone,
         storeName: form.storeName,
-        segment: form.segment,
+        segment: isOtherSegment ? form.segmentSuggestion.trim() : form.segment,
+        segmentIsSuggestion: isOtherSegment,
         cnpj: form.cnpj || undefined,
+        documentType: form.documentType,
         city: form.city || undefined,
         state: form.state || undefined,
         lat: form.lat ? Number(form.lat) : undefined,
@@ -168,18 +180,60 @@ export function RegisterPartnerPage() {
                     {c.name}
                   </option>
                 ))}
+                <option value={OTHER_SEGMENT}>Outro (sugerir novo segmento)</option>
+              </select>
+            </div>
+          </div>
+          {isOtherSegment && (
+            <Input
+              label="Qual segmento você sugere?"
+              value={form.segmentSuggestion}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, segmentSuggestion: e.target.value }))
+              }
+              placeholder="Ex.: Pet Shop"
+              hint="Sua loja já nasce com esse segmento. Nossa administração avalia a sugestão e decide se ela vira uma opção fixa no sistema."
+              required
+            />
+          )}
+          <div className="input-field">
+            <label className="input-field__label">Tipo de documento</label>
+            <div className="input-field__box">
+              <select
+                className="input-field__el"
+                value={form.documentType}
+                onChange={(e) => {
+                  const documentType = e.target.value as DocumentType;
+                  setForm((p) => ({
+                    ...p,
+                    documentType,
+                    cnpj: maskDocument(p.cnpj, documentType),
+                  }));
+                }}
+              >
+                <option value="CNPJ">CNPJ</option>
+                <option value="CPF">CPF</option>
               </select>
             </div>
           </div>
           <Input
-            label="CNPJ"
+            label={form.documentType}
             value={form.cnpj}
             onChange={(e) =>
-              setForm((p) => ({ ...p, cnpj: maskCnpj(e.target.value) }))
+              setForm((p) => ({
+                ...p,
+                cnpj: maskDocument(e.target.value, p.documentType),
+              }))
             }
-            placeholder="00.000.000/0000-00"
+            placeholder={
+              form.documentType === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'
+            }
             error={
-              form.cnpj && !isValidCnpj(form.cnpj) ? 'CNPJ incompleto.' : undefined
+              form.cnpj && !isValidDocument(form.cnpj, form.documentType)
+                ? form.documentType === 'CPF'
+                  ? 'CPF incompleto.'
+                  : 'CNPJ incompleto.'
+                : undefined
             }
           />
           <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
@@ -207,27 +261,23 @@ export function RegisterPartnerPage() {
           <div
             style={{
               display: 'flex',
+              flexDirection: 'column',
               gap: 'var(--space-3)',
-              alignItems: 'flex-end',
             }}
           >
-            <div style={{ flex: 1 }}>
-              <Input
-                label="Latitude"
-                value={form.lat}
-                onChange={update('lat')}
-                placeholder="-23.5505"
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <Input
-                label="Longitude"
-                value={form.lng}
-                onChange={update('lng')}
-                placeholder="-46.6333"
-              />
-            </div>
-            <Button type="button" variant="secondary" onClick={geocode}>
+            <Input
+              label="Latitude"
+              value={form.lat}
+              onChange={update('lat')}
+              placeholder="-23.5505"
+            />
+            <Input
+              label="Longitude"
+              value={form.lng}
+              onChange={update('lng')}
+              placeholder="-46.6333"
+            />
+            <Button type="button" variant="secondary" fullWidth onClick={geocode}>
               Localizar
             </Button>
           </div>

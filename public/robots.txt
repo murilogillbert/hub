@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /parceiro
+Disallow: /financeiro
+Disallow: /checkout
+Disallow: /carrinho
+Disallow: /conta
+
+Sitemap: https://opendriver.com.br/sitemap.xml

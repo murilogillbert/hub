@@ -9,7 +9,7 @@ import {
   PasswordCard,
   ProfileBasicsCard,
 } from '@shared/components/AccountSettings/AccountSettingsCards';
-import { coordinateError, isValidCnpj, maskCnpj, maskCoordinate } from '@shared/utils/masks';
+import { coordinateError, isValidDocument, maskDocument, maskCoordinate, DocumentType } from '@shared/utils/masks';
 import { resolveImageUrl } from '@shared/api/client';
 import { affiliateApi, catalogApi, partnerApi, uploadsApi, PixKeyType } from '@shared/api/endpoints';
 import './PartnerPages.css';
@@ -30,7 +30,16 @@ function StoreProfileCard() {
   const queryClient = useQueryClient();
   const meQuery = useQuery({ queryKey: ['affiliate-me'], queryFn: () => affiliateApi.me() });
   const segmentsQuery = useQuery({ queryKey: ['categories', 'store'], queryFn: () => catalogApi.categories('store') });
-  const [form, setForm] = useState({ name: '', segment: '', cnpj: '', city: '', state: '', lat: '', lng: '' });
+  const [form, setForm] = useState({
+    name: '',
+    segment: '',
+    cnpj: '',
+    documentType: 'CNPJ' as DocumentType,
+    city: '',
+    state: '',
+    lat: '',
+    lng: '',
+  });
   const [logoBusy, setLogoBusy] = useState(false);
 
   useEffect(() => {
@@ -39,6 +48,7 @@ function StoreProfileCard() {
       name: meQuery.data.name,
       segment: meQuery.data.segment ?? '',
       cnpj: meQuery.data.cnpj ?? '',
+      documentType: meQuery.data.documentType ?? 'CNPJ',
       city: meQuery.data.city ?? '',
       state: meQuery.data.state ?? '',
       lat: meQuery.data.lat ? String(meQuery.data.lat) : '',
@@ -54,6 +64,7 @@ function StoreProfileCard() {
         name: form.name,
         segment: form.segment,
         cnpj: form.cnpj,
+        documentType: form.documentType,
         city: form.city,
         state: form.state,
         lat: form.lat ? Number(form.lat) : undefined,
@@ -67,7 +78,11 @@ function StoreProfileCard() {
   });
 
   const save = () => {
-    if ((form.cnpj && !isValidCnpj(form.cnpj)) || coordinateError(form.lat, 'lat') || coordinateError(form.lng, 'lng')) {
+    if (
+      (form.cnpj && !isValidDocument(form.cnpj, form.documentType)) ||
+      coordinateError(form.lat, 'lat') ||
+      coordinateError(form.lng, 'lng')
+    ) {
       toast.error('Revise os campos destacados antes de salvar.');
       return;
     }
@@ -131,13 +146,37 @@ function StoreProfileCard() {
             </select>
           </div>
         </div>
-        <Input
-          label="CNPJ"
-          value={form.cnpj}
-          onChange={(e) => setForm((f) => ({ ...f, cnpj: maskCnpj(e.target.value) }))}
-          placeholder="00.000.000/0000-00"
-          error={form.cnpj && !isValidCnpj(form.cnpj) ? 'CNPJ incompleto.' : undefined}
-        />
+        <div className="row">
+          <div className="input-field" style={{ maxWidth: 160 }}>
+            <label className="input-field__label">Tipo de documento</label>
+            <div className="input-field__box">
+              <select
+                className="input-field__el"
+                value={form.documentType}
+                onChange={(e) => {
+                  const documentType = e.target.value as DocumentType;
+                  setForm((f) => ({ ...f, documentType, cnpj: maskDocument(f.cnpj, documentType) }));
+                }}
+              >
+                <option value="CNPJ">CNPJ</option>
+                <option value="CPF">CPF</option>
+              </select>
+            </div>
+          </div>
+          <Input
+            label={form.documentType}
+            value={form.cnpj}
+            onChange={(e) => setForm((f) => ({ ...f, cnpj: maskDocument(e.target.value, f.documentType) }))}
+            placeholder={form.documentType === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'}
+            error={
+              form.cnpj && !isValidDocument(form.cnpj, form.documentType)
+                ? form.documentType === 'CPF'
+                  ? 'CPF incompleto.'
+                  : 'CNPJ incompleto.'
+                : undefined
+            }
+          />
+        </div>
         <div className="row">
           <Input label="Cidade" value={form.city} onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))} />
           <Input label="Estado" value={form.state} onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))} placeholder="UF" />

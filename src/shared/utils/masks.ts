@@ -54,6 +54,12 @@ export const parseMoneyInput = (value: string) => {
 
 export const isValidCpf = (value: string) => onlyDigits(value).length === 11;
 export const isValidCnpj = (value: string) => onlyDigits(value).length === 14;
+
+export type DocumentType = 'CPF' | 'CNPJ';
+export const maskDocument = (value: string, type: DocumentType) =>
+  type === 'CPF' ? maskCpf(value) : maskCnpj(value);
+export const isValidDocument = (value: string, type: DocumentType) =>
+  type === 'CPF' ? isValidCpf(value) : isValidCnpj(value);
 export const isValidPhone = (value: string) => {
   const len = onlyDigits(value).length;
   return len === 10 || len === 11;

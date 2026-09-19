@@ -39,6 +39,7 @@ export interface PartnerDto {
   feePercent: number;
   joinedAt: Date;
   cnpj: string;
+  documentType: string;
   city: string;
   state: string;
   lat: number;
@@ -54,6 +55,7 @@ export const partnerUpsertSchema = z.object({
   feePercent: z.number().min(0).max(100),
   active: z.boolean(),
   cnpj: z.string().optional().nullable(),
+  documentType: z.enum(['CPF', 'CNPJ']).optional(),
   city: z.string().optional().nullable(),
   state: z.string().optional().nullable(),
   lat: z.number().optional().nullable(),
@@ -74,12 +76,25 @@ export const updateMyPartnerProfileSchema = z.object({
   segment: z.string().min(1).optional(),
   logoUrl: z.string().optional(),
   cnpj: z.string().optional().nullable(),
+  documentType: z.enum(['CPF', 'CNPJ']).optional(),
   city: z.string().optional().nullable(),
   state: z.string().optional().nullable(),
   lat: z.number().optional().nullable(),
   lng: z.number().optional().nullable(),
 });
 export type UpdateMyPartnerProfileRequest = z.infer<typeof updateMyPartnerProfileSchema>;
+
+// ---------- Sugestão de categoria/segmento (opção "Outro") ----------
+export interface CategorySuggestionDto {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  partnerId: string | null;
+  partnerName: string | null;
+  createdAt: Date;
+  resolvedAt: Date | null;
+}
 
 export interface StoreDto {
   id: string;
