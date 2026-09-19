@@ -22,7 +22,12 @@ function baseUrlAndHeaders(): { baseUrl: string; headers: Record<string, string>
 async function fetchInstance(instanceName: string): Promise<EvolutionInstanceInfo | null> {
   const { baseUrl, headers } = baseUrlAndHeaders();
   const res = await fetch(`${baseUrl}/instance/fetchInstances?instanceName=${instanceName}`, { headers });
-  if (!res.ok) throw new AppError('Falha ao consultar o Evolution API.', 502);
+  // Instância inexistente = 404 (caso normal antes do primeiro pareamento),
+  // não é falha. Nota: usar 500 (não 502) nos erros abaixo — o Cloudflare
+  // intercepta respostas 502 e troca pelo próprio HTML de erro, descartando
+  // o corpo JSON e os headers de CORS da nossa resposta.
+  if (res.status === 404) return null;
+  if (!res.ok) throw new AppError('Falha ao consultar o Evolution API.', 500);
   const list = (await res.json()) as EvolutionInstanceInfo[];
   return list[0] ?? null;
 }
@@ -44,16 +49,16 @@ export async function connectInstance(
       headers,
       body: JSON.stringify({ instanceName, qrcode: true, integration: 'WHATSAPP-BAILEYS' }),
     });
-    if (!res.ok) throw new AppError('Falha ao criar instância no Evolution API.', 502);
+    if (!res.ok) throw new AppError('Falha ao criar instância no Evolution API.', 500);
     const body = (await res.json()) as { qrcode?: EvolutionQrCode };
-    if (!body.qrcode?.base64) throw new AppError('Evolution API não devolveu QR code.', 502);
+    if (!body.qrcode?.base64) throw new AppError('Evolution API não devolveu QR code.', 500);
     return { status: 'qrcode', qrCodeBase64: body.qrcode.base64 };
   }
 
   const res = await fetch(`${baseUrl}/instance/connect/${instanceName}`, { headers });
-  if (!res.ok) throw new AppError('Falha ao reconectar instância no Evolution API.', 502);
+  if (!res.ok) throw new AppError('Falha ao reconectar instância no Evolution API.', 500);
   const body = (await res.json()) as EvolutionQrCode;
-  if (!body.base64) throw new AppError('Evolution API não devolveu QR code.', 502);
+  if (!body.base64) throw new AppError('Evolution API não devolveu QR code.', 500);
   return { status: 'qrcode', qrCodeBase64: body.base64 };
 }
 
