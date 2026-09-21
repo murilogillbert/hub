@@ -61,6 +61,9 @@
 }
 
 .layout-client__nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: var(--font-sm);
   color: rgba(255, 255, 255, 0.78);
   padding: 8px 14px;
@@ -69,12 +72,21 @@
   position: relative;
 }
 
+.layout-client__nav a svg {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
 .layout-client__nav a:hover {
+  background: var(--color-sidebar-hover);
   color: #fff;
 }
 
 .layout-client__nav a.active {
   color: var(--color-blue-light);
+}
+.layout-client__nav a.active svg {
+  opacity: 1;
 }
 .layout-client__nav a.active::after {
   content: '';
@@ -93,14 +105,36 @@
   gap: var(--space-3);
 }
 
+.layout-client__user-topline {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.layout-client__avatar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 .layout-client__avatar img {
   width: 36px;
   height: 36px;
   border-radius: 50%;
   border: 2px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+/* Nome/e-mail só aparecem no drawer mobile (ver media query) — no header
+   desktop o avatar continua sozinho, como sempre foi. */
+.layout-client__avatar-info {
+  display: none;
 }
 
 .layout-client__logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: var(--font-xs);
   color: rgba(255, 255, 255, 0.6);
   text-transform: uppercase;
@@ -404,27 +438,86 @@
   }
   .layout-client__nav a {
     width: 100%;
-    padding: 14px 16px;
+    padding: 13px 16px;
     font-size: var(--font-sm);
+  }
+  /* Mesma disposição da sidebar interna no mobile: item ativo vira uma
+     pílula preenchida em vez do sublinhado usado no header desktop. */
+  .layout-client__nav a.active {
+    background: var(--color-info);
+    color: #fff;
+    font-weight: 800;
+    box-shadow: var(--shadow-blue);
+  }
+  .layout-client__nav a.active::after {
+    display: none;
   }
   .layout-client__user {
     order: 3;
   }
-  /* Logado: badge de cashback + sino + avatar + sair só aparecem com o
+  /* Logado: badge de cashback + sino + cartão de conta (avatar/nome/e-mail,
+     igual ao SidebarUser das áreas internas) + sair só aparecem com o
      drawer aberto, pra deixar o header fechado compacto (logo + burger).
      Não-logado (Entrar/Criar conta) continua sempre visível. */
   .layout-client__user:has(.layout-client__logout) {
     display: none;
     width: 100%;
     order: 4;
-    flex-wrap: wrap;
-    gap: var(--space-3);
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
   }
   .layout-client__nav.is-open ~ .layout-client__user:has(.layout-client__logout) {
     display: flex;
     margin-top: var(--space-2);
     padding-top: var(--space-3);
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--color-sidebar-border);
+  }
+  .layout-client__user-topline {
+    padding: 0 16px;
+  }
+  .layout-client__avatar {
+    width: 100%;
+    padding: var(--space-3) 16px;
+    border-radius: var(--radius-md);
+  }
+  .layout-client__avatar:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .layout-client__avatar img {
+    width: 44px;
+    height: 44px;
+  }
+  .layout-client__avatar-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .layout-client__avatar-info strong {
+    font-size: var(--font-sm);
+    color: var(--color-sidebar-text-strong);
+  }
+  .layout-client__avatar-info small {
+    font-size: var(--font-xs);
+    color: var(--color-sidebar-text-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .layout-client__logout {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 13px 16px;
+    border-radius: var(--radius-pill);
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: var(--font-sm);
+    font-weight: 700;
+    color: var(--color-sidebar-text);
+  }
+  .layout-client__logout:hover {
+    background: var(--color-sidebar-hover);
+    color: #fff;
   }
   .layout-client__main {
     padding: var(--space-5) 0;

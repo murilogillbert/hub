@@ -49,28 +49,49 @@ export function ClientLayout({ children }: ClientLayoutProps) {
             onClick={closeMenu}
           >
             <NavLink to="/" end>
-              Início
+              <Icon name="home" size={17} /> Início
             </NavLink>
-            <NavLink to="/produtos">Catálogo</NavLink>
+            <NavLink to="/produtos">
+              <Icon name="receipt" size={17} /> Catálogo
+            </NavLink>
             <NavLink to="/carrinho">
-              Carrinho{cart.count > 0 ? ` (${cart.count})` : ''}
+              <Icon name="cart" size={17} /> Carrinho
+              {cart.count > 0 ? ` (${cart.count})` : ''}
             </NavLink>
-            {isAuthenticated && <NavLink to="/conta/itens">Meus itens</NavLink>}
-            {isAuthenticated && <NavLink to="/conta/historico">Histórico</NavLink>}
-            {isAuthenticated && <NavLink to="/conta/cashback">Meu cashback</NavLink>}
+            {isAuthenticated && (
+              <NavLink to="/conta/itens">
+                <Icon name="package" size={17} /> Meus itens
+              </NavLink>
+            )}
+            {isAuthenticated && (
+              <NavLink to="/conta/historico">
+                <Icon name="clipboard" size={17} /> Histórico
+              </NavLink>
+            )}
+            {isAuthenticated && (
+              <NavLink to="/conta/cashback">
+                <Icon name="wallet" size={17} /> Meu cashback
+              </NavLink>
+            )}
           </nav>
           <div className="layout-client__user">
             {isAuthenticated && user ? (
               <>
-                <span className="badge badge-accent">
-                  Cashback: {formatCurrency(user.cashbackBalance)}
+                <span className="layout-client__user-topline">
+                  <span className="badge badge-accent">
+                    Cashback: {formatCurrency(user.cashbackBalance)}
+                  </span>
+                  <NotificationsBell />
                 </span>
-                <NotificationsBell />
-                <Link to="/conta/perfil" className="layout-client__avatar">
+                <Link to="/conta/perfil" className="layout-client__avatar" onClick={closeMenu}>
                   <img src={resolveImageUrl(user.avatarUrl) || user.avatarUrl} alt={user.name} />
+                  <span className="layout-client__avatar-info">
+                    <strong>{user.name}</strong>
+                    <small>{user.email}</small>
+                  </span>
                 </Link>
                 <button onClick={handleLogout} className="layout-client__logout">
-                  Sair
+                  <Icon name="logOut" size={16} /> Sair
                 </button>
               </>
             ) : (
