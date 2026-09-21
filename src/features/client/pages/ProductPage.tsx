@@ -9,6 +9,7 @@ import { ProductReviewsSection } from '@shared/components/Reviews/Reviews';
 import { useCart } from '@shared/context/CartContext';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { formatCurrency, formatPercent } from '@shared/utils/formatters';
+import { usePageMeta } from '@shared/hooks/usePageMeta';
 import './ProductPage.css';
 
 export function ProductPage() {
@@ -23,6 +24,10 @@ export function ProductPage() {
     enabled: !!id,
   });
   const product = productQuery.data;
+  usePageMeta(
+    product?.title ?? 'Produto',
+    product?.description?.slice(0, 160),
+  );
 
   const storesQuery = useQuery({
     queryKey: ['stores', product?.partnerId],

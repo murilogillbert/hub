@@ -7,110 +7,43 @@ import { StoreMap } from '@shared/components/StoreMap/StoreMap';
 import { Button } from '@shared/components/Button/Button';
 import { QueryState } from '@shared/components/QueryState/QueryState';
 import { formatPercent } from '@shared/utils/formatters';
+import { Icon, type IconName } from '@shared/components/Icon/Icon';
 import './HomePage.css';
 
-// Ícones inline (mantém zero dependência nova). Estilo: stroke 2.
-const I = {
-  tag: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-      strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20.5 11l-8 8a2 2 0 0 1-2.8 0L3 12.3V3.5h8.8L20.5 11z" />
-      <circle cx="7.5" cy="7.5" r="1.5" />
-    </svg>
-  ),
-  wrench: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-      strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14.7 6.3a4 4 0 1 1 3 6.7L21 17l-3 3-4-3.3a4 4 0 0 1-6.7-3" />
-      <path d="M9 5l-4 4 3 3 4-4z" />
-    </svg>
-  ),
-  handshake: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-      strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 12l4-4 4 4-2 2 4 4 6-6-4-4 2-2-4-4-4 4" />
-    </svg>
-  ),
-  chart: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-      strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 3v18h18" />
-      <path d="M7 15l4-5 3 3 5-7" />
-    </svg>
-  ),
-  phone: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-      strokeLinecap="round" strokeLinejoin="round">
-      <rect x="7" y="2" width="10" height="20" rx="2" />
-      <line x1="12" y1="18" x2="12" y2="18" />
-    </svg>
-  ),
-  store: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-      strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 7l2-4h14l2 4" />
-      <path d="M3 7v13h18V7" />
-      <path d="M3 7c0 2 1 3 3 3s3-1 3-3 1 3 3 3 3-1 3-3 1 3 3 3 3-1 3-3" />
-    </svg>
-  ),
-  money: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-      strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M14 9a3 3 0 0 0-6 0c0 4 6 2 6 6a3 3 0 0 1-6 0" />
-      <line x1="12" y1="6" x2="12" y2="18" />
-    </svg>
-  ),
-  shield: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-      strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 3l8 4v5c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V7l8-4z" />
-    </svg>
-  ),
-  car: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-      strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 16h14l-2-6H7l-2 6z" />
-      <circle cx="8" cy="17" r="1.5" />
-      <circle cx="16" cy="17" r="1.5" />
-    </svg>
-  ),
-};
-
-const ADVANTAGES = [
+const ADVANTAGES: { icon: IconName; title: string; text: string }[] = [
   {
-    icon: I.tag,
+    icon: 'tag',
     title: 'Descontos Exclusivos',
     text: 'Economize em combustível, manutenção, pneus, lavagem e muito mais.',
   },
   {
-    icon: I.wrench,
+    icon: 'wrench',
     title: 'Serviços Automotivos',
     text: 'Oficinas, centros automotivos e serviços perto de você.',
   },
   {
-    icon: I.handshake,
+    icon: 'handshake',
     title: 'Parceiros Confiáveis',
     text: 'Rede de empresas parceiras selecionadas para oferecer o melhor.',
   },
   {
-    icon: I.chart,
+    icon: 'chart',
     title: 'Mais Ganhos',
     text: 'Aumente sua renda com oportunidades e indicações exclusivas.',
   },
 ];
 
-const STEPS = [
-  { icon: I.phone, title: '1. Cadastre-se', text: 'Crie sua conta de motorista.' },
-  { icon: I.tag, title: '2. Aproveite', text: 'Acesse descontos e serviços exclusivos.' },
-  { icon: I.store, title: '3. Use e economize', text: 'Utilize os serviços dos nossos parceiros.' },
-  { icon: I.money, title: '4. Ganhe mais', text: 'Aumente seus ganhos com oportunidades.' },
+const STEPS: { icon: IconName; title: string; text: string }[] = [
+  { icon: 'phone', title: '1. Cadastre-se', text: 'Crie sua conta de motorista.' },
+  { icon: 'tag', title: '2. Aproveite', text: 'Acesse descontos e serviços exclusivos.' },
+  { icon: 'store', title: '3. Use e economize', text: 'Utilize os serviços dos nossos parceiros.' },
+  { icon: 'money', title: '4. Ganhe mais', text: 'Aumente seus ganhos com oportunidades.' },
 ];
 
-const AUDIENCE = [
-  { icon: I.car, label: 'Motoristas de aplicativos', desc: 'de todas as plataformas' },
-  { icon: I.store, label: 'Frotistas e gestores', desc: 'de transporte' },
-  { icon: I.handshake, label: 'Empresas e parceiros', desc: 'do setor automotivo' },
+const AUDIENCE: { icon: IconName; label: string; desc: string }[] = [
+  { icon: 'car', label: 'Motoristas de aplicativos', desc: 'de todas as plataformas' },
+  { icon: 'store', label: 'Frotistas e gestores', desc: 'de transporte' },
+  { icon: 'handshake', label: 'Empresas e parceiros', desc: 'do setor automotivo' },
 ];
 
 const PARTNERS_DEMO = [
@@ -232,9 +165,9 @@ export function HomePage() {
             </Link>
           </div>
           <div className="home__hero-mini">
-            <span><i className="home__hero-mini-i">{I.tag}</i> Descontos exclusivos</span>
-            <span><i className="home__hero-mini-i">{I.handshake}</i> Parcerias confiáveis</span>
-            <span><i className="home__hero-mini-i">{I.chart}</i> Mais ganhos para você</span>
+            <span><i className="home__hero-mini-i"><Icon name="tag" size={16} /></i> Descontos exclusivos</span>
+            <span><i className="home__hero-mini-i"><Icon name="handshake" size={16} /></i> Parcerias confiáveis</span>
+            <span><i className="home__hero-mini-i"><Icon name="chart" size={16} /></i> Mais ganhos para você</span>
           </div>
         </div>
         <div className="home__hero-visual">
@@ -243,11 +176,11 @@ export function HomePage() {
             <strong>Descontos<br/>Exclusivos</strong>
           </div>
           <div className="home__hero-badge home__hero-badge--2">
-            {I.wrench}
+            <Icon name="wrench" size={24} />
             <strong>Serviços<br/>Automotivos</strong>
           </div>
           <div className="home__hero-badge home__hero-badge--3">
-            {I.money}
+            <Icon name="money" size={24} />
             <strong>Mais<br/>Ganhos</strong>
           </div>
         </div>
@@ -264,7 +197,9 @@ export function HomePage() {
         <div className="home__advantages-grid">
           {ADVANTAGES.map((a) => (
             <div key={a.title} className="home__advantage">
-              <span className="home__icon-circle">{a.icon}</span>
+              <span className="home__icon-circle">
+                <Icon name={a.icon} size={22} />
+              </span>
               <strong>{a.title}</strong>
               <p>{a.text}</p>
             </div>
@@ -282,7 +217,9 @@ export function HomePage() {
         <ol className="home__steps">
           {STEPS.map((s, i) => (
             <li key={s.title}>
-              <span className="home__step-circle">{s.icon}</span>
+              <span className="home__step-circle">
+                <Icon name={s.icon} size={22} />
+              </span>
               <strong>{s.title}</strong>
               <small>{s.text}</small>
               {i < STEPS.length - 1 && <span className="home__step-arrow">›</span>}
@@ -294,7 +231,9 @@ export function HomePage() {
       {/* ================= CALCULADORA DE LUCRO REAL ================= */}
       <section className="home__lucro">
         <div className="home__lucro-copy">
-          <span className="home__lucro-eyebrow">🚗 Calculadora de Lucro Real</span>
+          <span className="home__lucro-eyebrow">
+            <Icon name="car" size={14} /> Calculadora de Lucro Real
+          </span>
           <h2>
             Descubra se dirigir hoje <span className="text-lime">realmente compensou</span>.
           </h2>
@@ -306,12 +245,12 @@ export function HomePage() {
             líquido, lucro por hora, lucro por km — e se o dia valeu a pena.
           </p>
           <ul className="home__lucro-list">
-            <li>✅ Faturamento total</li>
-            <li>✅ Custo real</li>
-            <li>✅ Lucro líquido</li>
-            <li>✅ Lucro por hora</li>
-            <li>✅ Lucro por km</li>
-            <li>✅ Se o dia valeu a pena</li>
+            <li><Icon name="check" size={14} /> Faturamento total</li>
+            <li><Icon name="check" size={14} /> Custo real</li>
+            <li><Icon name="check" size={14} /> Lucro líquido</li>
+            <li><Icon name="check" size={14} /> Lucro por hora</li>
+            <li><Icon name="check" size={14} /> Lucro por km</li>
+            <li><Icon name="check" size={14} /> Se o dia valeu a pena</li>
           </ul>
           <Link to="/lucro-real-motorista">
             <Button size="lg">Calcular meu lucro real →</Button>
@@ -343,7 +282,9 @@ export function HomePage() {
           <ul>
             {AUDIENCE.map((a) => (
               <li key={a.label}>
-                <span className="home__audience-i">{a.icon}</span>
+                <span className="home__audience-i">
+                  <Icon name={a.icon} size={20} />
+                </span>
                 <div>
                   <strong>{a.label}</strong>
                   <small>{a.desc}</small>
@@ -403,7 +344,7 @@ export function HomePage() {
           <div className="row">
             {geoStatus && <span className="text-soft">{geoStatus}</span>}
             <Button variant="secondary" onClick={useMyLocation}>
-              📍 Usar minha localização
+              <Icon name="mapPin" size={16} /> Usar minha localização
             </Button>
             {nearby && (
               <Button
@@ -485,7 +426,9 @@ export function HomePage() {
       {/* ================= FAIXA CTA FINAL ================= */}
       <section className="home__cta-band">
         <div>
-          <span className="home__cta-shield">{I.shield}</span>
+          <span className="home__cta-shield">
+            <Icon name="shield" size={26} />
+          </span>
           <div>
             <strong>Segurança, confiança e tecnologia</strong>
             <small>para transformar o dia a dia de quem move o Brasil.</small>

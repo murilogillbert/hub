@@ -12,6 +12,7 @@ import {
 import { coordinateError, isValidDocument, maskDocument, maskCoordinate, DocumentType } from '@shared/utils/masks';
 import { resolveImageUrl } from '@shared/api/client';
 import { affiliateApi, catalogApi, partnerApi, uploadsApi, PixKeyType } from '@shared/api/endpoints';
+import { Icon } from '@shared/components/Icon/Icon';
 import './PartnerPages.css';
 
 const PIX_KEY_TYPES: { value: PixKeyType; label: string }[] = [
@@ -113,7 +114,7 @@ function StoreProfileCard() {
           className="profile__avatar"
         />
         <label className="btn btn--secondary btn--sm" style={{ cursor: 'pointer', width: 'fit-content' }}>
-          {logoBusy ? 'Enviando...' : '🖼️ Trocar logo'}
+          {logoBusy ? 'Enviando...' : <><Icon name="image" size={15} /> Trocar logo</>}
           <input
             type="file"
             accept="image/png,image/jpeg,image/webp"

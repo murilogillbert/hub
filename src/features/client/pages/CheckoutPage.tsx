@@ -11,6 +11,7 @@ import { useCart } from '@shared/context/CartContext';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { formatCurrency } from '@shared/utils/formatters';
 import { maskCep } from '@shared/utils/masks';
+import { Icon } from '@shared/components/Icon/Icon';
 import {
   catalogApi,
   ordersApi,
@@ -231,7 +232,9 @@ export function CheckoutPage() {
       <div className="checkout__left">
         <div className="row-between">
           <h2>Pagamento</h2>
-          <span className="badge badge-primary">🔒 Ambiente seguro</span>
+          <span className="badge badge-primary">
+            <Icon name="lock" size={13} /> Ambiente seguro
+          </span>
         </div>
         <p className="text-muted">
           Pagamento processado com segurança.
@@ -377,7 +380,7 @@ export function CheckoutPage() {
 
         {phase === 'error' && (
           <div className="checkout__state checkout__state--err">
-            <strong>⚠ {error}</strong>
+            <strong><Icon name="alertTriangle" size={15} /> {error}</strong>
             <Button
               type="button"
               variant="secondary"

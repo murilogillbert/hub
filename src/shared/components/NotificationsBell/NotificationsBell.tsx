@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { authApi } from '@shared/api/endpoints';
 import { formatDateTime } from '@shared/utils/formatters';
+import { Icon } from '@shared/components/Icon/Icon';
 import './NotificationsBell.css';
 
 export function NotificationsBell() {
@@ -23,7 +24,7 @@ export function NotificationsBell() {
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
-        <span aria-hidden="true">!</span>
+        <Icon name="bell" size={18} />
         {unread > 0 && <strong>{unread > 9 ? '9+' : unread}</strong>}
       </button>
       {open && (

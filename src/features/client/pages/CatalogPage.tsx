@@ -6,6 +6,7 @@ import { catalogApi, CatalogQuery } from '@shared/api/endpoints';
 import { Button } from '@shared/components/Button/Button';
 import { QueryState } from '@shared/components/QueryState/QueryState';
 import { PartnerStore } from '@shared/types';
+import { usePageMeta } from '@shared/hooks/usePageMeta';
 import './CatalogPage.css';
 
 const SORTS = [
@@ -52,6 +53,10 @@ function storeLabel(store: PartnerStore, partnerName: string) {
 }
 
 export function CatalogPage() {
+  usePageMeta(
+    'Catálogo',
+    'Descontos e cashback em produtos e serviços de lojas parceiras do OpenDriverHub.',
+  );
   const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState<CatalogQuery>(() =>
     readFilters(searchParams),

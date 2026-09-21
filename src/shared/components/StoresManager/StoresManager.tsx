@@ -16,6 +16,7 @@ import { resolveImageUrl } from '@shared/api/client';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { coordinateError, maskCoordinate } from '@shared/utils/masks';
 import { Partner, PartnerStore } from '@shared/types';
+import { Icon } from '@shared/components/Icon/Icon';
 import './StoresManager.css';
 
 interface StoreForm {
@@ -414,7 +415,7 @@ export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
                   className="btn btn--secondary btn--sm"
                   style={{ cursor: 'pointer' }}
                 >
-                  {imgBusy ? 'Enviando...' : '📷 Enviar imagem'}
+                  {imgBusy ? 'Enviando...' : <><Icon name="camera" size={15} /> Enviar imagem</>}
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp"

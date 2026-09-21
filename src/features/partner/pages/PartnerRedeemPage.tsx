@@ -4,6 +4,7 @@ import { QrScanner } from '@shared/components/QrScanner/QrScanner';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { formatCurrency } from '@shared/utils/formatters';
 import { partnerApi, RedeemResult } from '@shared/api/endpoints';
+import { Icon } from '@shared/components/Icon/Icon';
 import './PartnerRedeemPage.css';
 
 type Screen = 'home' | 'scan' | 'manual' | 'result';
@@ -95,7 +96,9 @@ export function PartnerRedeemPage() {
                 className="totem__choice"
                 onClick={() => setScreen('scan')}
               >
-                <span className="totem__choice-icon">📷</span>
+                <span className="totem__choice-icon">
+                  <Icon name="camera" size={30} />
+                </span>
                 <strong>Escanear QR Code</strong>
                 <small>A câmera abre só quando você tocar no botão.</small>
               </button>
@@ -104,7 +107,9 @@ export function PartnerRedeemPage() {
                 className="totem__choice"
                 onClick={() => setScreen('manual')}
               >
-                <span className="totem__choice-icon">⌨️</span>
+                <span className="totem__choice-icon">
+                  <Icon name="keyboard" size={30} />
+                </span>
                 <strong>Digitar código</strong>
                 <small>Informe o código impresso/recebido pelo cliente.</small>
               </button>
@@ -171,7 +176,9 @@ export function PartnerRedeemPage() {
 
             {error && (
               <div className="totem__feedback totem__feedback--error">
-                <span className="totem__feedback-icon">⚠</span>
+                <span className="totem__feedback-icon">
+                  <Icon name="alertTriangle" size={26} />
+                </span>
                 <p>{error}</p>
                 <button className="totem__primary" onClick={reset}>
                   Tentar novamente

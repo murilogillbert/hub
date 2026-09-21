@@ -3,6 +3,7 @@ import { NavLink, Navigate, Outlet } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { SidebarUser } from '@shared/components/SidebarUser/SidebarUser';
 import { Logo } from '@shared/components/Logo/Logo';
+import { Icon } from '@shared/components/Icon/Icon';
 import { VerifyEmailBanner } from '@shared/components/VerifyEmailBanner/VerifyEmailBanner';
 import { affiliateApi } from '@shared/api/endpoints';
 import './Layouts.css';
@@ -31,7 +32,7 @@ export function PartnerLayout() {
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
           >
-            {open ? '✕' : '☰'}
+            <Icon name={open ? 'x' : 'menu'} size={20} />
           </button>
         </div>
         <nav
@@ -41,22 +42,38 @@ export function PartnerLayout() {
           {isAffiliate ? (
             <>
               <NavLink to="/parceiro/afiliado/carteira" end>
-                💰 Carteira
+                <Icon name="wallet" size={17} /> Carteira
               </NavLink>
-              <NavLink to="/parceiro/afiliado/saque">Solicitar saque</NavLink>
-              <NavLink to="/parceiro/afiliado/materiais">📦 Materiais</NavLink>
-              <NavLink to="/parceiro/afiliado/link">🔗 Meu link</NavLink>
-              <NavLink to="/parceiro/perfil">👤 Meu perfil</NavLink>
+              <NavLink to="/parceiro/afiliado/saque">
+                <Icon name="banknote" size={17} /> Solicitar saque
+              </NavLink>
+              <NavLink to="/parceiro/afiliado/materiais">
+                <Icon name="package" size={17} /> Materiais
+              </NavLink>
+              <NavLink to="/parceiro/afiliado/link">
+                <Icon name="link" size={17} /> Meu link
+              </NavLink>
+              <NavLink to="/parceiro/perfil">
+                <Icon name="user" size={17} /> Meu perfil
+              </NavLink>
             </>
           ) : (
             <>
               <NavLink to="/parceiro/catalogo" end>
-                🧾 Catálogo
+                <Icon name="receipt" size={17} /> Catálogo
               </NavLink>
-              <NavLink to="/parceiro/unidades">Unidades</NavLink>
-              <NavLink to="/parceiro/venda">📷 Resgate / Venda</NavLink>
-              <NavLink to="/parceiro/metricas">📊 Métricas</NavLink>
-              <NavLink to="/parceiro/perfil">👤 Meu perfil</NavLink>
+              <NavLink to="/parceiro/unidades">
+                <Icon name="store" size={17} /> Unidades
+              </NavLink>
+              <NavLink to="/parceiro/venda">
+                <Icon name="camera" size={17} /> Resgate / Venda
+              </NavLink>
+              <NavLink to="/parceiro/metricas">
+                <Icon name="chart" size={17} /> Métricas
+              </NavLink>
+              <NavLink to="/parceiro/perfil">
+                <Icon name="user" size={17} /> Meu perfil
+              </NavLink>
             </>
           )}
         </nav>

@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { Icon } from '@shared/components/Icon/Icon';
 import './QueryState.css';
 
 interface QueryStateProps {
@@ -44,7 +45,8 @@ export function QueryState({
   if (error)
     return (
       <div className="query-state query-state--error">
-        ⚠ {error instanceof Error ? error.message : 'Falha ao carregar dados.'}
+        <Icon name="alertTriangle" size={15} />{' '}
+        {error instanceof Error ? error.message : 'Falha ao carregar dados.'}
       </div>
     );
   if (empty)

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
+import { Icon } from '@shared/components/Icon/Icon';
 import './QrScanner.css';
 
 interface QrScannerProps {
@@ -154,7 +155,7 @@ export function QrScanner({ onScan, onError, large = false }: QrScannerProps) {
       {!active && (
         <div className="qr-scanner__placeholder">
           <span className="qr-scanner__icon" aria-hidden>
-            📷
+            <Icon name="camera" size={32} />
           </span>
           <span>{starting ? 'Abrindo câmera...' : 'Câmera desligada'}</span>
           <small>

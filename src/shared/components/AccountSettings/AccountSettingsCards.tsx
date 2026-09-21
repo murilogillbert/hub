@@ -7,6 +7,7 @@ import { useToast } from '@shared/components/Toaster/ToastContext';
 import { isValidCpf, isValidPhone, maskCpf, maskPhone } from '@shared/utils/masks';
 import { authApi, uploadsApi } from '@shared/api/endpoints';
 import { resolveImageUrl } from '@shared/api/client';
+import { Icon } from '@shared/components/Icon/Icon';
 
 /** Avatar + dados pessoais (nome/e-mail/telefone/CPF) — usado por todos os
  * papéis (Cliente, Parceiro, Afiliado, Admin, Financeiro), já que
@@ -68,7 +69,7 @@ export function ProfileBasicsCard({ extraBadge }: { extraBadge?: ReactNode }) {
               className="btn btn--secondary btn--sm"
               style={{ marginTop: 10, cursor: 'pointer', width: 'fit-content' }}
             >
-              {avatarBusy ? 'Enviando...' : '📷 Trocar foto'}
+              {avatarBusy ? 'Enviando...' : <><Icon name="camera" size={15} /> Trocar foto</>}
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp"

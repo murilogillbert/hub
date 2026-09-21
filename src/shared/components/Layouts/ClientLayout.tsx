@@ -7,6 +7,7 @@ import { resolveImageUrl } from '@shared/api/client';
 import { FloatingAssistant } from '@features/assistant/components/FloatingAssistant';
 import { NotificationsBell } from '@shared/components/NotificationsBell/NotificationsBell';
 import { Logo } from '@shared/components/Logo/Logo';
+import { Icon } from '@shared/components/Icon/Icon';
 import { VerifyEmailBanner } from '@shared/components/VerifyEmailBanner/VerifyEmailBanner';
 import './Layouts.css';
 
@@ -41,7 +42,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
           >
-            {menuOpen ? '✕' : '☰'}
+            <Icon name={menuOpen ? 'x' : 'menu'} size={20} />
           </button>
           <nav
             className={`layout-client__nav ${menuOpen ? 'is-open' : ''}`}

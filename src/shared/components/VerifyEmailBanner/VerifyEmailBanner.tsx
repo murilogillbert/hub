@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@shared/hooks/useAuth';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { authApi } from '@shared/api/endpoints';
+import { Icon } from '@shared/components/Icon/Icon';
 import './VerifyEmailBanner.css';
 
 /** Aviso persistente pra quem ainda não confirmou o e-mail — o login continua
@@ -30,7 +31,8 @@ export function VerifyEmailBanner() {
   return (
     <div className="verify-email-banner">
       <span>
-        ✉️ Confirme seu e-mail ({user.email}) para poder pagar e sacar na plataforma.
+        <Icon name="mail" size={15} /> Confirme seu e-mail ({user.email}) para poder
+        pagar e sacar na plataforma.
       </span>
       <button type="button" onClick={resend} disabled={busy || sent}>
         {sent ? 'Enviado!' : busy ? 'Enviando...' : 'Reenviar e-mail'}

@@ -3,6 +3,8 @@ import { useMutation } from '@tanstack/react-query';
 import { Button } from '@shared/components/Button/Button';
 import { Input } from '@shared/components/Input/Input';
 import { affiliateApplicationApi } from '@shared/api/endpoints';
+import { Icon } from '@shared/components/Icon/Icon';
+import { usePageMeta } from '@shared/hooks/usePageMeta';
 import './AffiliateLandingPage.css';
 
 /**
@@ -10,6 +12,10 @@ import './AffiliateLandingPage.css';
  * /afiliados — sem login. Hero + "como funciona" + formulário de inscrição.
  */
 export function AffiliateLandingPage() {
+  usePageMeta(
+    'Programa de Afiliados · Energia Solar',
+    'Vire consultor parceiro de energia solar: link próprio, materiais de campanha e comissão por cada negócio fechado.',
+  );
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -50,10 +56,10 @@ export function AffiliateLandingPage() {
         </div>
         <aside className="affiliate-page__hero-side">
           <ul>
-            <li>✅ Link de indicação só seu</li>
-            <li>✅ Materiais de campanha prontos</li>
-            <li>✅ Saldo e extrato de comissão em tempo real</li>
-            <li>✅ Saque quando quiser (sujeito a aprovação)</li>
+            <li><Icon name="check" size={14} /> Link de indicação só seu</li>
+            <li><Icon name="check" size={14} /> Materiais de campanha prontos</li>
+            <li><Icon name="check" size={14} /> Saldo e extrato de comissão em tempo real</li>
+            <li><Icon name="check" size={14} /> Saque quando quiser (sujeito a aprovação)</li>
           </ul>
         </aside>
       </section>

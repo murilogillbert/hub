@@ -1,4 +1,6 @@
 import { LucroRealCalculator } from '../components/LucroRealCalculator/LucroRealCalculator';
+import { Icon } from '@shared/components/Icon/Icon';
+import { usePageMeta } from '@shared/hooks/usePageMeta';
 import './LucroRealPage.css';
 
 /**
@@ -9,13 +11,18 @@ import './LucroRealPage.css';
  * - Componente reutilizável faz o cálculo e a captura de lead.
  */
 export function LucroRealPage() {
+  usePageMeta(
+    'Lucro Real do Motorista',
+    'Calcule seu lucro real, custo por km e se o dia de corridas realmente compensou.',
+  );
   return (
     <div className="lucro-page">
       <section className="lucro-page__hero">
         <div className="lucro-page__hero-copy">
           <span className="eyebrow">Open Driver · diagnóstico</span>
           <h1>
-            🚗 Você sabe quanto realmente <span className="text-lime">lucrou hoje</span>?
+            <Icon name="car" size={30} /> Você sabe quanto realmente{' '}
+            <span className="text-lime">lucrou hoje</span>?
           </h1>
           <p>
             Some tudo que recebeu na Uber, 99, Open Driver, corridas
@@ -31,10 +38,10 @@ export function LucroRealPage() {
 
         <aside className="lucro-page__hero-side">
           <ul>
-            <li>✅ Faturamento total do dia</li>
-            <li>✅ Custo real, custo por km</li>
-            <li>✅ Lucro líquido e lucro por hora</li>
-            <li>✅ Status: o dia compensou?</li>
+            <li><Icon name="check" size={14} /> Faturamento total do dia</li>
+            <li><Icon name="check" size={14} /> Custo real, custo por km</li>
+            <li><Icon name="check" size={14} /> Lucro líquido e lucro por hora</li>
+            <li><Icon name="check" size={14} /> Status: o dia compensou?</li>
           </ul>
         </aside>
       </section>

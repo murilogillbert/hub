@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { SidebarUser } from '@shared/components/SidebarUser/SidebarUser';
 import { Logo } from '@shared/components/Logo/Logo';
+import { Icon } from '@shared/components/Icon/Icon';
 import './Layouts.css';
 
 export function FinanceiroLayout() {
@@ -22,7 +23,7 @@ export function FinanceiroLayout() {
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
           >
-            {open ? '✕' : '☰'}
+            <Icon name={open ? 'x' : 'menu'} size={20} />
           </button>
         </div>
         <nav
@@ -30,10 +31,14 @@ export function FinanceiroLayout() {
           onClick={close}
         >
           <NavLink to="/financeiro" end>
-            💸 Saques
+            <Icon name="banknote" size={17} /> Saques
           </NavLink>
-          <NavLink to="/financeiro/afiliados">🤝 Afiliados</NavLink>
-          <NavLink to="/financeiro/perfil">👤 Meu perfil</NavLink>
+          <NavLink to="/financeiro/afiliados">
+            <Icon name="handshake" size={17} /> Afiliados
+          </NavLink>
+          <NavLink to="/financeiro/perfil">
+            <Icon name="user" size={17} /> Meu perfil
+          </NavLink>
         </nav>
         <SidebarUser />
       </aside>

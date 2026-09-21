@@ -4,6 +4,7 @@ import { useAuth } from '@shared/hooks/useAuth';
 import { authApi } from '@shared/api/endpoints';
 import { Button } from '@shared/components/Button/Button';
 import { Input } from '@shared/components/Input/Input';
+import { Icon } from '@shared/components/Icon/Icon';
 import './StepUpGuard.css';
 
 interface StepUpGuardProps {
@@ -51,7 +52,7 @@ export function StepUpGuard({
     <div className="stepup">
       <form className="stepup__card" onSubmit={handleSubmit}>
         <span className="stepup__icon" aria-hidden>
-          🔒
+          <Icon name="lock" size={28} />
         </span>
         <h2>Confirmação necessária</h2>
         <p className="text-muted">{reason}</p>

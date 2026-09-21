@@ -54,6 +54,14 @@
   --color-gold: var(--color-lime);
   --color-gold-light: var(--color-lime-hover);
 
+  /* ===== Sidebars internas (Admin/Parceiro/Financeiro, fundo navy escuro) ===== */
+  --color-sidebar-text: rgba(255, 255, 255, 0.72);
+  --color-sidebar-text-strong: #ffffff;
+  --color-sidebar-text-soft: rgba(255, 255, 255, 0.55);
+  --color-sidebar-border: rgba(255, 255, 255, 0.08);
+  --color-sidebar-hover: rgba(31, 123, 255, 0.16);
+  --color-sidebar-label: rgba(255, 255, 255, 0.4);
+
   /* ===== Gradientes ===== */
   --brand-gradient: linear-gradient(135deg, #1f7bff 0%, #4fb8ff 100%);
   --lime-gradient: linear-gradient(135deg, #b5dc2f 0%, #93c92e 100%);

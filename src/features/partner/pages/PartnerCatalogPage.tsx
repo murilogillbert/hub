@@ -19,6 +19,7 @@ import { useAuth } from '@shared/hooks/useAuth';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { formatMoneyInput, parseMoneyInput } from '@shared/utils/masks';
 import { Product } from '@shared/types';
+import { Icon } from '@shared/components/Icon/Icon';
 import './PartnerPages.css';
 
 const EMPTY: ProductUpsert = {
@@ -161,11 +162,13 @@ export function PartnerCatalogPage() {
           </p>
         </div>
         {showcase ? (
-          <span className="badge badge-primary">👁️ Modo vitrine</span>
+          <span className="badge badge-primary">
+            <Icon name="eye" size={13} /> Modo vitrine
+          </span>
         ) : (
           <div className="row">
             <Button variant="secondary" onClick={enterShowcase}>
-              👁️ Modo vitrine
+              <Icon name="eye" size={15} /> Modo vitrine
             </Button>
             <Button onClick={openCreate}>+ Novo produto</Button>
           </div>
@@ -249,7 +252,7 @@ export function PartnerCatalogPage() {
             />
             <div className="row">
               <label className="partner-catalog__upload">
-                {uploading ? 'Enviando...' : '📷 Enviar imagem'}
+                {uploading ? 'Enviando...' : <><Icon name="camera" size={15} /> Enviar imagem</>}
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
@@ -372,7 +375,7 @@ export function PartnerCatalogPage() {
       {showcase && (
         <div className="catalog-showcase__exit">
           <Button variant="secondary" onClick={() => setExitOpen(true)}>
-            🔒 Sair do modo vitrine
+            <Icon name="lock" size={15} /> Sair do modo vitrine
           </Button>
         </div>
       )}

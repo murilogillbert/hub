@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Icon } from '@shared/components/Icon/Icon';
 import './AuthPages.css';
 
 export function RegisterChoicePage() {
@@ -10,7 +11,9 @@ export function RegisterChoicePage() {
 
         <div className="auth-choice">
           <Link to="/cadastro/cliente" className="auth-choice__card">
-            <span className="auth-choice__icon">🛍️</span>
+            <span className="auth-choice__icon">
+              <Icon name="shoppingBag" size={26} />
+            </span>
             <strong>Sou Cliente</strong>
             <small>
               Comprar produtos e vouchers com cashback nos parceiros.
@@ -18,7 +21,9 @@ export function RegisterChoicePage() {
           </Link>
 
           <Link to="/cadastro/parceiro" className="auth-choice__card">
-            <span className="auth-choice__icon">🤝</span>
+            <span className="auth-choice__icon">
+              <Icon name="handshake" size={26} />
+            </span>
             <strong>Sou Parceiro</strong>
             <small>
               Vender para a base de clientes e acompanhar métricas.
