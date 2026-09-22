@@ -42,7 +42,10 @@ export function createApp() {
     next();
   });
   app.use(cors({ origin: config.corsOrigins, credentials: false }));
-  app.use(express.json());
+  // Guarda o corpo cru junto do parseado — só o webhook da pesquisa
+  // (Formbricks/Svix) precisa dele pra verificar a assinatura HMAC, que tem
+  // que bater byte a byte com o que foi enviado (survey.routes.ts).
+  app.use(express.json({ verify: (req, _res, buf) => { (req as express.Request & { rawBody?: Buffer }).rawBody = buf; } }));
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 

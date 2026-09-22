@@ -82,7 +82,8 @@ const CATALOG: Group[] = [
       { key: 'Survey:VideoUrls', label: 'Links dos vídeos (um por linha — sorteia um a cada envio)', secret: false },
       { key: 'Survey:MessageTemplate', label: 'Mensagem do WhatsApp (use {{name}} e {{videoUrl}})', secret: false },
       { key: 'Survey:RewardAmount', label: 'Valor pago ao motorista por lead (R$)', secret: false },
-      { key: 'Survey:ExpectedWebhookId', label: 'Webhook ID esperado (Formbricks)', secret: true },
+      { key: 'Survey:WebhookSecret', label: 'Webhook Secret (whsec_...) do Formbricks', secret: true },
+      { key: 'Survey:ExpectedWebhookId', label: 'Webhook ID (fallback se não houver secret)', secret: true },
     ],
   },
 ];
