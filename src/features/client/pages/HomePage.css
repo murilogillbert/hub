@@ -392,16 +392,19 @@
   .home__audience { grid-template-columns: 1fr; padding: var(--space-5); }
   .home__partners-grid { grid-template-columns: repeat(3, 1fr); }
   .home__cta-band { grid-template-columns: 1fr; text-align: left; }
-  .home__lucro { grid-template-columns: 1fr; padding: var(--space-5); }
-  /* Fix: display:flex é obrigatório para flex-direction/wrap e flex:1 funcionarem */
-  .home__lucro-mock { display: flex; min-height: 0; flex-direction: row; flex-wrap: wrap; gap: var(--space-3); }
-  .home__lucro-mock-card { position: static; width: auto; flex: 1; min-width: 130px; }
+  /* home__lucro (grid-template-columns/areas) é ajustado mais abaixo, DEPOIS
+     da declaração base — senão a base (não-media, mas declarada depois no
+     arquivo) ganha da cascata e volta pra 2 colunas mesmo no mobile. */
+  .home__lucro { padding: var(--space-5); }
 }
 
 /* ===== Calculadora de Lucro Real (CTA na home) ===== */
 .home__lucro {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
+  grid-template-areas:
+    'copy mock'
+    'cta  mock';
   gap: var(--space-6);
   background: var(--hero-gradient);
   color: #fff;
@@ -411,6 +414,9 @@
   overflow: hidden;
   position: relative;
 }
+
+.home__lucro-copy { grid-area: copy; }
+.home__lucro-cta { grid-area: cta; }
 
 .home__lucro-copy h2 {
   font-size: clamp(1.5rem, 2.6vw, 2.1rem);
@@ -450,6 +456,7 @@
 }
 
 .home__lucro-mock {
+  grid-area: mock;
   position: relative;
   min-height: 280px;
 }
@@ -481,12 +488,21 @@
 .home__lucro-mock-card--2 small { color: var(--color-navy); }
 .home__lucro-mock-card--3 { top: 68%; left: 12%; }
 
-/* ---- Correção de cascata: os estilos base do lucro-mock estão declarados
-   APÓS o primeiro bloco @media 980px neste arquivo, então eles sobrescrevem
-   as regras mobile (position:absolute volta, min-height:280px volta, flex some).
-   Re-declaramos aqui — depois da base — para que tablet e mobile recebam o
-   layout flex correto com cards visíveis. ---- */
+/* ---- Correção de cascata: os estilos base do lucro (grid-template-areas/
+   columns) e do lucro-mock estão declarados APÓS o primeiro bloco @media
+   980px deste arquivo, então eles sobrescrevem as regras mobile (grid volta
+   a 2 colunas, position:absolute volta, min-height:280px volta, flex some).
+   Re-declaramos aqui — depois da base — pra mobile empilhar em 1 coluna, na
+   ordem texto → valores → botão (valores acima do botão, sem sobrepor nada),
+   e desktop continua com o layout de 2 colunas original. ---- */
 @media (max-width: 980px) {
+  .home__lucro {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'copy'
+      'mock'
+      'cta';
+  }
   .home__lucro-mock {
     display: flex;
     min-height: 0;

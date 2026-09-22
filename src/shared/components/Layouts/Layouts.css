@@ -429,6 +429,11 @@
   .layout-client__nav {
     display: none;
     order: 4;
+    /* A regra base (desktop) usa flex:1 (flex-basis:0%) pra esticar o nav
+       horizontal entre a logo e os botões — isso ignora width:100% aqui e
+       faz o nav "encaixar" no espaço sobrando da 1ª linha em vez de quebrar
+       pra linha de baixo. flex-basis:100% força a quebra de linha certa. */
+    flex: 1 1 100%;
     width: 100%;
     flex-direction: column;
     gap: 4px;
@@ -452,8 +457,12 @@
   .layout-client__nav a.active::after {
     display: none;
   }
+  /* order:4 (igual ao nav) pra ficar depois dos itens de menu quando o
+     drawer abre — a ordem pedida é logo+fechar, menu, depois perfil/login.
+     Como este elemento vem depois do nav no HTML, empata em order e o
+     navegador desempata pela ordem do documento (renderiza depois). */
   .layout-client__user {
-    order: 3;
+    order: 4;
   }
   /* Logado: badge de cashback + sino + cartão de conta (avatar/nome/e-mail,
      igual ao SidebarUser das áreas internas) + sair só aparecem com o

@@ -252,9 +252,6 @@ export function HomePage() {
             <li><Icon name="check" size={14} /> Lucro por km</li>
             <li><Icon name="check" size={14} /> Se o dia valeu a pena</li>
           </ul>
-          <Link to="/lucro-real-motorista">
-            <Button size="lg">Calcular meu lucro real →</Button>
-          </Link>
         </div>
         <div className="home__lucro-mock" aria-hidden="true">
           <div className="home__lucro-mock-card home__lucro-mock-card--1">
@@ -269,6 +266,11 @@ export function HomePage() {
             <small>Lucro/hora</small>
             <strong>R$ 17,85</strong>
           </div>
+        </div>
+        <div className="home__lucro-cta">
+          <Link to="/lucro-real-motorista">
+            <Button size="lg">Calcular meu lucro real →</Button>
+          </Link>
         </div>
       </section>
 
