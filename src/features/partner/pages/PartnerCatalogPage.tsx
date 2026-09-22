@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QrCode } from '@shared/components/QrCode/QrCode';
+import { QrCodeCard } from '@shared/components/QrCode/QrCodeCard';
 import { Card } from '@shared/components/Card/Card';
 import { Button } from '@shared/components/Button/Button';
 import { Input } from '@shared/components/Input/Input';
@@ -174,6 +175,24 @@ export function PartnerCatalogPage() {
           </div>
         )}
       </header>
+
+      {user?.partnerId && (
+        <Card>
+          <h3>QR code do seu estabelecimento</h3>
+          <p className="text-muted" style={{ marginTop: 'var(--space-1)' }}>
+            Cole no balcão — quem escanear cai direto no catálogo filtrado
+            pra sua loja.
+          </p>
+          <div style={{ marginTop: 'var(--space-3)' }}>
+            <QrCodeCard
+              value={`${window.location.origin}/produtos?partnerId=${user.partnerId}`}
+              label="Catálogo da loja"
+              ownerName={user.name}
+              size={160}
+            />
+          </div>
+        </Card>
+      )}
 
       {!showcase && form && (
         <Card>

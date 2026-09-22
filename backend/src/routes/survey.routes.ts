@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import { Router } from 'express';
 import { envelope } from '../dtos/common.dto.js';
 import { getSetting } from '../infra/settingsProvider.js';
-import { ROLES, requireAuth, requireRole, userId } from '../middleware/auth.js';
+import { requireAuth, requireRole, userId } from '../middleware/auth.js';
 import * as surveyLeadService from '../services/surveyLeadService.js';
 import * as surveyLinkService from '../services/surveyLinkService.js';
 
@@ -16,11 +16,12 @@ declare global {
   }
 }
 
-/** Pesquisa de opinião (link pessoal do motorista) — webhook público do
- * Formbricks + rota autenticada do motorista pra ver o próprio link/stats. */
+/** Pesquisa de opinião (link pessoal do motorista OU do parceiro — mesma
+ * mecânica pros dois papéis) — webhook público do Formbricks + rota
+ * autenticada pra ver o próprio link/stats. */
 export const surveyRouter = Router();
 
-surveyRouter.get('/me', requireAuth, requireRole(...ROLES.client), async (req, res) => {
+surveyRouter.get('/me', requireAuth, requireRole('Client', 'Partner', 'Admin'), async (req, res) => {
   res.json(envelope(await surveyLinkService.myLink(userId(req))));
 });
 

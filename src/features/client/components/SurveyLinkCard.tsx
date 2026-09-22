@@ -3,15 +3,18 @@ import { useQuery } from '@tanstack/react-query';
 import { Card } from '@shared/components/Card/Card';
 import { Button } from '@shared/components/Button/Button';
 import { StatCard } from '@shared/components/StatCard/StatCard';
-import { QrCode } from '@shared/components/QrCode/QrCode';
+import { QrCodeCard } from '@shared/components/QrCode/QrCodeCard';
 import { QueryState } from '@shared/components/QueryState/QueryState';
 import { Icon } from '@shared/components/Icon/Icon';
 import { surveyApi } from '@shared/api/endpoints';
 import { SERVER_ORIGIN } from '@shared/api/client';
+import { useAuth } from '@shared/hooks/useAuth';
 
-/** Link pessoal da pesquisa de opinião — card na tela de Perfil, separado
- * do marketplace/cashback de propósito (campanha à parte). */
+/** Link pessoal da pesquisa de opinião — card na tela de Perfil (motorista
+ * ou parceiro, mesma mecânica pros dois), separado do marketplace/cashback
+ * de propósito (campanha à parte). */
 export function SurveyLinkCard() {
+  const { user } = useAuth();
   const q = useQuery({ queryKey: ['survey-link'], queryFn: () => surveyApi.me() });
   const [copied, setCopied] = useState(false);
 
@@ -44,7 +47,12 @@ export function SurveyLinkCard() {
 
         {link && (
           <div style={{ marginTop: 'var(--space-4)' }}>
-            <QrCode value={link} size={160} />
+            <QrCodeCard
+              value={link}
+              size={160}
+              label="Pesquisa de opinião"
+              ownerName={user?.name ?? 'OpenDriverHub'}
+            />
           </div>
         )}
 

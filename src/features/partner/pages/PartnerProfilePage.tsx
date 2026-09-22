@@ -14,6 +14,9 @@ import { coordinateError, isValidDocument, maskDocument, maskCoordinate, Documen
 import { resolveImageUrl } from '@shared/api/client';
 import { affiliateApi, catalogApi, partnerApi, uploadsApi, PixKeyType } from '@shared/api/endpoints';
 import { Icon } from '@shared/components/Icon/Icon';
+import { useAuth } from '@shared/hooks/useAuth';
+import { formatCurrency } from '@shared/utils/formatters';
+import { SurveyLinkCard } from '@features/client/components/SurveyLinkCard';
 import './PartnerPages.css';
 
 const PIX_KEY_TYPES: { value: PixKeyType; label: string }[] = [
@@ -338,6 +341,7 @@ function PixKeyCard() {
 }
 
 export function PartnerProfilePage() {
+  const { user } = useAuth();
   const meQuery = useQuery({ queryKey: ['affiliate-me'], queryFn: () => affiliateApi.me() });
   const isAffiliate = meQuery.data?.kind === 'solar_affiliate';
 
@@ -355,7 +359,13 @@ export function PartnerProfilePage() {
       </header>
 
       <div className="profile">
-        <ProfileBasicsCard />
+        <ProfileBasicsCard
+          extraBadge={
+            <span className="badge badge-accent" style={{ marginTop: 8 }}>
+              Saldo (pesquisa de opinião): {formatCurrency(user?.cashbackBalance ?? 0)}
+            </span>
+          }
+        />
         <PasswordCard />
         <NotificationsCard />
         {meQuery.data && (isAffiliate ? (
@@ -366,6 +376,7 @@ export function PartnerProfilePage() {
         ) : (
           <StoreProfileCard />
         ))}
+        <SurveyLinkCard />
         <LogoutCard />
       </div>
     </div>
