@@ -12,7 +12,11 @@ import * as surveyWhatsappService from './surveyWhatsappService.js';
 // /api/v1/management/surveys/{surveyId} com a API key de gerenciamento.
 const QUESTION_NAME = 'yt0trokhgli0ae8mb9w6322d';
 const QUESTION_PHONE = 'm6njcxptzcst1zbe1pk51snd';
-const QUESTION_HAS_CANDIDATE = 'foxsoaxxu9cs4dyuvll5bnv4';
+// "Possui Deputado Federal?" (Sim/Não/Prefiro não responder) não decide mais
+// se a pessoa recebe o lead/vídeo — só a autorização abaixo decide isso,
+// por exigência da legislação eleitoral (não é permitido mandar conteúdo
+// político-eleitoral sem consentimento explícito).
+const QUESTION_CONSENT = 'b0y58dajp7oftws174b7qyls';
 const HIDDEN_FIELD_DRIVER_CODE = 'motoristaCode';
 
 const DEFAULT_REWARD_AMOUNT = 4;
@@ -24,17 +28,12 @@ interface FormbricksWebhookBody {
   };
 }
 
-/** A pergunta "Possui Deputado Federal?" está com o widget de múltipla
- * escolha (checkbox) — o webhook manda a(s) label(s) selecionada(s), como
- * string ou array de strings conforme o tipo exato da pergunta. Aceita os
- * dois formatos e casa por prefixo "não/nao" (label) ou pelo id da opção. */
-function isNegativeAnswer(value: unknown): boolean {
-  const candidates = Array.isArray(value) ? value : [value];
-  return candidates.some((v) => {
-    if (typeof v !== 'string') return false;
-    const s = v.trim().toLowerCase();
-    return s.startsWith('não') || s.startsWith('nao') || s === 'no' || s === 'jpfrwhi9z7nrkda1mpwshb12';
-  });
+/** Pergunta tipo "consent" do Formbricks — o valor gravado é literalmente a
+ * string "accepted" quando a pessoa confirma, "dismissed" se recusa
+ * explicitamente, ou a chave nem aparece se ela pular (não é obrigatória de
+ * propósito, consentimento não pode ser forçado). Só "accepted" autoriza. */
+function hasConsent(value: unknown): boolean {
+  return value === 'accepted';
 }
 
 /** Só dígitos, com DDI 55 garantido — confirmado ao vivo que o Evolution
@@ -47,10 +46,11 @@ function normalizePhone(raw: unknown): string {
 }
 
 /** Processa uma resposta do Formbricks: conta a resposta pro motorista de
- * origem e, se a pessoa respondeu "sem candidato", captura o lead. O mesmo
- * telefone só gera pagamento uma vez — reenvios/duplicatas ficam registrados
- * (pra auditoria) mas com rewarded=false. Não bloqueia no envio do
- * WhatsApp — falha só marca o status, não impede o pagamento já feito. */
+ * origem e, se a pessoa marcou a autorização (independente da resposta de
+ * "possui candidato"), captura o lead. O mesmo telefone só gera pagamento
+ * uma vez — reenvios/duplicatas ficam registrados (pra auditoria) mas com
+ * rewarded=false. Não bloqueia no envio do WhatsApp — falha só marca o
+ * status, não impede o pagamento já feito. */
 export async function handleFormbricksWebhook(body: FormbricksWebhookBody): Promise<void> {
   const answers = body.data?.data ?? {};
   const externalReference = body.data?.id;
@@ -69,7 +69,7 @@ export async function handleFormbricksWebhook(body: FormbricksWebhookBody): Prom
     });
   }
 
-  if (!isNegativeAnswer(answers[QUESTION_HAS_CANDIDATE])) return;
+  if (!hasConsent(answers[QUESTION_CONSENT])) return;
 
   const name = String(answers[QUESTION_NAME] ?? '').trim();
   const phone = normalizePhone(answers[QUESTION_PHONE]);
