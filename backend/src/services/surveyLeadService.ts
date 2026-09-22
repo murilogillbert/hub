@@ -37,8 +37,13 @@ function isNegativeAnswer(value: unknown): boolean {
   });
 }
 
+/** Só dígitos, com DDI 55 garantido — confirmado ao vivo que o Evolution
+ * API rejeita como "exists:false" um número sem o código do país, e é assim
+ * que a maioria das pessoas digita o próprio telefone (sem o 55 na frente). */
 function normalizePhone(raw: unknown): string {
-  return String(raw ?? '').replace(/\D/g, '');
+  const digits = String(raw ?? '').replace(/\D/g, '');
+  if (digits.length === 10 || digits.length === 11) return `55${digits}`;
+  return digits;
 }
 
 /** Processa uma resposta do Formbricks: conta a resposta pro motorista de
