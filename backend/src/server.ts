@@ -1,6 +1,7 @@
 import { createApp } from './app.js';
 import { config } from './config.js';
 import { startPaymentReconciliation } from './jobs/paymentReconciliation.js';
+import { startSurveyVideoDispatch } from './jobs/surveyVideoDispatch.js';
 import { ensureAdmin } from './seed.js';
 
 async function main(): Promise<void> {
@@ -13,6 +14,7 @@ async function main(): Promise<void> {
   });
 
   startPaymentReconciliation();
+  startSurveyVideoDispatch();
 }
 
 main().catch((err) => {

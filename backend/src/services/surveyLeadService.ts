@@ -100,11 +100,54 @@ export async function handleFormbricksWebhook(body: FormbricksWebhookBody): Prom
     return created;
   });
 
-  const sent = await surveyWhatsappService.sendVideoMessage(phone, name);
-  await prisma.surveyLead.update({
-    where: { id: lead.id },
-    data: { whatsappStatus: sent ? 'Sent' : 'Failed', whatsappSentAt: sent ? new Date() : null },
+  // Reenvio pro mesmo telefone (duplicata) não agenda uma série nova — a
+  // pessoa já recebeu (ou está recebendo) os 4 vídeos da primeira vez.
+  if (!alreadySeenPhone) await scheduleVideoDeliveries(lead.id);
+}
+
+/** Agenda o envio dos 4 vídeos configurados pro lead: o 1º sai quase na
+ * hora (pego pelo próximo tick do job), os seguintes espaçados 28-32min um
+ * do outro (aleatório dentro da faixa) — pedido explícito pra não levar
+ * bloqueio do WhatsApp por mandar tudo de uma vez. */
+async function scheduleVideoDeliveries(leadId: string): Promise<void> {
+  const urls = await surveyWhatsappService.shuffledVideoUrls();
+  if (urls.length === 0) return;
+
+  let scheduledAt = new Date();
+  const rows = urls.map((videoUrl, i) => {
+    if (i > 0) {
+      const minutes = 28 + Math.random() * 4; // 28–32min
+      scheduledAt = new Date(scheduledAt.getTime() + minutes * 60_000);
+    }
+    return { leadId, videoUrl, sequence: i + 1, scheduledAt };
   });
+  await prisma.surveyVideoDelivery.createMany({ data: rows });
+}
+
+/** Chamado pelo job (jobs/surveyVideoDispatch.ts) a cada tick — manda todo
+ * vídeo cujo horário já chegou e ainda não foi enviado. Atualiza também
+ * SurveyLead.whatsappStatus/whatsappSentAt (reflete a tentativa mais
+ * recente, pra dar uma visão rápida na lista do Admin). */
+export async function dispatchDueVideos(): Promise<void> {
+  const due = await prisma.surveyVideoDelivery.findMany({
+    where: { status: 'Pending', scheduledAt: { lte: new Date() } },
+    include: { lead: true },
+    take: 50,
+  });
+
+  for (const delivery of due) {
+    const sent = await surveyWhatsappService.sendOne(delivery.lead.phone, delivery.lead.name, delivery.videoUrl);
+    await prisma.$transaction([
+      prisma.surveyVideoDelivery.update({
+        where: { id: delivery.id },
+        data: { status: sent ? 'Sent' : 'Failed', sentAt: sent ? new Date() : null },
+      }),
+      prisma.surveyLead.update({
+        where: { id: delivery.leadId },
+        data: { whatsappStatus: sent ? 'Sent' : 'Failed', whatsappSentAt: sent ? new Date() : null },
+      }),
+    ]);
+  }
 }
 
 async function addSurveyReward(
@@ -137,7 +180,7 @@ export async function listLeads(page: number, pageSize: number): Promise<PagedRe
       orderBy: { createdAt: 'desc' },
       skip,
       take: pageSize,
-      include: { driver: true },
+      include: { driver: true, videoDeliveries: true },
     }),
     prisma.surveyLead.count(),
   ]);
@@ -151,6 +194,8 @@ export async function listLeads(page: number, pageSize: number): Promise<PagedRe
     rewardAmount: r.rewardAmount ? Number(r.rewardAmount) : null,
     whatsappStatus: r.whatsappStatus,
     whatsappSentAt: r.whatsappSentAt,
+    videosSent: r.videoDeliveries.filter((d) => d.status === 'Sent').length,
+    videosTotal: r.videoDeliveries.length,
     createdAt: r.createdAt,
   }));
   return toPage(items, total, page, pageSize);

@@ -19,26 +19,29 @@ export async function disconnect(): Promise<void> {
   await evolutionApi.disconnectInstance(INSTANCE_NAME);
 }
 
-/** Sorteia um dos vídeos configurados (um por linha em Survey:VideoUrls) —
- * distribui o engajamento entre os vários em vez de mandar sempre o mesmo. */
-async function pickVideoUrl(): Promise<string | null> {
+/** Os vídeos configurados (um por linha em Survey:VideoUrls), embaralhados —
+ * cada lead recebe os 4 em uma ordem diferente. Os 4 têm que chegar, só
+ * espaçados (ver surveyLeadService.scheduleVideoDeliveries); não sorteia
+ * só 1 mais. */
+export async function shuffledVideoUrls(): Promise<string[]> {
   const raw = await getSetting('Survey:VideoUrls');
-  if (!raw) return null;
+  if (!raw) return [];
   const urls = raw
     .split(/\r?\n|,/)
     .map((u) => u.trim())
     .filter(Boolean);
-  if (urls.length === 0) return null;
-  return urls[Math.floor(Math.random() * urls.length)];
+  for (let i = urls.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [urls[i], urls[j]] = [urls[j], urls[i]];
+  }
+  return urls;
 }
 
 /** Monta a mensagem a partir do template configurável (Admin → Integrações
- * → Pesquisa de opinião) e manda pro telefone do lead. Não lança — quem
- * chama decide o que fazer com o retorno (surveyLeadService marca o status). */
-export async function sendVideoMessage(phone: string, name: string): Promise<boolean> {
-  const videoUrl = await pickVideoUrl();
-  if (!videoUrl) return false;
-
+ * → Pesquisa de opinião) e manda 1 vídeo específico pro telefone do lead.
+ * Não lança — quem chama decide o que fazer com o retorno (o job de
+ * despacho marca o status da entrega). */
+export async function sendOne(phone: string, name: string, videoUrl: string): Promise<boolean> {
   const template =
     (await getSetting('Survey:MessageTemplate')) ??
     'Olá, {{name}}! Aqui está o vídeo que preparamos pra você: {{videoUrl}}';

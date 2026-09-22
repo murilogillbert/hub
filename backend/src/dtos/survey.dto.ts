@@ -17,6 +17,8 @@ export interface SurveyLeadDto {
   rewardAmount: number | null;
   whatsappStatus: string;
   whatsappSentAt: Date | null;
+  videosSent: number;
+  videosTotal: number;
   createdAt: Date;
 }
 

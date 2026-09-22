@@ -713,6 +713,8 @@ export interface SurveyLead {
   rewardAmount: number | null;
   whatsappStatus: string;
   whatsappSentAt: string | null;
+  videosSent: number;
+  videosTotal: number;
   createdAt: string;
 }
 export interface SurveySummary {

@@ -35,7 +35,7 @@ export function AdminSurveyPage() {
     try {
       const all = await adminApi.surveyLeads({ page: 1, pageSize: 5000 });
       const rows = [
-        ['Nome', 'Telefone', 'Motorista', 'Pago', 'Valor (R$)', 'WhatsApp', 'Data'].map(csvCell).join(','),
+        ['Nome', 'Telefone', 'Motorista', 'Pago', 'Valor (R$)', 'Vídeos enviados', 'Data'].map(csvCell).join(','),
         ...all.items.map((lead: SurveyLead) =>
           [
             csvCell(lead.name),
@@ -43,7 +43,7 @@ export function AdminSurveyPage() {
             csvCell(lead.driverName ?? ''),
             csvCell(lead.rewarded ? 'Sim' : 'Não'),
             csvCell(lead.rewardAmount ? lead.rewardAmount.toFixed(2) : ''),
-            csvCell(lead.whatsappStatus),
+            csvCell(`${lead.videosSent}/${lead.videosTotal}`),
             csvCell(formatDateTime(lead.createdAt)),
           ].join(','),
         ),
@@ -63,8 +63,9 @@ export function AdminSurveyPage() {
           <h2>Pesquisa de opinião</h2>
           <p className="text-muted">
             Link pessoal do motorista → Formbricks. Quem responde "sem
-            candidato" recebe o vídeo automaticamente pelo WhatsApp central
-            abaixo, e o motorista que indicou recebe o valor configurado.
+            candidato" recebe os 4 vídeos automaticamente pelo WhatsApp
+            central abaixo (espaçados ~30min entre si), e o motorista que
+            indicou recebe o valor configurado.
           </p>
         </div>
         <Button variant="secondary" onClick={exportCsv} disabled={exporting}>
@@ -121,7 +122,7 @@ export function AdminSurveyPage() {
                 <th>Telefone</th>
                 <th>Motorista de origem</th>
                 <th>Pago</th>
-                <th>WhatsApp</th>
+                <th>Vídeos</th>
                 <th>Data</th>
               </tr>
             </thead>
@@ -145,18 +146,16 @@ export function AdminSurveyPage() {
                   <td>
                     <span
                       className={`badge ${
-                        lead.whatsappStatus === 'Sent'
-                          ? 'badge-accent'
-                          : lead.whatsappStatus === 'Failed'
-                            ? 'badge-danger'
-                            : 'badge-warning'
+                        lead.videosTotal === 0
+                          ? ''
+                          : lead.videosSent === lead.videosTotal
+                            ? 'badge-accent'
+                            : lead.whatsappStatus === 'Failed'
+                              ? 'badge-danger'
+                              : 'badge-warning'
                       }`}
                     >
-                      {lead.whatsappStatus === 'Sent'
-                        ? 'Enviado'
-                        : lead.whatsappStatus === 'Failed'
-                          ? 'Falhou'
-                          : 'Pendente'}
+                      {lead.videosTotal === 0 ? '—' : `${lead.videosSent}/${lead.videosTotal}`}
                     </span>
                   </td>
                   <td>{formatDateTime(lead.createdAt)}</td>
