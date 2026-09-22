@@ -546,6 +546,7 @@ export const adminApi = {
   revokeServiceApiKey: (id: string) => api.del<void>(`/admin/service-api-keys/${id}`),
 
   // ---- Pesquisa de opinião ----
+  surveySummary: () => api.get<SurveySummary>('/admin/survey/summary'),
   surveyLeads: (params?: { page?: number; pageSize?: number }) => {
     const qs = new URLSearchParams();
     qs.set('page', String(params?.page ?? 1));
@@ -708,9 +709,17 @@ export interface SurveyLead {
   driverName: string | null;
   name: string;
   phone: string;
+  rewarded: boolean;
+  rewardAmount: number | null;
   whatsappStatus: string;
   whatsappSentAt: string | null;
   createdAt: string;
+}
+export interface SurveySummary {
+  totalLeads: number;
+  rewardedLeads: number;
+  totalPaid: number;
+  topDrivers: { driverId: string; driverName: string; leads: number; paid: number }[];
 }
 
 /** Área do motorista (Client) — link pessoal da pesquisa de opinião. */

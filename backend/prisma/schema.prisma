@@ -181,12 +181,21 @@ model SurveyLead {
   /// Id da resposta no Formbricks — evita duplicar o lead se o webhook repetir.
   externalReference String               @unique @map("external_reference")
   name              String
+  /// Telefone normalizado (só dígitos) — é a chave de deduplicação: o mesmo
+  /// telefone só paga o motorista uma vez, mesmo que o nome venha diferente.
   phone             String
+  /// true só na primeira vez que esse telefone aparece — é o que decide se
+  /// esse envio específico gerou o pagamento (ver rewardAmount).
+  rewarded          Boolean              @default(false)
+  /// Valor efetivamente pago nesse lead (congelado no momento do pagamento —
+  /// se Survey:RewardAmount mudar depois, os registros antigos não mudam).
+  rewardAmount      Decimal?             @db.Decimal(12, 2) @map("reward_amount")
   whatsappStatus    SurveyWhatsappStatus @default(Pending) @map("whatsapp_status")
   whatsappSentAt    DateTime?            @map("whatsapp_sent_at")
   createdAt         DateTime             @default(now()) @map("created_at")
 
   @@index([driverId, createdAt])
+  @@index([phone])
   @@map("survey_leads")
 }
 

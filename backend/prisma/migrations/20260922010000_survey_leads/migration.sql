@@ -14,6 +14,8 @@ CREATE TABLE "survey_leads" (
     "external_reference" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
+    "rewarded" BOOLEAN NOT NULL DEFAULT false,
+    "reward_amount" DECIMAL(12,2),
     "whatsapp_status" "SurveyWhatsappStatus" NOT NULL DEFAULT 'Pending',
     "whatsapp_sent_at" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -29,6 +31,9 @@ CREATE UNIQUE INDEX "survey_leads_external_reference_key" ON "survey_leads"("ext
 
 -- CreateIndex
 CREATE INDEX "survey_leads_driver_id_created_at_idx" ON "survey_leads"("driver_id", "created_at");
+
+-- CreateIndex
+CREATE INDEX "survey_leads_phone_idx" ON "survey_leads"("phone");
 
 -- AddForeignKey
 ALTER TABLE "survey_leads" ADD CONSTRAINT "survey_leads_driver_id_fkey" FOREIGN KEY ("driver_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;

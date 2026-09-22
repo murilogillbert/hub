@@ -75,12 +75,13 @@ const CATALOG: Group[] = [
     id: 'survey',
     name: 'Pesquisa de opinião',
     description:
-      'Link pessoal do motorista → Formbricks. Quem responde "sem candidato" recebe o vídeo por WhatsApp automaticamente.',
+      'Link pessoal do motorista → Formbricks. Quem responde "sem candidato" recebe um vídeo por WhatsApp e gera pagamento pro motorista.',
     icon: '📋',
     fields: [
       { key: 'Survey:FormUrl', label: 'URL da survey (Formbricks)', secret: false },
-      { key: 'Survey:VideoUrl', label: 'Link do vídeo (YouTube)', secret: false },
-      { key: 'Survey:MessageTemplate', label: 'Mensagem do WhatsApp (use {{videoUrl}})', secret: false },
+      { key: 'Survey:VideoUrls', label: 'Links dos vídeos (um por linha — sorteia um a cada envio)', secret: false },
+      { key: 'Survey:MessageTemplate', label: 'Mensagem do WhatsApp (use {{name}} e {{videoUrl}})', secret: false },
+      { key: 'Survey:RewardAmount', label: 'Valor pago ao motorista por lead (R$)', secret: false },
       { key: 'Survey:ExpectedWebhookId', label: 'Webhook ID esperado (Formbricks)', secret: true },
     ],
   },

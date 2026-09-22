@@ -2,22 +2,59 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@shared/components/Card/Card';
 import { Button } from '@shared/components/Button/Button';
+import { StatCard } from '@shared/components/StatCard/StatCard';
 import { QueryState } from '@shared/components/QueryState/QueryState';
 import { useToast } from '@shared/components/Toaster/ToastContext';
-import { formatDateTime } from '@shared/utils/formatters';
-import { adminApi } from '@shared/api/endpoints';
+import { formatDateTime, formatCurrency } from '@shared/utils/formatters';
+import { adminApi, SurveyLead } from '@shared/api/endpoints';
+import { downloadTextFile, buildCsv, csvCell } from '@shared/utils/exportReport';
 import './AdminPages.css';
 
 /** Pesquisa de opinião: pareamento do WhatsApp central (um só número, não é
- * por motorista) + lista de leads capturados (quem respondeu "sem
- * candidato" e deixou nome/telefone). */
+ * por motorista) + métricas + lista de leads capturados (quem respondeu
+ * "sem candidato" e deixou nome/telefone — cada telefone inédito paga o
+ * motorista automaticamente, ver Survey:RewardAmount em Integrações). */
 export function AdminSurveyPage() {
   const [page, setPage] = useState(1);
+  const [exporting, setExporting] = useState(false);
+  const toast = useToast();
+
+  const summaryQuery = useQuery({
+    queryKey: ['admin-survey-summary'],
+    queryFn: () => adminApi.surveySummary(),
+  });
   const q = useQuery({
     queryKey: ['admin-survey-leads', page],
     queryFn: () => adminApi.surveyLeads({ page, pageSize: 20 }),
   });
   const items = q.data?.items ?? [];
+  const s = summaryQuery.data;
+
+  const exportCsv = async () => {
+    setExporting(true);
+    try {
+      const all = await adminApi.surveyLeads({ page: 1, pageSize: 5000 });
+      const rows = [
+        ['Nome', 'Telefone', 'Motorista', 'Pago', 'Valor (R$)', 'WhatsApp', 'Data'].map(csvCell).join(','),
+        ...all.items.map((lead: SurveyLead) =>
+          [
+            csvCell(lead.name),
+            csvCell(lead.phone),
+            csvCell(lead.driverName ?? ''),
+            csvCell(lead.rewarded ? 'Sim' : 'Não'),
+            csvCell(lead.rewardAmount ? lead.rewardAmount.toFixed(2) : ''),
+            csvCell(lead.whatsappStatus),
+            csvCell(formatDateTime(lead.createdAt)),
+          ].join(','),
+        ),
+      ];
+      downloadTextFile('pesquisa-leads.csv', buildCsv(rows), 'text/csv;charset=utf-8');
+    } catch {
+      toast.error('Falha ao exportar CSV.');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <div className="admin-page">
@@ -27,10 +64,45 @@ export function AdminSurveyPage() {
           <p className="text-muted">
             Link pessoal do motorista → Formbricks. Quem responde "sem
             candidato" recebe o vídeo automaticamente pelo WhatsApp central
-            abaixo.
+            abaixo, e o motorista que indicou recebe o valor configurado.
           </p>
         </div>
+        <Button variant="secondary" onClick={exportCsv} disabled={exporting}>
+          {exporting ? 'Exportando...' : 'Exportar CSV'}
+        </Button>
       </header>
+
+      {s && (
+        <div className="partner-page__stats">
+          <StatCard label="Total de respostas" value={String(s.totalLeads)} />
+          <StatCard label="Contatos pagos" value={String(s.rewardedLeads)} />
+          <StatCard label="Total pago" value={formatCurrency(s.totalPaid)} />
+        </div>
+      )}
+
+      {s && s.topDrivers.length > 0 && (
+        <Card>
+          <h3>Ranking por motorista</h3>
+          <table className="history__table" style={{ marginTop: 'var(--space-3)' }}>
+            <thead>
+              <tr>
+                <th>Motorista</th>
+                <th>Contatos pagos</th>
+                <th>Total recebido</th>
+              </tr>
+            </thead>
+            <tbody>
+              {s.topDrivers.map((d) => (
+                <tr key={d.driverId}>
+                  <td>{d.driverName}</td>
+                  <td>{d.leads}</td>
+                  <td>{formatCurrency(d.paid)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      )}
 
       <SurveyWhatsappCard />
 
@@ -48,6 +120,7 @@ export function AdminSurveyPage() {
                 <th>Nome</th>
                 <th>Telefone</th>
                 <th>Motorista de origem</th>
+                <th>Pago</th>
                 <th>WhatsApp</th>
                 <th>Data</th>
               </tr>
@@ -60,6 +133,15 @@ export function AdminSurveyPage() {
                   </td>
                   <td>{lead.phone}</td>
                   <td>{lead.driverName ?? '—'}</td>
+                  <td>
+                    {lead.rewarded ? (
+                      <span className="badge badge-accent">{formatCurrency(lead.rewardAmount ?? 0)}</span>
+                    ) : !lead.driverId ? (
+                      <span className="badge">Sem motorista</span>
+                    ) : (
+                      <span className="badge">Duplicado</span>
+                    )}
+                  </td>
                   <td>
                     <span
                       className={`badge ${

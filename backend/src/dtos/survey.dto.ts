@@ -13,6 +13,8 @@ export interface SurveyLeadDto {
   driverName: string | null;
   name: string;
   phone: string;
+  rewarded: boolean;
+  rewardAmount: number | null;
   whatsappStatus: string;
   whatsappSentAt: Date | null;
   createdAt: Date;

@@ -173,6 +173,9 @@ adminRouter.delete('/service-api-keys/:id', ...guard, async (req, res) => {
 });
 
 // ---------- Pesquisa de opinião (link pessoal do motorista) ----------
+adminRouter.get('/survey/summary', ...guard, async (_req, res) => {
+  res.json(envelope(await surveyLeadService.summary()));
+});
 adminRouter.get('/survey/leads', ...guard, async (req, res) => {
   const q = req.query as Record<string, string | undefined>;
   res.json(envelope(await surveyLeadService.listLeads(q.page ? Number(q.page) : 1, q.pageSize ? Number(q.pageSize) : 20)));
