@@ -1,4 +1,5 @@
 import { ReactNode, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@shared/components/Card/Card';
 import { Input } from '@shared/components/Input/Input';
 import { Button } from '@shared/components/Button/Button';
@@ -237,6 +238,33 @@ export function NotificationsCard() {
           <Button onClick={saveNotifications}>Salvar preferências</Button>
           {savedMsg && <span className="badge badge-accent">{savedMsg}</span>}
         </div>
+      </div>
+    </Card>
+  );
+}
+
+/** Botão de sair no fim da tela de Perfil — as áreas internas (Admin/
+ * Parceiro/Financeiro) não tinham nenhum jeito de sair da conta pela UI
+ * (só o header público do Cliente tinha). */
+export function LogoutCard() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  return (
+    <Card>
+      <h3>Sessão</h3>
+      <p className="text-muted" style={{ marginTop: 'var(--space-1)' }}>
+        Encerrar sua sessão neste dispositivo.
+      </p>
+      <div style={{ marginTop: 'var(--space-3)' }}>
+        <Button variant="secondary" onClick={handleLogout}>
+          <Icon name="logOut" size={16} /> Sair da conta
+        </Button>
       </div>
     </Card>
   );

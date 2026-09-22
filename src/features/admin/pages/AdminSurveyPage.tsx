@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@shared/components/Card/Card';
 import { Button } from '@shared/components/Button/Button';
 import { StatCard } from '@shared/components/StatCard/StatCard';
+import { BarChart } from '@shared/components/BarChart/BarChart';
+import { MetricList } from '@shared/components/MetricList/MetricList';
 import { QueryState } from '@shared/components/QueryState/QueryState';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { formatDateTime, formatCurrency } from '@shared/utils/formatters';
@@ -74,10 +76,25 @@ export function AdminSurveyPage() {
       </header>
 
       {s && (
-        <div className="partner-page__stats">
-          <StatCard label="Total de respostas" value={String(s.totalLeads)} />
-          <StatCard label="Contatos pagos" value={String(s.rewardedLeads)} />
+        <div className="admin-page__stats">
+          <StatCard label="Visitas ao link" value={String(s.funnel.views)} hint="cliques no link pessoal" />
+          <StatCard label="Respostas" value={String(s.funnel.responses)} hint="total, sim + não" />
+          <StatCard label="Leads capturados" value={String(s.totalLeads)} hint='responderam "sem candidato"' />
+          <StatCard label="Contatos pagos" value={String(s.rewardedLeads)} hint="telefones únicos" />
           <StatCard label="Total pago" value={formatCurrency(s.totalPaid)} />
+        </div>
+      )}
+
+      {s && (
+        <div className="admin-page__charts">
+          <Card>
+            <h3>Leads capturados por dia (14 dias)</h3>
+            <BarChart data={s.leadsByDay} accent="var(--color-primary)" />
+          </Card>
+          <Card>
+            <h3>Status dos vídeos agendados</h3>
+            <MetricList items={s.videoStatusBreakdown} accent="var(--color-info)" />
+          </Card>
         </div>
       )}
 

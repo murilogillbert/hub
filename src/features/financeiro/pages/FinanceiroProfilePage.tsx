@@ -1,4 +1,5 @@
 import {
+  LogoutCard,
   NotificationsCard,
   PasswordCard,
   ProfileBasicsCard,
@@ -19,6 +20,7 @@ export function FinanceiroProfilePage() {
         <ProfileBasicsCard />
         <PasswordCard />
         <NotificationsCard />
+        <LogoutCard />
       </div>
     </div>
   );

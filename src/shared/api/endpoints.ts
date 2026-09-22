@@ -722,6 +722,9 @@ export interface SurveySummary {
   rewardedLeads: number;
   totalPaid: number;
   topDrivers: { driverId: string; driverName: string; leads: number; paid: number }[];
+  leadsByDay: SeriesPoint[];
+  videoStatusBreakdown: NamedValue[];
+  funnel: { views: number; responses: number; leads: number; rewarded: number };
 }
 
 /** Área do motorista (Client) — link pessoal da pesquisa de opinião. */

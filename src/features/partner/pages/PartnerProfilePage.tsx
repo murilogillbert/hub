@@ -5,6 +5,7 @@ import { Input } from '@shared/components/Input/Input';
 import { Button } from '@shared/components/Button/Button';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import {
+  LogoutCard,
   NotificationsCard,
   PasswordCard,
   ProfileBasicsCard,
@@ -365,6 +366,7 @@ export function PartnerProfilePage() {
         ) : (
           <StoreProfileCard />
         ))}
+        <LogoutCard />
       </div>
     </div>
   );

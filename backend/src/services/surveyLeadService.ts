@@ -1,5 +1,5 @@
 import type { Prisma } from '@prisma/client';
-import { toPage, type PagedResult } from '../dtos/common.dto.js';
+import { toPage, type NamedValue, type PagedResult, type SeriesPoint } from '../dtos/common.dto.js';
 import type { SurveyLeadDto } from '../dtos/survey.dto.js';
 import { getSetting } from '../infra/settingsProvider.js';
 import { prisma } from '../infra/prisma.js';
@@ -206,10 +206,27 @@ export interface SurveySummary {
   rewardedLeads: number;
   totalPaid: number;
   topDrivers: { driverId: string; driverName: string; leads: number; paid: number }[];
+  leadsByDay: SeriesPoint[];
+  videoStatusBreakdown: NamedValue[];
+  funnel: { views: number; responses: number; leads: number; rewarded: number };
 }
 
+const DAYS_IN_CHART = 14;
+
 export async function summary(): Promise<SurveySummary> {
-  const [totalLeads, rewardedLeads, paidAgg, grouped] = await Promise.all([
+  const since = new Date();
+  since.setDate(since.getDate() - (DAYS_IN_CHART - 1));
+  since.setHours(0, 0, 0, 0);
+
+  const [
+    totalLeads,
+    rewardedLeads,
+    paidAgg,
+    grouped,
+    recentLeads,
+    videoStatusGroups,
+    viewsResponsesAgg,
+  ] = await Promise.all([
     prisma.surveyLead.count(),
     prisma.surveyLead.count({ where: { rewarded: true } }),
     prisma.surveyLead.aggregate({ where: { rewarded: true }, _sum: { rewardAmount: true } }),
@@ -221,6 +238,9 @@ export async function summary(): Promise<SurveySummary> {
       orderBy: { _count: { driverId: 'desc' } },
       take: 10,
     }),
+    prisma.surveyLead.findMany({ where: { createdAt: { gte: since } }, select: { createdAt: true } }),
+    prisma.surveyVideoDelivery.groupBy({ by: ['status'], _count: { _all: true } }),
+    prisma.user.aggregate({ _sum: { surveyLinkViews: true, surveyLinkResponses: true } }),
   ]);
 
   const driverIds = grouped.map((g) => g.driverId).filter((id): id is string => !!id);
@@ -228,6 +248,30 @@ export async function summary(): Promise<SurveySummary> {
     ? await prisma.user.findMany({ where: { id: { in: driverIds } } })
     : [];
   const nameById = new Map(drivers.map((d) => [d.id, d.name]));
+
+  // Preenche os 14 dias mesmo sem lead (barra zerada), pra não distorcer o
+  // gráfico — mesmo espírito do byMonth em adminService.ts, só que por dia.
+  const byDay = new Map<string, number>();
+  for (let i = 0; i < DAYS_IN_CHART; i++) {
+    const d = new Date(since);
+    d.setDate(d.getDate() + i);
+    byDay.set(d.toISOString().slice(0, 10), 0);
+  }
+  for (const lead of recentLeads) {
+    const key = lead.createdAt.toISOString().slice(0, 10);
+    byDay.set(key, (byDay.get(key) ?? 0) + 1);
+  }
+  const leadsByDay: SeriesPoint[] = [...byDay.entries()].map(([key, value]) => ({
+    label: new Date(`${key}T00:00:00Z`).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' }),
+    value,
+  }));
+
+  const statusLabel: Record<string, string> = { Sent: 'Enviados', Pending: 'Pendentes', Failed: 'Falharam' };
+  const videoStatusBreakdown: NamedValue[] = videoStatusGroups.map((g) => ({
+    name: statusLabel[g.status] ?? g.status,
+    value: g._count._all,
+    count: g._count._all,
+  }));
 
   return {
     totalLeads,
@@ -239,5 +283,13 @@ export async function summary(): Promise<SurveySummary> {
       leads: g._count._all,
       paid: Number(g._sum.rewardAmount ?? 0),
     })),
+    leadsByDay,
+    videoStatusBreakdown,
+    funnel: {
+      views: viewsResponsesAgg._sum.surveyLinkViews ?? 0,
+      responses: viewsResponsesAgg._sum.surveyLinkResponses ?? 0,
+      leads: totalLeads,
+      rewarded: rewardedLeads,
+    },
   };
 }
