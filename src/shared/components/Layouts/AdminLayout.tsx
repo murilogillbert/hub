@@ -60,6 +60,11 @@ export function AdminLayout() {
             <Icon name="key" size={17} /> Chaves de API
           </NavLink>
 
+          <span className="layout-internal__nav-label">Pesquisa</span>
+          <NavLink to="/admin/pesquisa">
+            <Icon name="clipboard" size={17} /> Pesquisa de opinião
+          </NavLink>
+
           <span className="layout-internal__nav-label">Sistema</span>
           <NavLink to="/admin/usuarios">
             <Icon name="users" size={17} /> Usuários

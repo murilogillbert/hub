@@ -16,6 +16,8 @@ import * as categorySuggestionService from '../services/categorySuggestionServic
 import * as serviceApiKeyService from '../services/serviceApiKeyService.js';
 import * as settingsService from '../services/settingsService.js';
 import * as storeService from '../services/storeService.js';
+import * as surveyLeadService from '../services/surveyLeadService.js';
+import * as surveyWhatsappService from '../services/surveyWhatsappService.js';
 
 export const adminRouter = Router();
 const guard = [requireAuth, requireRole(...ROLES.admin)] as const;
@@ -167,6 +169,22 @@ adminRouter.post('/service-api-keys', ...guard, validateBody(createApiKeySchema)
 });
 adminRouter.delete('/service-api-keys/:id', ...guard, async (req, res) => {
   await serviceApiKeyService.revoke(req.params.id as string);
+  res.status(204).send();
+});
+
+// ---------- Pesquisa de opinião (link pessoal do motorista) ----------
+adminRouter.get('/survey/leads', ...guard, async (req, res) => {
+  const q = req.query as Record<string, string | undefined>;
+  res.json(envelope(await surveyLeadService.listLeads(q.page ? Number(q.page) : 1, q.pageSize ? Number(q.pageSize) : 20)));
+});
+adminRouter.post('/survey/whatsapp', ...guard, async (_req, res) => {
+  res.json(envelope(await surveyWhatsappService.connect()));
+});
+adminRouter.get('/survey/whatsapp', ...guard, async (_req, res) => {
+  res.json(envelope(await surveyWhatsappService.status()));
+});
+adminRouter.delete('/survey/whatsapp', ...guard, async (_req, res) => {
+  await surveyWhatsappService.disconnect();
   res.status(204).send();
 });
 

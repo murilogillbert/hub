@@ -114,6 +114,12 @@ enum CashbackEntryType {
   Used
 }
 
+enum SurveyWhatsappStatus {
+  Pending
+  Sent
+  Failed
+}
+
 model User {
   id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name            String    @db.VarChar(160)
@@ -136,6 +142,15 @@ model User {
   reviews         Review[]
   authTokens      AuthToken[]
 
+  /// Link pessoal de pesquisa de opinião (motorista comum, não-afiliado) —
+  /// mesmo papel do Partner.referralCode, mas por usuário Client. Gerado
+  /// lazily no primeiro acesso (ver surveyLinkService.ts).
+  surveyCode          String? @unique @map("survey_code")
+  surveyLinkViews     Int     @default(0) @map("survey_link_views")
+  surveyLinkResponses Int     @default(0) @map("survey_link_responses")
+  surveyLinkLeads     Int     @default(0) @map("survey_link_leads")
+  surveyLeads         SurveyLead[]
+
   @@map("users")
 }
 
@@ -154,6 +169,25 @@ model AuthToken {
 
   @@index([userId, purpose])
   @@map("auth_tokens")
+}
+
+/// Lead capturado na pesquisa de opinião (survey pessoal do motorista,
+/// independente do programa de afiliados solar) — quem respondeu "não tenho
+/// candidato" e deixou nome/telefone pra receber o vídeo pelo WhatsApp.
+model SurveyLead {
+  id                String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  driverId          String?              @map("driver_id") @db.Uuid
+  driver            User?                @relation(fields: [driverId], references: [id])
+  /// Id da resposta no Formbricks — evita duplicar o lead se o webhook repetir.
+  externalReference String               @unique @map("external_reference")
+  name              String
+  phone             String
+  whatsappStatus    SurveyWhatsappStatus @default(Pending) @map("whatsapp_status")
+  whatsappSentAt    DateTime?            @map("whatsapp_sent_at")
+  createdAt         DateTime             @default(now()) @map("created_at")
+
+  @@index([driverId, createdAt])
+  @@map("survey_leads")
 }
 
 model Partner {

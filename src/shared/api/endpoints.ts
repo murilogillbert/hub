@@ -544,6 +544,17 @@ export const adminApi = {
   createServiceApiKey: (body: { label: string; scopes: string[] }) =>
     api.post<ServiceApiKey & { key: string }>('/admin/service-api-keys', body),
   revokeServiceApiKey: (id: string) => api.del<void>(`/admin/service-api-keys/${id}`),
+
+  // ---- Pesquisa de opinião ----
+  surveyLeads: (params?: { page?: number; pageSize?: number }) => {
+    const qs = new URLSearchParams();
+    qs.set('page', String(params?.page ?? 1));
+    qs.set('pageSize', String(params?.pageSize ?? 20));
+    return api.get<PagedResult<SurveyLead>>(`/admin/survey/leads?${qs.toString()}`);
+  },
+  connectSurveyWhatsapp: () => api.post<WhatsAppConnect>('/admin/survey/whatsapp'),
+  surveyWhatsappStatus: () => api.get<WhatsAppStatus>('/admin/survey/whatsapp'),
+  disconnectSurveyWhatsapp: () => api.del('/admin/survey/whatsapp'),
 };
 
 export interface IntegrationField {
@@ -683,6 +694,29 @@ export interface WhatsAppConnect {
 export interface WhatsAppStatus {
   status: 'connected' | 'connecting' | 'disconnected';
 }
+
+// ---------- Pesquisa de opinião (link pessoal do motorista) ----------
+export interface SurveyLink {
+  code: string;
+  views: number;
+  responses: number;
+  leads: number;
+}
+export interface SurveyLead {
+  id: string;
+  driverId: string | null;
+  driverName: string | null;
+  name: string;
+  phone: string;
+  whatsappStatus: string;
+  whatsappSentAt: string | null;
+  createdAt: string;
+}
+
+/** Área do motorista (Client) — link pessoal da pesquisa de opinião. */
+export const surveyApi = {
+  me: () => api.get<SurveyLink>('/survey/me'),
+};
 
 /** Landing "quero ser afiliado" — sem login. */
 export const affiliateApplicationApi = {

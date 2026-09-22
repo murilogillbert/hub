@@ -74,3 +74,16 @@ export async function disconnectInstance(instanceName: string): Promise<void> {
   const { baseUrl, headers } = baseUrlAndHeaders();
   await fetch(`${baseUrl}/instance/logout/${instanceName}`, { method: 'DELETE', headers });
 }
+
+/** Manda uma mensagem de texto simples. Sem pareamento prévio anterior no
+ * repo pra essa chamada — validar contra a instância real (`/message/
+ * sendText/{instance}`) antes de confiar cegamente no formato do corpo. */
+export async function sendTextMessage(instanceName: string, phone: string, text: string): Promise<void> {
+  const { baseUrl, headers } = baseUrlAndHeaders();
+  const res = await fetch(`${baseUrl}/message/sendText/${instanceName}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ number: phone, text }),
+  });
+  if (!res.ok) throw new AppError('Falha ao enviar mensagem pelo Evolution API.', 500);
+}

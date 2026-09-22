@@ -71,6 +71,19 @@ const CATALOG: Group[] = [
       { key: 'Groq:Model', label: 'Modelo', secret: false },
     ],
   },
+  {
+    id: 'survey',
+    name: 'Pesquisa de opinião',
+    description:
+      'Link pessoal do motorista → Formbricks. Quem responde "sem candidato" recebe o vídeo por WhatsApp automaticamente.',
+    icon: '📋',
+    fields: [
+      { key: 'Survey:FormUrl', label: 'URL da survey (Formbricks)', secret: false },
+      { key: 'Survey:VideoUrl', label: 'Link do vídeo (YouTube)', secret: false },
+      { key: 'Survey:MessageTemplate', label: 'Mensagem do WhatsApp (use {{videoUrl}})', secret: false },
+      { key: 'Survey:ExpectedWebhookId', label: 'Webhook ID esperado (Formbricks)', secret: true },
+    ],
+  },
 ];
 
 const ALLOWED_KEYS = new Set(CATALOG.flatMap((g) => g.fields.map((f) => f.key)));

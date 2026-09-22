@@ -14,6 +14,7 @@ import { meRouter } from './routes/me.routes.js';
 import { partnerRouter } from './routes/partner.routes.js';
 import { redirectRouter } from './routes/redirect.routes.js';
 import { serviceRouter } from './routes/service.routes.js';
+import { surveyRouter } from './routes/survey.routes.js';
 import { uploadsRouter } from './routes/uploads.routes.js';
 import { webhookRouter } from './routes/webhook.routes.js';
 
@@ -59,6 +60,7 @@ export function createApp() {
   app.use('/api/v1/admin', adminRouter);
   app.use('/api/v1/financeiro', financeiroRouter);
   app.use('/api/v1/service', serviceRouter);
+  app.use('/api/v1/survey', surveyRouter);
   app.use('/api/v1/payments/webhook', webhookRouter);
   app.use('/api/v1/uploads', uploadsRouter);
 

@@ -51,6 +51,7 @@ import { AdminAffiliateApplicationsPage } from '@features/admin/pages/AdminAffil
 import { AdminCampaignMaterialsPage } from '@features/admin/pages/AdminCampaignMaterialsPage';
 import { AdminApiKeysPage } from '@features/admin/pages/AdminApiKeysPage';
 import { AdminProfilePage } from '@features/admin/pages/AdminProfilePage';
+import { AdminSurveyPage } from '@features/admin/pages/AdminSurveyPage';
 
 import { FinanceiroWithdrawalsPage } from '@features/financeiro/pages/FinanceiroWithdrawalsPage';
 import { FinanceiroAffiliatesPage } from '@features/financeiro/pages/FinanceiroAffiliatesPage';
@@ -166,6 +167,7 @@ export function AppRoutes() {
           <Route path="afiliados/solicitacoes" element={<AdminAffiliateApplicationsPage />} />
           <Route path="afiliados/materiais" element={<AdminCampaignMaterialsPage />} />
           <Route path="afiliados/chaves-api" element={<AdminApiKeysPage />} />
+          <Route path="pesquisa" element={<AdminSurveyPage />} />
           <Route path="perfil" element={<AdminProfilePage />} />
         </Route>
       </Route>
