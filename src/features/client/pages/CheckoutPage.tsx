@@ -80,6 +80,7 @@ export function CheckoutPage() {
 
   const [method, setMethod] = useState<Method>('pix');
   const [useCashbackOpt, setUseCashbackOpt] = useState(false);
+  const [affiliateCode, setAffiliateCode] = useState('');
   const [card, setCard] = useState({
     number: '',
     holder: '',
@@ -183,6 +184,7 @@ export function CheckoutPage() {
       const order = await ordersApi.create(
         lines.map((l) => ({ productId: l.productId, quantity: l.quantity })),
         useCashbackOpt,
+        affiliateCode,
       );
       orderIdRef.current = order.id;
 
@@ -423,6 +425,15 @@ export function CheckoutPage() {
               pagamento
             </span>
           </label>
+        )}
+
+        {phase === 'form' && (
+          <Input
+            label="Código de afiliado (opcional)"
+            placeholder="Código do motorista que te indicou"
+            value={affiliateCode}
+            onChange={(e) => setAffiliateCode(e.target.value)}
+          />
         )}
 
         <dl className="checkout__summary">

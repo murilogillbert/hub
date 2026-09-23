@@ -287,8 +287,10 @@ async function resolvePartnerLink(role: string, partnerId: string | null | undef
   return partnerId;
 }
 
-function capitalizeRole(role: string): 'Client' | 'Partner' | 'Admin' | 'Financeiro' {
+function capitalizeRole(role: string): 'Client' | 'Passenger' | 'Driver' | 'Partner' | 'Admin' | 'Financeiro' {
   const v = role.toLowerCase();
+  if (v === 'passenger') return 'Passenger';
+  if (v === 'driver') return 'Driver';
   if (v === 'partner') return 'Partner';
   if (v === 'admin') return 'Admin';
   if (v === 'financeiro') return 'Financeiro';

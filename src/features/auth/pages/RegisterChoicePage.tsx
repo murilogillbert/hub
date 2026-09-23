@@ -10,13 +10,23 @@ export function RegisterChoicePage() {
         <p className="text-muted">Como você quer usar o OpenDriverHub?</p>
 
         <div className="auth-choice">
-          <Link to="/cadastro/cliente" className="auth-choice__card">
+          <Link to="/cadastro/passageiro" className="auth-choice__card">
             <span className="auth-choice__icon">
               <Icon name="shoppingBag" size={26} />
             </span>
-            <strong>Sou Cliente</strong>
+            <strong>Sou Passageiro</strong>
             <small>
               Comprar produtos e vouchers com cashback nos parceiros.
+            </small>
+          </Link>
+
+          <Link to="/cadastro/motorista" className="auth-choice__card">
+            <span className="auth-choice__icon">
+              <Icon name="shoppingBag" size={26} />
+            </span>
+            <strong>Sou Motorista</strong>
+            <small>
+              Compre com cashback e indique lojas parceiras pra ganhar comissão.
             </small>
           </Link>
 

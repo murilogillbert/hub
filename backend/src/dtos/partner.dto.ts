@@ -17,4 +17,12 @@ export interface PartnerMetricsDto {
   topProducts: NamedValue[];
   salesByCategory: NamedValue[];
   paymentMethods: NamedValue[];
+  /** Ganhos vindos de acesso/indicação de motorista afiliado (programa
+   * loja↔motorista) — ver driverAffiliateService.storeMetrics. */
+  driverReferral: {
+    ordersCount: number;
+    revenue: number;
+    commissionPaid: number;
+    linkViews: number;
+  };
 }

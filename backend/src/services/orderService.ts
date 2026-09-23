@@ -3,6 +3,7 @@ import { cashbackFor } from '../domain/commissionRules.js';
 import { AppError } from '../errors.js';
 import { prisma } from '../infra/prisma.js';
 import { toCashbackEntryDto, toOrderDto, tryParseOrderStatus } from '../mappings.js';
+import * as driverAffiliateService from './driverAffiliateService.js';
 
 const orderInclude = { customer: true, items: { include: { partner: true } } } as const;
 
@@ -68,6 +69,16 @@ export async function createOrder(customerId: string, req: CreateOrderRequest): 
 
   const cashbackUsed = req.useCashback ? Math.min(Math.round(customer.cashbackBalance.toNumber() * 100) / 100, paidPrice) : 0;
 
+  // Código de afiliado (motorista) digitado no checkout — só grava se bater
+  // com pelo menos UMA loja do carrinho; senão erro exato pedido pelo
+  // stakeholder (orderService.createOrder é o único lugar onde ele é
+  // validado, distinto por-parceiro no crédito real em paymentService.approve).
+  let affiliateDriverId: string | null = null;
+  if (req.affiliateCode) {
+    const distinctPartnerIds = [...new Set(itemsData.map((i) => i.partnerId))];
+    affiliateDriverId = await driverAffiliateService.resolveCheckoutCode(req.affiliateCode, distinctPartnerIds);
+  }
+
   const order = await prisma.order.create({
     data: {
       code: generateCode(),
@@ -76,6 +87,8 @@ export async function createOrder(customerId: string, req: CreateOrderRequest): 
       paidPrice,
       cashbackEarned,
       cashbackUsed,
+      affiliateCode: affiliateDriverId ? req.affiliateCode : null,
+      affiliateDriverId,
       items: { create: itemsData },
     },
     include: orderInclude,

@@ -6,6 +6,7 @@ export const registerSchema = z.object({
   password: z.string().min(6),
   cpf: z.string().optional(),
   phone: z.string().optional(),
+  role: z.enum(['Passenger', 'Driver']),
 });
 export type RegisterRequest = z.infer<typeof registerSchema>;
 
@@ -115,10 +116,14 @@ export interface NotificationDto {
 
 const roleEnum = z.enum([
   'client',
+  'passenger',
+  'driver',
   'partner',
   'admin',
   'financeiro',
   'Client',
+  'Passenger',
+  'Driver',
   'Partner',
   'Admin',
   'Financeiro',

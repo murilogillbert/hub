@@ -7,9 +7,14 @@ import { routeForRole } from '@shared/context/AuthContext';
 import { isValidCpf, maskCpf } from '@shared/utils/masks';
 import './AuthPages.css';
 
-export function RegisterClientPage() {
+interface RegisterClientPageProps {
+  role: 'Passenger' | 'Driver';
+}
+
+export function RegisterClientPage({ role }: RegisterClientPageProps) {
   const navigate = useNavigate();
   const { register } = useAuth();
+  const roleLabel = role === 'Driver' ? 'motorista' : 'passageiro';
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -38,6 +43,7 @@ export function RegisterClientPage() {
         email: form.email,
         password: form.password,
         cpf: form.cpf,
+        role,
       });
       navigate(routeForRole(user.role), { replace: true });
     } catch (err) {
@@ -53,7 +59,7 @@ export function RegisterClientPage() {
         <Link to="/cadastro" className="auth-page__back">
           ← Voltar
         </Link>
-        <h2>Cadastro de cliente</h2>
+        <h2>Cadastro de {roleLabel}</h2>
         <p className="text-muted">É grátis. Comece a acumular cashback hoje.</p>
         <form
           onSubmit={handleSubmit}
@@ -91,7 +97,7 @@ export function RegisterClientPage() {
           />
           {error && <small className="input-field__error">{error}</small>}
           <Button type="submit" size="lg" fullWidth disabled={busy}>
-            {busy ? 'Criando...' : 'Criar conta de cliente'}
+            {busy ? 'Criando...' : `Criar conta de ${roleLabel}`}
           </Button>
         </form>
         <p className="auth-page__alt">

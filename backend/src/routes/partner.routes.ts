@@ -3,6 +3,7 @@ import { productUpsertSchema, storeUpsertSchema, updateMyPartnerProfileSchema } 
 import { envelope } from '../dtos/common.dto.js';
 import { redeemRequestSchema } from '../dtos/orders.dto.js';
 import { requestWithdrawalSchema, updatePixKeySchema } from '../dtos/affiliate.dto.js';
+import { addDriverAffiliateSchema, bulkCommissionSchema, updateDriverAffiliateSchema } from '../dtos/driverAffiliate.dto.js';
 import { AppError } from '../errors.js';
 import { prisma } from '../infra/prisma.js';
 import { ROLES, partnerId, requireAuth, requireRole, requireVerifiedEmail, userId } from '../middleware/auth.js';
@@ -10,6 +11,7 @@ import { validateBody } from '../middleware/validate.js';
 import { toAffiliatePartnerDto } from '../mappings.js';
 import * as affiliateWalletService from '../services/affiliateWalletService.js';
 import * as campaignMaterialService from '../services/campaignMaterialService.js';
+import * as driverAffiliateService from '../services/driverAffiliateService.js';
 import * as partnerService from '../services/partnerService.js';
 import * as storeService from '../services/storeService.js';
 import * as whatsappConnectService from '../services/whatsappConnectService.js';
@@ -150,4 +152,48 @@ partnerRouter.get('/affiliate/link', ...guard, async (req, res) => {
       linkSales: partner.linkSales,
     }),
   );
+});
+
+// ---------- Afiliação loja↔motorista (programa novo, independente do solar) ----------
+
+partnerRouter.get('/affiliate-drivers/search', ...guard, async (req, res) => {
+  res.json(envelope(await driverAffiliateService.searchDrivers(partnerId(req), String(req.query.q ?? ''))));
+});
+
+partnerRouter.get('/affiliate-drivers/metrics', ...guard, async (req, res) => {
+  res.json(envelope(await driverAffiliateService.storeMetrics(partnerId(req))));
+});
+
+partnerRouter.get('/affiliate-drivers', ...guard, async (req, res) => {
+  res.json(envelope(await driverAffiliateService.listForPartner(partnerId(req))));
+});
+
+partnerRouter.post('/affiliate-drivers', ...guard, validateBody(addDriverAffiliateSchema), async (req, res) => {
+  await driverAffiliateService.add(partnerId(req), req.body.driverId, req.body.commissionPercent);
+  res.status(204).send();
+});
+
+partnerRouter.put(
+  '/affiliate-drivers/bulk-commission',
+  ...guard,
+  validateBody(bulkCommissionSchema),
+  async (req, res) => {
+    await driverAffiliateService.bulkSetCommission(partnerId(req), req.body.commissionPercent);
+    res.status(204).send();
+  },
+);
+
+partnerRouter.put(
+  '/affiliate-drivers/:driverId',
+  ...guard,
+  validateBody(updateDriverAffiliateSchema),
+  async (req, res) => {
+    await driverAffiliateService.updateCommission(partnerId(req), req.params.driverId as string, req.body.commissionPercent);
+    res.status(204).send();
+  },
+);
+
+partnerRouter.delete('/affiliate-drivers/:driverId', ...guard, async (req, res) => {
+  await driverAffiliateService.remove(partnerId(req), req.params.driverId as string);
+  res.status(204).send();
 });

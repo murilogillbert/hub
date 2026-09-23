@@ -3,6 +3,7 @@ import { config } from '../config.js';
 import { AppError } from '../errors.js';
 import { getSetting } from '../infra/settingsProvider.js';
 import * as affiliateLinkService from '../services/affiliateLinkService.js';
+import * as driverAffiliateService from '../services/driverAffiliateService.js';
 import * as surveyLinkService from '../services/surveyLinkService.js';
 
 /** Link curto de indicação do afiliado (hub.com/r/CODE) — conta a visita e
@@ -23,6 +24,21 @@ redirectRouter.get('/r/pesquisa/:code', async (req, res) => {
   const url = new URL(formUrl);
   url.searchParams.set('motoristaCode', code);
   res.redirect(302, url.toString());
+});
+
+/** Link pessoal do motorista pra indicar o catálogo de UMA loja específica
+ * (hub.com/r/indicacao/ID) — programa novo de afiliação loja↔motorista,
+ * independente da pesquisa de opinião. ID é o próprio id da linha
+ * DriverAffiliate (par motorista+loja já é unicamente identificado por ela,
+ * sem precisar inventar mais um código). Precisa vir ANTES de /r/:code.
+ * Comissão de verdade é creditada só se o comprador digitar o código do
+ * motorista no checkout — este link é só o atalho pro catálogo + contagem
+ * de visita pra métricas (ver driverAffiliateService.recordClickAndGetPartnerId). */
+redirectRouter.get('/r/indicacao/:id', async (req, res) => {
+  const id = req.params.id as string;
+  const partnerId = await driverAffiliateService.recordClickAndGetPartnerId(id);
+  if (!partnerId) throw new AppError('Link de indicação inválido.', 404);
+  res.redirect(302, `${config.frontendUrl}/produtos?partnerId=${partnerId}`);
 });
 
 redirectRouter.get('/r/:code', async (req, res) => {

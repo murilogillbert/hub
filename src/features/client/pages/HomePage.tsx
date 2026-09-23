@@ -155,7 +155,7 @@ export function HomePage() {
             Economize, ganhe mais e tenha tudo que você precisa em um só lugar.
           </p>
           <div className="row home__hero-ctas">
-            <Link to="/cadastro/cliente">
+            <Link to="/cadastro/motorista">
               <Button size="lg">Sou Motorista →</Button>
             </Link>
             <Link to="/cadastro/parceiro">

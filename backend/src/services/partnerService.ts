@@ -3,10 +3,11 @@ import type { ProductDto, ProductUpsertRequest, UpdateMyPartnerProfileRequest } 
 import type { AffiliatePartnerDto } from '../dtos/affiliate.dto.js';
 import type { PartnerMetricsDto } from '../dtos/partner.dto.js';
 import type { RedeemResult } from '../dtos/orders.dto.js';
-import { partnerNet, platformFeeFor, round2 } from '../domain/commissionRules.js';
+import { driverCommissionFor, partnerNet, platformFeeFor, round2 } from '../domain/commissionRules.js';
 import { AppError } from '../errors.js';
 import { prisma } from '../infra/prisma.js';
 import { parseProductKind, toAffiliatePartnerDto, toProductDto } from '../mappings.js';
+import * as driverAffiliateService from './driverAffiliateService.js';
 
 /** Autoatendimento: o próprio parceiro (loja ou afiliado) edita seus dados.
  * feePercent/active/asaasWalletId ficam de fora de propósito — exclusivos do
@@ -164,6 +165,7 @@ export async function metrics(partnerId: string): Promise<PartnerMetricsDto> {
   const byMethod = groupNamedValueCount(valid, (i) => methodLabel(i.order.paymentMethod)).sort(
     (a, b) => b.value - a.value,
   );
+  const driverReferral = await driverAffiliateService.storeMetrics(partnerId);
 
   return {
     totalRevenue: round2(revenue),
@@ -182,6 +184,7 @@ export async function metrics(partnerId: string): Promise<PartnerMetricsDto> {
     topProducts,
     salesByCategory: byCategory,
     paymentMethods: byMethod,
+    driverReferral,
   };
 }
 
@@ -234,7 +237,13 @@ export async function redeem(partnerId: string, actorId: string, code: string, c
   const subtotal = pending.reduce((acc, i) => acc + i.lineTotal.toNumber(), 0);
   const cashback = pending.reduce((acc, i) => acc + i.cashbackEarned.toNumber(), 0);
   const platformFee = platformFeeFor(subtotal, fee);
-  const net = partnerNet(subtotal, platformFee, cashback);
+  // A comissão já foi de fato creditada ao motorista em
+  // paymentService.approve() (não aqui) — isso só recalcula o mesmo valor
+  // pra exibir o líquido certo pro parceiro nesta tela/no audit log.
+  const commissionByPartner = await driverAffiliateService.commissionMapForOrder(order);
+  const commissionInfo = commissionByPartner.get(partnerId);
+  const commission = commissionInfo ? driverCommissionFor(subtotal, commissionInfo.percent) : 0;
+  const net = partnerNet(subtotal, platformFee, cashback, commission);
   const title = pending.map((i) => `${i.quantity}x ${i.productTitle}`).join(', ');
 
   if (!confirm)
@@ -288,7 +297,7 @@ export async function redeem(partnerId: string, actorId: string, code: string, c
         action: 'order.redeem',
         entityType: 'Order',
         entityId: fresh.id,
-        payloadJson: JSON.stringify({ code: fresh.code, partnerId, net, cashback, subtotal }),
+        payloadJson: JSON.stringify({ code: fresh.code, partnerId, net, cashback, subtotal, commission }),
       },
     });
   });

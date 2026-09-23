@@ -65,6 +65,16 @@ export function PartnerMetricsPage() {
                 value={formatPercent(m.redemptionRate)}
                 hint={`${m.redeemedCount} resgatados / ${m.paidCount} pagos`}
               />
+              <StatCard
+                label="Receita via indicação de motorista"
+                value={formatCurrency(m.driverReferral.revenue)}
+                hint={`${m.driverReferral.ordersCount} pedido(s) · ${m.driverReferral.linkViews} clique(s) no link`}
+              />
+              <StatCard
+                label="Comissão paga a motoristas"
+                value={formatCurrency(m.driverReferral.commissionPaid)}
+                hint="descontada do seu líquido, não da taxa da plataforma"
+              />
             </div>
 
             <div className="partner-page__charts">

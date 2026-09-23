@@ -9,6 +9,7 @@ export const createOrderSchema = z.object({
   productId: z.string().uuid().optional(),
   useCashback: z.boolean().default(false),
   items: z.array(cartItemSchema).optional(),
+  affiliateCode: z.string().trim().min(1).optional(),
 });
 export type CreateOrderRequest = z.infer<typeof createOrderSchema>;
 

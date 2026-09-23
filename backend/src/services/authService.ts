@@ -64,7 +64,7 @@ export async function register(req: RegisterRequest): Promise<AuthResponse> {
       name: req.name.trim(),
       email,
       passwordHash: hashPassword(req.password),
-      role: 'Client',
+      role: req.role,
       phone: req.phone,
       cpf: req.cpf?.trim() || null,
       avatarUrl: dicebearAvatar(req.name),

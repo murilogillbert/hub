@@ -73,6 +73,12 @@ export interface PartnerMetrics {
   topProducts: NamedValue[];
   salesByCategory: NamedValue[];
   paymentMethods: NamedValue[];
+  driverReferral: {
+    ordersCount: number;
+    revenue: number;
+    commissionPaid: number;
+    linkViews: number;
+  };
 }
 export interface TopPartner {
   partnerId: string;
@@ -139,6 +145,7 @@ export const authApi = {
     password: string;
     cpf?: string;
     phone?: string;
+    role: 'Passenger' | 'Driver';
   }) => api.postPublic<AuthResponse>('/auth/register', body),
   registerPartner: (body: {
     name: string;
@@ -264,7 +271,8 @@ export const ordersApi = {
   create: (
     items: { productId: string; quantity: number }[],
     useCashback = false,
-  ) => api.post<Order>('/orders', { items, useCashback }),
+    affiliateCode?: string,
+  ) => api.post<Order>('/orders', { items, useCashback, affiliateCode: affiliateCode || undefined }),
   myOrders: (status?: string) =>
     api.get<Order[]>(`/me/orders${status ? `?status=${status}` : ''}`),
   myOrder: (id: string) => api.get<Order>(`/me/orders/${id}`),
@@ -354,6 +362,59 @@ export const partnerApi = {
     api.put<AffiliatePartner>('/partner/profile', body),
 };
 
+// ---- Afiliação loja↔motorista (programa novo, independente do solar) ----
+export interface DriverSearchResult {
+  id: string;
+  name: string;
+  email: string;
+  alreadyAffiliated: boolean;
+}
+export interface DriverAffiliate {
+  id: string;
+  driverId: string;
+  driverName: string;
+  driverEmail: string;
+  commissionPercent: number;
+  linkViews: number;
+  commissionEarned: number;
+  ordersCount: number;
+  createdAt: string;
+}
+export interface StoreReferralMetrics {
+  ordersCount: number;
+  revenue: number;
+  commissionPaid: number;
+  linkViews: number;
+}
+export interface MyAffiliation {
+  id: string;
+  partnerId: string;
+  partnerName: string;
+  partnerLogoUrl: string;
+  commissionPercent: number;
+  linkViews: number;
+  commissionEarned: number;
+}
+export interface MyAffiliateProgram {
+  affiliateCode: string;
+  stores: MyAffiliation[];
+}
+export const driverAffiliateApi = {
+  // Lado loja
+  search: (q: string) => api.get<DriverSearchResult[]>(`/partner/affiliate-drivers/search?q=${encodeURIComponent(q)}`),
+  list: () => api.get<DriverAffiliate[]>('/partner/affiliate-drivers'),
+  storeMetrics: () => api.get<StoreReferralMetrics>('/partner/affiliate-drivers/metrics'),
+  add: (driverId: string, commissionPercent: number) =>
+    api.post<void>('/partner/affiliate-drivers', { driverId, commissionPercent }),
+  update: (driverId: string, commissionPercent: number) =>
+    api.put<void>(`/partner/affiliate-drivers/${driverId}`, { commissionPercent }),
+  bulkSetCommission: (commissionPercent: number) =>
+    api.put<void>('/partner/affiliate-drivers/bulk-commission', { commissionPercent }),
+  remove: (driverId: string) => api.del<void>(`/partner/affiliate-drivers/${driverId}`),
+  // Lado motorista
+  myProgram: () => api.get<MyAffiliateProgram>('/me/affiliate-program'),
+};
+
 /** Autoatendimento: loja manda tudo, afiliado manda só city/state. */
 export interface UpdateMyPartnerProfile {
   name?: string;
@@ -387,7 +448,7 @@ export interface AdminUserUpdate {
   name: string;
   email: string;
   phone?: string;
-  role: 'client' | 'partner' | 'admin' | 'financeiro';
+  role: 'client' | 'passenger' | 'driver' | 'partner' | 'admin' | 'financeiro';
   cashbackBalance: number;
   partnerId?: string | null;
 }

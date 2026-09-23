@@ -6,6 +6,7 @@ import {
   ProfileBasicsCard,
 } from '@shared/components/AccountSettings/AccountSettingsCards';
 import { SurveyLinkCard } from '../components/SurveyLinkCard';
+import { DriverAffiliateCard } from '../components/DriverAffiliateCard';
 import './ClientArea.css';
 
 export function ProfilePage() {
@@ -31,6 +32,7 @@ export function ProfilePage() {
         <PasswordCard />
         <NotificationsCard />
         <SurveyLinkCard />
+        {user?.role === 'driver' && <DriverAffiliateCard />}
       </div>
     </div>
   );

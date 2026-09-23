@@ -21,7 +21,7 @@ declare global {
  * autenticada pra ver o próprio link/stats. */
 export const surveyRouter = Router();
 
-surveyRouter.get('/me', requireAuth, requireRole('Client', 'Partner', 'Admin'), async (req, res) => {
+surveyRouter.get('/me', requireAuth, requireRole('Client', 'Passenger', 'Driver', 'Partner', 'Admin'), async (req, res) => {
   res.json(envelope(await surveyLinkService.myLink(userId(req))));
 });
 

@@ -10,9 +10,16 @@ export interface AuthContext {
 }
 
 /** Espelha as 3 AuthorizationPolicy do Program.cs original: Admin sempre
- * passa nas policies Client/Partner. */
+ * passa nas policies Client/Partner.
+ *
+ * client: quem pode comprar/ver pedidos/cashback — Passenger e Driver
+ * (o antigo papel Client dividido em dois) + Partner (loja também compra,
+ * ver programa de afiliação loja↔motorista) + Client mantido pra sempre
+ * como rede de segurança pra token/linha antiga (nunca removido do enum). */
 export const ROLES = {
-  client: ['Client', 'Admin'],
+  client: ['Passenger', 'Driver', 'Partner', 'Client', 'Admin'],
+  passenger: ['Passenger', 'Admin'],
+  driver: ['Driver', 'Admin'],
   partner: ['Partner', 'Admin'],
   admin: ['Admin'],
   financeiro: ['Financeiro', 'Admin'],

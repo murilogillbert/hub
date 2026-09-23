@@ -29,6 +29,7 @@ import { ResetPasswordPage } from '@features/auth/pages/ResetPasswordPage';
 import { VerifyEmailPage } from '@features/auth/pages/VerifyEmailPage';
 
 import { PartnerCatalogPage } from '@features/partner/pages/PartnerCatalogPage';
+import { PartnerDriverAffiliatesPage } from '@features/partner/pages/PartnerDriverAffiliatesPage';
 import { PartnerRedeemPage } from '@features/partner/pages/PartnerRedeemPage';
 import { PartnerMetricsPage } from '@features/partner/pages/PartnerMetricsPage';
 import { PartnerStoresPage } from '@features/partner/pages/PartnerStoresPage';
@@ -86,10 +87,18 @@ export function AppRoutes() {
           }
         />
         <Route
-          path="/cadastro/cliente"
+          path="/cadastro/passageiro"
           element={
             <RedirectIfAuthenticated>
-              <RegisterClientPage />
+              <RegisterClientPage role="Passenger" />
+            </RedirectIfAuthenticated>
+          }
+        />
+        <Route
+          path="/cadastro/motorista"
+          element={
+            <RedirectIfAuthenticated>
+              <RegisterClientPage role="Driver" />
             </RedirectIfAuthenticated>
           }
         />
@@ -115,8 +124,10 @@ export function AppRoutes() {
         <Route path="/produto/:id" element={<ProductPage />} />
         <Route path="/carrinho" element={<CartPage />} />
 
-        {/* Compra exige login — sem sessão, vai para /login e volta */}
-        <Route element={<RequireRole roles={['client', 'admin']} />}>
+        {/* Compra exige login — sem sessão, vai para /login e volta.
+            Partner também compra (loja pode ser comprador, programa de
+            afiliação loja↔motorista). */}
+        <Route element={<RequireRole roles={['client', 'passenger', 'driver', 'partner', 'admin']} />}>
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/checkout/:id" element={<CheckoutPage />} />
           <Route path="/compra/confirmacao/:id" element={<PurchaseConfirmationPage />} />
@@ -135,6 +146,7 @@ export function AppRoutes() {
           <Route path="catalogo" element={<PartnerCatalogPage />} />
           <Route path="unidades" element={<PartnerStoresPage />} />
           <Route path="venda" element={<PartnerRedeemPage />} />
+          <Route path="afiliados-motoristas" element={<PartnerDriverAffiliatesPage />} />
           <Route
             path="metricas"
             element={

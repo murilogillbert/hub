@@ -16,6 +16,7 @@ export interface RegisterClientInput {
   password: string;
   cpf?: string;
   phone?: string;
+  role: 'Passenger' | 'Driver';
 }
 export interface RegisterPartnerInput {
   name: string;
@@ -57,6 +58,8 @@ export function routeForRole(role: UserRole): string {
     case 'financeiro':
       return '/financeiro';
     case 'client':
+    case 'passenger':
+    case 'driver':
       return '/';
     default:
       return '/login';

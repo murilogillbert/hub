@@ -1,5 +1,6 @@
-import { partnerNet, platformFeeFor } from '../../domain/commissionRules.js';
+import { driverCommissionFor, partnerNet, platformFeeFor } from '../../domain/commissionRules.js';
 import { AppError } from '../../errors.js';
+import * as driverAffiliateService from '../../services/driverAffiliateService.js';
 import { getSetting } from '../settingsProvider.js';
 import * as codes from './paymentCodes.js';
 import type {
@@ -47,16 +48,24 @@ async function baseUrlAndHeaders(): Promise<{ baseUrl: string; headers: Record<s
   };
 }
 
-/** Monta o split por parceiro (líquido = total − taxa − cashback). Só inclui
- * parceiros com carteira Asaas. Se a soma exceder o valor cobrado (ex.:
- * cliente abateu cashback), ignora o split e cai no repasse manual. */
-function buildSplits(order: OrderForPayment, chargeAmount: number): { walletId: string; fixedValue: number }[] {
+/** Monta o split por parceiro (líquido = total − taxa − cashback −
+ * comissão do motorista afiliado, se houver). Só inclui parceiros com
+ * carteira Asaas. Se a soma exceder o valor cobrado (ex.: cliente abateu
+ * cashback), ignora o split e cai no repasse manual.
+ *
+ * Usa commissionMapForOrder — a MESMA fonte que paymentService.approve()
+ * usa pra creditar de verdade o motorista — pra nunca divergir entre o que
+ * a Asaas transfere pro parceiro e o que é debitado do líquido dele aqui. */
+async function buildSplits(order: OrderForPayment, chargeAmount: number): Promise<{ walletId: string; fixedValue: number }[]> {
+  const commissionByPartner = await driverAffiliateService.commissionMapForOrder(order);
   const byPartner = new Map<string, { walletId: string; net: number }>();
   for (const item of order.items) {
     const walletId = item.partner?.asaasWalletId;
     if (!walletId) continue;
     const fee = platformFeeFor(item.lineTotal.toNumber(), item.partner.feePercent.toNumber());
-    const net = partnerNet(item.lineTotal.toNumber(), fee, item.cashbackEarned.toNumber());
+    const commissionInfo = commissionByPartner.get(item.partnerId);
+    const commission = commissionInfo ? driverCommissionFor(item.lineTotal.toNumber(), commissionInfo.percent) : 0;
+    const net = partnerNet(item.lineTotal.toNumber(), fee, item.cashbackEarned.toNumber(), commission);
     const entry = byPartner.get(item.partnerId) ?? { walletId, net: 0 };
     entry.net += net;
     byPartner.set(item.partnerId, entry);
@@ -90,7 +99,7 @@ export class AsaasGateway implements IPaymentGateway {
 
     const customerId = await this.ensureCustomer(baseUrl, headers, order);
 
-    const splits = buildSplits(order, amount);
+    const splits = await buildSplits(order, amount);
     const description = order.items[0]?.productTitle ?? `Pedido ${order.code}`;
     const body: Record<string, unknown> = {
       customer: customerId,

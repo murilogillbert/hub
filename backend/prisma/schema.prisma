@@ -18,8 +18,14 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+/// Client é mantido para sempre no enum (nunca DROP VALUE em prod) como rede
+/// de segurança para tokens/linhas antigas — cadastros novos usam Passenger
+/// ou Driver. Ver migration "migrate_client_role" para o UPDATE que migrou
+/// as linhas Client existentes para Driver.
 enum UserRole {
   Client
+  Passenger
+  Driver
   Partner
   Admin
   Financeiro
@@ -151,6 +157,14 @@ model User {
   surveyLinkLeads     Int     @default(0) @map("survey_link_leads")
   surveyLeads         SurveyLead[]
 
+  /// Código pessoal do motorista no programa de afiliação loja↔motorista —
+  /// separado do surveyCode (programa da pesquisa de opinião, independente
+  /// deste). Digitado pelo comprador no checkout para creditar comissão.
+  affiliateCode       String? @unique @map("affiliate_code")
+  driverAffiliates    DriverAffiliate[]
+  driverCommissionEntries DriverCommissionEntry[]
+  affiliateOrders     Order[] @relation("OrderAffiliateDriver")
+
   @@map("users")
 }
 
@@ -268,6 +282,8 @@ model Partner {
   commissionEntries  AffiliateCommissionEntry[]
   withdrawalRequests WithdrawalRequest[]
   categorySuggestions CategorySuggestion[]
+  driverAffiliates   DriverAffiliate[]
+  driverCommissionEntries DriverCommissionEntry[]
 
   @@map("partners")
 }
@@ -360,6 +376,16 @@ model Order {
   payments          PaymentTransaction[]
   cashbackEntries   CashbackEntry[]
   reviews           Review[]
+
+  /// Código de afiliado (motorista) digitado no checkout — validado contra
+  /// DriverAffiliate na criação do pedido (ver orderService.createOrder).
+  /// affiliateDriverId fica gravado mesmo que só bata com PARTE das lojas
+  /// do carrinho; qual loja de fato aplica comissão é resolvido de novo,
+  /// por parceiro, na aprovação do pagamento (paymentService.approve).
+  affiliateCode     String?             @map("affiliate_code")
+  affiliateDriverId String?             @map("affiliate_driver_id") @db.Uuid
+  affiliateDriver   User?               @relation("OrderAffiliateDriver", fields: [affiliateDriverId], references: [id])
+  driverCommissionEntries DriverCommissionEntry[]
 
   @@index([customerId, status])
   @@map("orders")
@@ -551,6 +577,46 @@ model AffiliateCommissionEntry {
 
   @@index([partnerId, createdAt])
   @@map("affiliate_commission_entries")
+}
+
+/// Vínculo de afiliação loja↔motorista (programa novo, independente do
+/// afiliado solar acima): a loja adiciona um motorista com uma comissão %
+/// sobre a venda. Remover o vínculo apaga só esta linha — o histórico de
+/// comissões já pagas mora em DriverCommissionEntry, tabela separada.
+model DriverAffiliate {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId         String   @map("partner_id") @db.Uuid
+  partner           Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  driverId          String   @map("driver_id") @db.Uuid
+  driver            User     @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  commissionPercent Decimal  @db.Decimal(5, 2) @map("commission_percent")
+  /// Quantas vezes o link/QR pessoal desta afiliação (loja específica) foi
+  /// acessado — ver GET /r/indicacao/:id.
+  linkViews         Int      @default(0) @map("link_views")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@unique([partnerId, driverId])
+  @@map("driver_affiliates")
+}
+
+/// Lançamento de comissão paga a um motorista por uma venda de uma loja da
+/// qual ele é afiliado — criado em paymentService.approve() (não no
+/// resgate), ledger de auditoria + fonte das métricas dos dois lados.
+model DriverCommissionEntry {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId   String   @map("partner_id") @db.Uuid
+  partner     Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  driverId    String   @map("driver_id") @db.Uuid
+  driver      User     @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  orderId     String?  @map("order_id") @db.Uuid
+  order       Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  amount      Decimal  @db.Decimal(12, 2)
+  description String   @db.VarChar(240)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([partnerId, createdAt])
+  @@index([driverId, createdAt])
+  @@map("driver_commission_entries")
 }
 
 /// Pedido de saque de um afiliado — autoatendimento + aprovação do financeiro.

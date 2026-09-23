@@ -13,11 +13,21 @@ export function platformFeeFor(price: Money, feePercent: Money): number {
   return new Decimal(price).times(feePercent).div(100).toDecimalPlaces(2).toNumber();
 }
 
-/** Líquido do parceiro = pago − taxa da plataforma − cashback do cliente. */
-export function partnerNet(paidPrice: Money, platformFee: Money, cashback: Money): number {
+/** Comissão do motorista afiliado = percentual sobre o subtotal vendido
+ * pelo parceiro daquele pedido (programa loja↔motorista, distinto da
+ * pesquisa de opinião). */
+export function driverCommissionFor(subtotal: Money, commissionPercent: Money): number {
+  return new Decimal(subtotal).times(commissionPercent).div(100).toDecimalPlaces(2).toNumber();
+}
+
+/** Líquido do parceiro = pago − taxa da plataforma − cashback do cliente −
+ * comissão do motorista afiliado (se houver). A taxa da plataforma nunca
+ * muda por causa da comissão — só reduz o líquido do próprio parceiro. */
+export function partnerNet(paidPrice: Money, platformFee: Money, cashback: Money, commission: Money = 0): number {
   return new Decimal(paidPrice)
     .minus(platformFee)
     .minus(cashback)
+    .minus(commission)
     .toDecimalPlaces(2)
     .toNumber();
 }

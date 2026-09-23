@@ -1,10 +1,12 @@
 import type { ProcessPaymentRequest } from '../dtos/orders.dto.js';
 import type { PaymentStatusSnapshot } from '../infra/paymentGateways/types.js';
+import { driverCommissionFor, round2 } from '../domain/commissionRules.js';
 import { AppError } from '../errors.js';
 import { paymentGateway } from '../infra/paymentGateways/index.js';
 import * as codes from '../infra/paymentGateways/paymentCodes.js';
 import { prisma } from '../infra/prisma.js';
 import { parsePaymentMethod } from '../mappings.js';
+import * as driverAffiliateService from './driverAffiliateService.js';
 import type { Prisma } from '@prisma/client';
 
 const orderInclude = { customer: true, items: { include: { partner: true } } } as const;
@@ -174,7 +176,10 @@ export async function reconcileByExternal(externalId: string, eventType: string,
 
 async function approve(orderId: string, voucherCode: string | null): Promise<void> {
   await prisma.$transaction(async (tx) => {
-    const order = await tx.order.findUnique({ where: { id: orderId }, include: { customer: true } });
+    const order = await tx.order.findUnique({
+      where: { id: orderId },
+      include: { customer: true, items: { include: { partner: true } } },
+    });
     if (!order || order.status === 'Paid' || order.status === 'Redeemed') return;
 
     const voucher = order.voucherCode ?? voucherCode ?? codes.voucher();
@@ -194,6 +199,42 @@ async function approve(orderId: string, voucherCode: string | null): Promise<voi
     }
     if (cashbackUsed > 0 || cashbackEarned > 0)
       await tx.user.update({ where: { id: order.customerId }, data: { cashbackBalance: balance } });
+
+    // Comissão do motorista afiliado — ponto único onde é decidida e
+    // creditada de verdade (não no resgate, que nunca move dinheiro; e não
+    // no split da Asaas, que só REFLETE esta mesma conta, ver asaas.ts
+    // buildSplits). Roda pra todo pedido exatamente 1 vez (guard acima),
+    // inclusive quando o cashback cobre 100% do valor.
+    const commissionByPartner = await driverAffiliateService.commissionMapForOrder(order);
+    if (commissionByPartner.size > 0) {
+      const subtotalByPartner = new Map<string, number>();
+      for (const item of order.items) {
+        subtotalByPartner.set(item.partnerId, (subtotalByPartner.get(item.partnerId) ?? 0) + item.lineTotal.toNumber());
+      }
+      for (const [partnerId, { driverId, percent }] of commissionByPartner) {
+        const subtotal = subtotalByPartner.get(partnerId) ?? 0;
+        const commission = driverCommissionFor(subtotal, percent);
+        if (commission <= 0) continue;
+
+        const exists = await tx.driverCommissionEntry.findFirst({ where: { orderId, partnerId } });
+        if (exists) continue;
+
+        const partner = order.items.find((i) => i.partnerId === partnerId)?.partner;
+        await tx.driverCommissionEntry.create({
+          data: { partnerId, driverId, orderId, amount: round2(commission), description: `Comissão por indicação — ${partner?.name ?? 'loja'} (pedido ${order.code})` },
+        });
+        await tx.cashbackEntry.create({
+          data: {
+            userId: driverId,
+            orderId,
+            type: 'Earned',
+            amount: round2(commission),
+            description: `Comissão por indicação — ${partner?.name ?? 'loja'} (pedido ${order.code})`,
+          },
+        });
+        await tx.user.update({ where: { id: driverId }, data: { cashbackBalance: { increment: round2(commission) } } });
+      }
+    }
 
     await tx.notification.create({
       data: {

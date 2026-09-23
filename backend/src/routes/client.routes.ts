@@ -4,6 +4,7 @@ import { createOrderSchema, processPaymentSchema } from '../dtos/orders.dto.js';
 import { createReviewSchema } from '../dtos/reviews.dto.js';
 import { ROLES, requireAuth, requireRole, requireVerifiedEmail, userId } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
+import * as driverAffiliateService from '../services/driverAffiliateService.js';
 import * as orderService from '../services/orderService.js';
 import * as paymentService from '../services/paymentService.js';
 import * as reviewService from '../services/reviewService.js';
@@ -53,4 +54,10 @@ clientRouter.post(
 
 clientRouter.get('/orders/:id/payment-status', ...guard, async (req, res) => {
   res.json(envelope(await paymentService.status(req.params.id as string)));
+});
+
+// ---------- Afiliação loja↔motorista (lado motorista) ----------
+
+clientRouter.get('/me/affiliate-program', requireAuth, requireRole(...ROLES.driver), async (req, res) => {
+  res.json(envelope(await driverAffiliateService.myAffiliateProgram(userId(req))));
 });

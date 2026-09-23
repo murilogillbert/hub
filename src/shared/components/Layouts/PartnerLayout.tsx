@@ -68,6 +68,9 @@ export function PartnerLayout() {
               <NavLink to="/parceiro/venda">
                 <Icon name="camera" size={17} /> Resgate / Venda
               </NavLink>
+              <NavLink to="/parceiro/afiliados-motoristas">
+                <Icon name="handshake" size={17} /> Motoristas afiliados
+              </NavLink>
               <NavLink to="/parceiro/metricas">
                 <Icon name="chart" size={17} /> Métricas
               </NavLink>

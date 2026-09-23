@@ -12,7 +12,7 @@ import { adminApi } from '@shared/api/endpoints';
 import { User, Partner } from '@shared/types';
 import './AdminPages.css';
 
-type Role = 'client' | 'partner' | 'admin' | 'financeiro';
+type Role = 'client' | 'passenger' | 'driver' | 'partner' | 'admin' | 'financeiro';
 
 interface EditState {
   id: string;
@@ -139,7 +139,7 @@ export function AdminUsersPage() {
       name: '',
       email: '',
       phone: '',
-      role: 'client',
+      role: 'passenger',
       cashbackBalance: 0,
       partnerId: '',
       pCnpj: '',
@@ -329,7 +329,8 @@ export function AdminUsersPage() {
                       value={edit.role}
                       onChange={(e) => set('role', e.target.value as Role)}
                     >
-                      <option value="client">Cliente</option>
+                      <option value="passenger">Passageiro</option>
+                      <option value="driver">Motorista</option>
                       <option value="partner">Parceiro</option>
                       <option value="admin">Admin</option>
                       <option value="financeiro">Financeiro</option>
