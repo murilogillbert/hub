@@ -1,6 +1,6 @@
 import type { ProcessPaymentRequest } from '../dtos/orders.dto.js';
 import type { PaymentStatusSnapshot } from '../infra/paymentGateways/types.js';
-import { driverCommissionFor, round2 } from '../domain/commissionRules.js';
+import { clampCommission, driverCommissionFor, platformFeeFor, round2 } from '../domain/commissionRules.js';
 import { AppError } from '../errors.js';
 import { paymentGateway } from '../infra/paymentGateways/index.js';
 import * as codes from '../infra/paymentGateways/paymentCodes.js';
@@ -79,7 +79,6 @@ export async function process(
       paymentMethod: method,
       paymentReference: snap.paymentReference,
       externalPaymentId: snap.paymentId,
-      ...(rejectedOrCancelled ? { status: 'Cancelled' } : {}),
     },
   });
 
@@ -98,13 +97,15 @@ export async function process(
   });
 
   if (snap.paymentStatus === 'approved') await approve(order.id, snap.voucherCode);
+  // cancelOrder também libera o cashback reservado na criação do pedido.
+  else if (rejectedOrCancelled) await cancelOrder(order.id, snap.statusDetail ?? snap.paymentStatus);
 
   const finalStatus: OrderRow['status'] = snap.paymentStatus === 'approved' ? 'Paid' : rejectedOrCancelled ? 'Cancelled' : order.status;
   return { ...snap, orderStatus: finalStatus };
 }
 
-export async function status(orderId: string): Promise<PaymentStatusSnapshot> {
-  const order = await prisma.order.findUnique({ where: { id: orderId }, include: orderInclude });
+export async function status(orderId: string, customerId: string): Promise<PaymentStatusSnapshot> {
+  const order = await prisma.order.findFirst({ where: { id: orderId, customerId }, include: orderInclude });
   if (!order) throw new AppError('Pedido não encontrado.', 404);
 
   let current = order;
@@ -128,10 +129,27 @@ export async function status(orderId: string): Promise<PaymentStatusSnapshot> {
   };
 }
 
+// Pix válido por 30min (ver mock.ts/asaas.ts pix.expiresAt) — 35min dá uma
+// folga pequena antes de considerar abandonado. Sem isso, pedidos nunca
+// pagos ficavam sendo checados contra o gateway pra sempre, a cada 5s.
+const PIX_EXPIRATION_MS = 35 * 60 * 1000;
+
 export async function reconcilePending(): Promise<void> {
+  const cutoff = new Date(Date.now() - PIX_EXPIRATION_MS);
+
+  // Cancela o que já expirou (libera o cashback reservado) ANTES de gastar
+  // uma chamada ao gateway por pedido — evita que a lista só cresça.
+  const expired = await prisma.order.findMany({
+    where: { status: 'PendingPayment', paymentMethod: 'Pix', createdAt: { lt: cutoff } },
+    select: { id: true },
+    take: 200,
+  });
+  for (const { id } of expired) await cancelOrder(id, 'pix_expirado');
+
   const pending = await prisma.order.findMany({
-    where: { status: 'PendingPayment', paymentMethod: 'Pix' },
+    where: { status: 'PendingPayment', paymentMethod: 'Pix', createdAt: { gte: cutoff } },
     include: orderInclude,
+    take: 200,
   });
   for (const order of pending) {
     const sync = await paymentGateway.sync(order);
@@ -174,6 +192,35 @@ export async function reconcileByExternal(externalId: string, eventType: string,
   return result;
 }
 
+/** Cancela um pedido ainda pendente (recusa direta, ou Pix abandonado que
+ * expirou) e devolve o cashback reservado na criação do pedido
+ * (orderService.createOrder) — sem isso o cliente perderia saldo de um
+ * pedido que nunca foi pago de verdade. Idempotente: só age se o pedido
+ * ainda estiver PendingPayment (aprovar e cancelar nunca acontecem os dois
+ * pro mesmo pedido). */
+async function cancelOrder(orderId: string, reason: string): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    const order = await tx.order.findUnique({ where: { id: orderId } });
+    if (!order || order.status !== 'PendingPayment') return;
+
+    await tx.order.update({ where: { id: orderId }, data: { status: 'Cancelled' } });
+
+    const cashbackUsed = order.cashbackUsed.toNumber();
+    if (cashbackUsed > 0) {
+      await tx.user.update({ where: { id: order.customerId }, data: { cashbackBalance: { increment: round2(cashbackUsed) } } });
+      await tx.cashbackEntry.create({
+        data: {
+          userId: order.customerId,
+          orderId,
+          type: 'Earned',
+          amount: round2(cashbackUsed),
+          description: `Estorno de cashback reservado — pedido ${order.code} cancelado (${reason})`,
+        },
+      });
+    }
+  });
+}
+
 async function approve(orderId: string, voucherCode: string | null): Promise<void> {
   await prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({
@@ -185,35 +232,45 @@ async function approve(orderId: string, voucherCode: string | null): Promise<voi
     const voucher = order.voucherCode ?? voucherCode ?? codes.voucher();
     await tx.order.update({ where: { id: orderId }, data: { status: 'Paid', paidAt: new Date(), voucherCode: voucher } });
 
-    // Carteira de cashback: abate o usado e credita o ganho na compra.
+    // Carteira de cashback: o "usado" já foi reservado/descontado na
+    // CRIAÇÃO do pedido (orderService.createOrder, decremento atômico —
+    // evita gastar o mesmo saldo 2x em pedidos concorrentes) — aqui só
+    // registra o lançamento no extrato, sem descontar de novo. O "ganho" é
+    // creditado agora, na aprovação.
     const cashbackUsed = order.cashbackUsed.toNumber();
     const cashbackEarned = order.cashbackEarned.toNumber();
-    let balance = order.customer.cashbackBalance.toNumber();
     if (cashbackUsed > 0) {
-      balance = Math.max(0, balance - cashbackUsed);
       await addCashbackEntry(tx, orderId, order.customerId, order.code, 'Used', cashbackUsed);
     }
     if (cashbackEarned > 0) {
-      balance += cashbackEarned;
       await addCashbackEntry(tx, orderId, order.customerId, order.code, 'Earned', cashbackEarned);
+      await tx.user.update({ where: { id: order.customerId }, data: { cashbackBalance: { increment: round2(cashbackEarned) } } });
     }
-    if (cashbackUsed > 0 || cashbackEarned > 0)
-      await tx.user.update({ where: { id: order.customerId }, data: { cashbackBalance: balance } });
 
     // Comissão do motorista afiliado — ponto único onde é decidida e
     // creditada de verdade (não no resgate, que nunca move dinheiro; e não
     // no split da Asaas, que só REFLETE esta mesma conta, ver asaas.ts
     // buildSplits). Roda pra todo pedido exatamente 1 vez (guard acima),
-    // inclusive quando o cashback cobre 100% do valor.
+    // inclusive quando o cashback cobre 100% do valor. clampCommission trava
+    // pra taxa+cashback+comissão nunca somarem mais que o subtotal vendido —
+    // loja e motorista configuram os % de forma independente e
+    // autoatendimento, então isso é o que impede gerar mais crédito do que
+    // o valor real da venda.
     const commissionByPartner = await driverAffiliateService.commissionMapForOrder(order);
     if (commissionByPartner.size > 0) {
       const subtotalByPartner = new Map<string, number>();
+      const cashbackByPartner = new Map<string, number>();
+      const feePercentByPartner = new Map<string, number>();
       for (const item of order.items) {
         subtotalByPartner.set(item.partnerId, (subtotalByPartner.get(item.partnerId) ?? 0) + item.lineTotal.toNumber());
+        cashbackByPartner.set(item.partnerId, (cashbackByPartner.get(item.partnerId) ?? 0) + item.cashbackEarned.toNumber());
+        feePercentByPartner.set(item.partnerId, item.partner.feePercent.toNumber());
       }
       for (const [partnerId, { driverId, percent }] of commissionByPartner) {
         const subtotal = subtotalByPartner.get(partnerId) ?? 0;
-        const commission = driverCommissionFor(subtotal, percent);
+        const platformFee = platformFeeFor(subtotal, feePercentByPartner.get(partnerId) ?? 0);
+        const rawCommission = driverCommissionFor(subtotal, percent);
+        const commission = clampCommission(subtotal, platformFee, cashbackByPartner.get(partnerId) ?? 0, rawCommission);
         if (commission <= 0) continue;
 
         const exists = await tx.driverCommissionEntry.findFirst({ where: { orderId, partnerId } });

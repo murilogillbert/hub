@@ -103,6 +103,8 @@ export function AdminPartnersPage() {
         evolutionInstance: p.evolutionInstance ?? undefined,
       }),
     onSuccess: invalidate,
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : 'Falha ao pausar/reativar parceiro.'),
   });
 
   const openEdit = (p: Partner) => {

@@ -1,13 +1,13 @@
-// OpenDriverHub — schema Postgres (Supabase). Porta 1:1 o modelo do antigo
-// AppDbContext.cs (EF Core / SQL Server): mesmas entidades, relações,
-// cascades e índices. Nomes de coluna/tabela em snake_case (idiomático em
-// Postgres/Supabase); o Prisma Client continua expondo camelCase no código.
+// OpenDriverHub — schema Postgres (self-hosted via Coolify). Porta 1:1 o
+// modelo do antigo AppDbContext.cs (EF Core / SQL Server): mesmas
+// entidades, relações, cascades e índices. Nomes de coluna/tabela em
+// snake_case; o Prisma Client continua expondo camelCase no código.
 
 generator client {
   provider      = "prisma-client-js"
   // "native" para rodar local (Windows/Mac/Linux); "rhel-openssl-3.0.x" é o
-  // binário que as funções serverless da Vercel (Amazon Linux) precisam.
-  // Sem isso, o Prisma Client falha em runtime na Vercel com "Query Engine
+  // binário Linux usado no build/runtime de produção (imagem Docker via
+  // Coolify). Sem isso, o Prisma Client falha em runtime com "Query Engine
   // not found for this platform".
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
@@ -388,6 +388,11 @@ model Order {
   driverCommissionEntries DriverCommissionEntry[]
 
   @@index([customerId, status])
+  // Suporta o filtro do job de reconciliação de Pix (paymentService.reconcilePending).
+  @@index([status, paymentMethod, createdAt])
+  // Todo webhook de pagamento busca por um destes dois campos.
+  @@index([externalPaymentId])
+  @@index([paymentReference])
   @@map("orders")
 }
 
@@ -447,6 +452,9 @@ model CashbackEntry {
   createdAt   DateTime          @default(now()) @map("created_at")
 
   @@index([userId, createdAt])
+  // paymentService.approve() consulta 2x por orderId (idempotência de
+  // Used/Earned) dentro da mesma transação.
+  @@index([orderId])
   @@map("cashback_entries")
 }
 
@@ -503,6 +511,7 @@ model Notification {
   readAt    DateTime? @map("read_at")
   createdAt DateTime  @default(now()) @map("created_at")
 
+  @@index([userId, createdAt])
   @@map("notifications")
 }
 
@@ -616,6 +625,9 @@ model DriverCommissionEntry {
 
   @@index([partnerId, createdAt])
   @@index([driverId, createdAt])
+  // Reforça no banco a idempotência que paymentService.approve() já checa
+  // em código (1 lançamento por parceiro por pedido) e acelera a checagem.
+  @@unique([orderId, partnerId])
   @@map("driver_commission_entries")
 }
 

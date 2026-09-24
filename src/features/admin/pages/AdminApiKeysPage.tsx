@@ -45,6 +45,7 @@ export function AdminApiKeysPage() {
       invalidate();
       toast.success('Chave revogada.');
     },
+    onError: (e) => toast.error(e instanceof Error ? e.message : 'Falha ao revogar chave.'),
   });
 
   const items = q.data ?? [];

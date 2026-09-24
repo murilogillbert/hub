@@ -22,24 +22,24 @@ function generateAffiliateCode(): string {
  * ganha um código global (User.affiliateCode) que qualquer comprador digita
  * no checkout. */
 
-export async function searchDrivers(partnerId: string, q: string): Promise<DriverSearchResultDto[]> {
-  const query = q.trim();
+/** Busca por CÓDIGO exato (o mesmo código único do motorista, o que ele
+ * também usa no checkout) — nunca por nome/e-mail. A loja só consegue
+ * adicionar um motorista que já compartilhou o próprio código com ela; não
+ * dá pra "descobrir" motoristas digitando letras soltas (LGPD). */
+export async function findDriverByCode(partnerId: string, code: string): Promise<DriverSearchResultDto[]> {
+  const query = code.trim();
   if (!query) return [];
-  const drivers = await prisma.user.findMany({
-    where: { role: 'Driver', name: { contains: query, mode: 'insensitive' } },
-    orderBy: { name: 'asc' },
-    take: 20,
-    select: { id: true, name: true, email: true },
+  const driver = await prisma.user.findUnique({
+    where: { affiliateCode: query },
+    select: { id: true, name: true, role: true },
   });
-  if (drivers.length === 0) return [];
+  if (!driver || driver.role !== 'Driver') return [];
 
-  const existing = await prisma.driverAffiliate.findMany({
-    where: { partnerId, driverId: { in: drivers.map((d) => d.id) } },
-    select: { driverId: true },
+  const existing = await prisma.driverAffiliate.findUnique({
+    where: { partnerId_driverId: { partnerId, driverId: driver.id } },
   });
-  const existingIds = new Set(existing.map((e) => e.driverId));
 
-  return drivers.map((d) => ({ id: d.id, name: d.name, email: d.email, alreadyAffiliated: existingIds.has(d.id) }));
+  return [{ id: driver.id, name: driver.name, alreadyAffiliated: !!existing }];
 }
 
 async function commissionEarnedByDriver(partnerId: string): Promise<Map<string, { amount: number; orders: number }>> {
@@ -84,6 +84,8 @@ async function ensureDriver(driverId: string): Promise<{ id: string; name: strin
 }
 
 export async function add(partnerId: string, driverId: string, commissionPercent: number): Promise<void> {
+  const partner = await prisma.partner.findUnique({ where: { id: partnerId } });
+  if (!partner?.active) throw new AppError('Loja pausada não pode adicionar novos afiliados.', 409);
   await ensureDriver(driverId);
   await prisma.driverAffiliate.upsert({
     where: { partnerId_driverId: { partnerId, driverId } },
@@ -117,26 +119,24 @@ export async function remove(partnerId: string, driverId: string): Promise<void>
 }
 
 export async function storeMetrics(partnerId: string): Promise<StoreReferralMetricsDto> {
-  const [entries, linkViewsAgg] = await Promise.all([
-    prisma.driverCommissionEntry.findMany({ where: { partnerId }, select: { amount: true, orderId: true } }),
+  // Tudo em agregação no banco — nada de carregar linha por linha em JS
+  // (a lista de DriverCommissionEntry cresce sem limite com o tempo).
+  // ordersCount = contagem de linhas: a constraint única
+  // (orderId, partnerId) em DriverCommissionEntry já garante no máximo 1
+  // lançamento por pedido por loja, então count == pedidos distintos.
+  const [commissionAgg, linkViewsAgg, revenueAgg] = await Promise.all([
+    prisma.driverCommissionEntry.aggregate({ where: { partnerId }, _sum: { amount: true }, _count: { _all: true } }),
     prisma.driverAffiliate.aggregate({ where: { partnerId }, _sum: { linkViews: true } }),
+    prisma.orderItem.aggregate({
+      where: { partnerId, order: { driverCommissionEntries: { some: { partnerId } } } },
+      _sum: { lineTotal: true },
+    }),
   ]);
-  const commissionPaid = entries.reduce((acc, e) => acc + e.amount.toNumber(), 0);
-  const ordersCount = new Set(entries.map((e) => e.orderId).filter((id): id is string => !!id)).size;
-  // Comissão é sobre o subtotal vendido — a receita gerada pela indicação é
-  // reconstruída a partir do mesmo subtotal implícito (comissão / percentual
-  // médio não é confiável por linha, então soma o líquido dos pedidos via
-  // OrderItem ligados a essas orders).
-  const orderIds = [...new Set(entries.map((e) => e.orderId).filter((id): id is string => !!id))];
-  const items = orderIds.length
-    ? await prisma.orderItem.findMany({ where: { orderId: { in: orderIds }, partnerId }, select: { lineTotal: true } })
-    : [];
-  const revenue = items.reduce((acc, i) => acc + i.lineTotal.toNumber(), 0);
 
   return {
-    ordersCount,
-    revenue: round2(revenue),
-    commissionPaid: round2(commissionPaid),
+    ordersCount: commissionAgg._count._all,
+    revenue: round2(revenueAgg._sum.lineTotal?.toNumber() ?? 0),
+    commissionPaid: round2(commissionAgg._sum.amount?.toNumber() ?? 0),
     linkViews: linkViewsAgg._sum.linkViews ?? 0,
   };
 }
@@ -190,10 +190,12 @@ export async function recordClickAndGetPartnerId(driverAffiliateId: string): Pro
 /** Resolve o código de afiliado digitado no checkout: existe o motorista? E
  * ele é afiliado de ALGUMA das lojas do carrinho? Usado na criação do
  * pedido (orderService.createOrder) — lança o erro exato pedido pelo
- * stakeholder quando não bate com nenhuma loja do carrinho. */
-export async function resolveCheckoutCode(affiliateCode: string, distinctPartnerIds: string[]): Promise<string> {
+ * stakeholder quando não bate com nenhuma loja do carrinho. Motorista não
+ * pode se autoindicar (usar o próprio código na própria compra). */
+export async function resolveCheckoutCode(affiliateCode: string, distinctPartnerIds: string[], buyerId: string): Promise<string> {
   const driver = await prisma.user.findUnique({ where: { affiliateCode: affiliateCode.trim() } });
   if (!driver) throw new AppError('código não faz parte dos nossos afiliados', 400);
+  if (driver.id === buyerId) throw new AppError('código não faz parte dos nossos afiliados', 400);
 
   const match = await prisma.driverAffiliate.findFirst({
     where: { driverId: driver.id, partnerId: { in: distinctPartnerIds } },
@@ -216,8 +218,11 @@ export async function commissionMapForOrder(order: {
   if (!order.affiliateDriverId) return map;
 
   const distinctPartnerIds = [...new Set(order.items.map((i) => i.partnerId))];
+  // Recheca o papel atual — se o motorista foi rebaixado (deixou de ser
+  // Driver) depois de indicar, a comissão para de ser gerada dali em diante,
+  // mesmo que o vínculo DriverAffiliate continue existindo.
   const rows = await prisma.driverAffiliate.findMany({
-    where: { driverId: order.affiliateDriverId, partnerId: { in: distinctPartnerIds } },
+    where: { driverId: order.affiliateDriverId, partnerId: { in: distinctPartnerIds }, driver: { role: 'Driver' } },
   });
   for (const row of rows) map.set(row.partnerId, { driverId: row.driverId, percent: row.commissionPercent.toNumber() });
   return map;

@@ -194,6 +194,10 @@ export async function notifications(userId: string): Promise<NotificationDto[]> 
   return rows.map(toNotificationDto);
 }
 
+export async function markNotificationsRead(userId: string): Promise<void> {
+  await prisma.notification.updateMany({ where: { userId, readAt: null }, data: { readAt: new Date() } });
+}
+
 export async function resendVerification(email: string): Promise<void> {
   const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
   // Não revela se o e-mail existe ou já está verificado — resposta genérica

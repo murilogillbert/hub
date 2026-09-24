@@ -48,11 +48,15 @@ export async function metrics(): Promise<AdminMetricsDto> {
     0,
   );
 
-  const customers = await prisma.user.count({ where: { role: 'Client' } });
+  // "Cliente" = quem compra (Passenger/Driver, o antigo Client dividido em
+  // dois papéis) — Client fica de fora por ser legado, nenhuma linha nova
+  // usa esse valor (ver migration migrate_client_role).
+  const customerRoles: ('Passenger' | 'Driver')[] = ['Passenger', 'Driver'];
+  const customers = await prisma.user.count({ where: { role: { in: customerRoles } } });
   const partnersTotal = await prisma.partner.count();
   const partnersActive = await prisma.partner.count({ where: { active: true } });
   const cashbackAgg = await prisma.user.aggregate({
-    where: { role: 'Client' },
+    where: { role: { in: customerRoles } },
     _sum: { cashbackBalance: true },
   });
   const cashbackOutstanding = cashbackAgg._sum.cashbackBalance?.toNumber() ?? 0;
@@ -61,7 +65,7 @@ export async function metrics(): Promise<AdminMetricsDto> {
   today.setUTCHours(0, 0, 0, 0);
   const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const ordersToday = all.filter((o) => o.createdAt >= today).length;
-  const newCustomers30 = await prisma.user.count({ where: { role: 'Client', createdAt: { gte: since30 } } });
+  const newCustomers30 = await prisma.user.count({ where: { role: { in: customerRoles }, createdAt: { gte: since30 } } });
 
   const pendingCount = all.filter((o) => o.status === 'PendingPayment').length;
   const paidCount = all.filter((o) => o.status === 'Paid').length;

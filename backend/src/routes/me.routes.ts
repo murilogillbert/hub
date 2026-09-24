@@ -24,6 +24,11 @@ meRouter.get('/me/notifications', requireAuth, async (req, res) => {
   res.json(envelope(await authService.notifications(userId(req))));
 });
 
+meRouter.post('/me/notifications/read', requireAuth, async (req, res) => {
+  await authService.markNotificationsRead(userId(req));
+  res.status(204).send();
+});
+
 meRouter.put('/me/password', requireAuth, validateBody(changePasswordSchema), async (req, res) => {
   await authService.changePassword(userId(req), req.body);
   res.status(204).send();

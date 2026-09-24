@@ -4,7 +4,7 @@ import { getSetting } from '../settingsProvider.js';
 
 // Criado sob demanda (não no boot) — assim a API sobe normalmente mesmo antes
 // do Gmail estar configurado em Admin → Integrações; só o envio de e-mail fica
-// indisponível até lá (mesmo princípio do client do Supabase Storage).
+// indisponível até lá.
 let cached: { transporter: Transporter; from: string } | null = null;
 
 async function client(): Promise<{ transporter: Transporter; from: string }> {

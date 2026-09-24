@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '@shared/api/endpoints';
 import { formatDateTime } from '@shared/utils/formatters';
 import { Icon } from '@shared/components/Icon/Icon';
 import './NotificationsBell.css';
 
 export function NotificationsBell() {
+  const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const q = useQuery({
     queryKey: ['me-notifications'],
@@ -15,6 +16,11 @@ export function NotificationsBell() {
   const items = q.data ?? [];
   const unread = items.filter((item) => !item.read).length;
 
+  const markRead = useMutation({
+    mutationFn: () => authApi.markNotificationsRead(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['me-notifications'] }),
+  });
+
   return (
     <div className="notifications-bell">
       <button
@@ -22,7 +28,10 @@ export function NotificationsBell() {
         className="notifications-bell__button"
         aria-label="Notificações"
         aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          setOpen((value) => !value);
+          if (!open && unread > 0) markRead.mutate();
+        }}
       >
         <Icon name="bell" size={18} />
         {unread > 0 && <strong>{unread > 9 ? '9+' : unread}</strong>}

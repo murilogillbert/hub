@@ -25,6 +25,13 @@ export async function createOrder(customerId: string, req: CreateOrderRequest): 
   const customer = await prisma.user.findUnique({ where: { id: customerId } });
   if (!customer) throw new AppError('Usuário não encontrado.', 401);
 
+  // Busca todos os produtos do carrinho de uma vez (evita 1 SELECT por item).
+  const products = await prisma.product.findMany({
+    where: { id: { in: [...merged.keys()] } },
+    include: { partner: true },
+  });
+  const productById = new Map(products.map((p) => [p.id, p]));
+
   const itemsData: {
     productId: string;
     partnerId: string;
@@ -41,9 +48,10 @@ export async function createOrder(customerId: string, req: CreateOrderRequest): 
   let cashbackEarned = 0;
 
   for (const [productId, qty] of merged) {
-    const product = await prisma.product.findUnique({ where: { id: productId } });
+    const product = productById.get(productId);
     if (!product) throw new AppError('Produto não encontrado.', 404);
     if (!product.active) throw new AppError(`Produto indisponível: ${product.title}.`, 409);
+    if (!product.partner.active) throw new AppError(`Loja indisponível para: ${product.title}.`, 409);
     if (product.stock < qty) throw new AppError(`Estoque insuficiente para ${product.title}.`, 409);
 
     const price = product.price.toNumber();
@@ -67,7 +75,23 @@ export async function createOrder(customerId: string, req: CreateOrderRequest): 
     cashbackEarned += lineCashback;
   }
 
-  const cashbackUsed = req.useCashback ? Math.min(Math.round(customer.cashbackBalance.toNumber() * 100) / 100, paidPrice) : 0;
+  // Reserva o cashback de forma atômica (decremento condicional ao saldo
+  // disponível no momento) — evita que 2 pedidos criados quase juntos gastem
+  // o mesmo saldo duas vezes. Se perder a corrida, o pedido segue sem
+  // desconto (nunca falha a criação por causa disso). O saldo só volta se o
+  // pedido for cancelado/expirar sem pagar (ver paymentService.cancelOrder) —
+  // approve() não desconta de novo, só registra o lançamento no extrato.
+  let cashbackUsed = 0;
+  if (req.useCashback) {
+    const wanted = Math.min(Math.round(customer.cashbackBalance.toNumber() * 100) / 100, paidPrice);
+    if (wanted > 0) {
+      const reserved = await prisma.user.updateMany({
+        where: { id: customerId, cashbackBalance: { gte: wanted } },
+        data: { cashbackBalance: { decrement: wanted } },
+      });
+      if (reserved.count === 1) cashbackUsed = wanted;
+    }
+  }
 
   // Código de afiliado (motorista) digitado no checkout — só grava se bater
   // com pelo menos UMA loja do carrinho; senão erro exato pedido pelo
@@ -76,7 +100,7 @@ export async function createOrder(customerId: string, req: CreateOrderRequest): 
   let affiliateDriverId: string | null = null;
   if (req.affiliateCode) {
     const distinctPartnerIds = [...new Set(itemsData.map((i) => i.partnerId))];
-    affiliateDriverId = await driverAffiliateService.resolveCheckoutCode(req.affiliateCode, distinctPartnerIds);
+    affiliateDriverId = await driverAffiliateService.resolveCheckoutCode(req.affiliateCode, distinctPartnerIds, customerId);
   }
 
   const order = await prisma.order.create({

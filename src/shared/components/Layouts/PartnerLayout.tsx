@@ -77,6 +77,9 @@ export function PartnerLayout() {
               <NavLink to="/parceiro/perfil">
                 <Icon name="user" size={17} /> Meu perfil
               </NavLink>
+              <NavLink to="/produtos">
+                <Icon name="cart" size={17} /> Comprar no hub
+              </NavLink>
             </>
           )}
         </nav>

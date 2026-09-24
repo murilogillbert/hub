@@ -1,5 +1,3 @@
-import { jsPDF } from 'jspdf';
-
 /** Serializa o <svg> do QR pra um PNG (fundo branco) em data URL — usado
  * tanto pelo download em PNG quanto pelo PDF (embutido como imagem). */
 async function svgToPngDataUrl(svg: SVGSVGElement, scale = 6): Promise<string> {
@@ -54,6 +52,10 @@ export async function downloadQrPdf(
   filename: string,
   title?: string,
 ): Promise<void> {
+  // Import dinâmico: jsPDF (+ html2canvas/purify que ele puxa junto) só
+  // entra no bundle de quem realmente clica em "baixar PDF", em vez de
+  // pesar no chunk principal pra todo visitante.
+  const { jsPDF } = await import('jspdf');
   const dataUrl = await svgToPngDataUrl(svg, 8);
   const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
   const pageWidth = pdf.internal.pageSize.getWidth();

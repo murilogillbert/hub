@@ -26,7 +26,12 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://opendriver.com.br/cadastro/cliente</loc>
+    <loc>https://opendriver.com.br/cadastro/passageiro</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://opendriver.com.br/cadastro/motorista</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>

@@ -45,6 +45,7 @@ export async function getProducts(category?: string, q?: string, partnerId?: str
   const list = await prisma.product.findMany({
     where: {
       active: true,
+      partner: { active: true },
       ...(category && category !== 'Todos' ? { category } : {}),
       ...(q ? { title: { contains: q, mode: 'insensitive' } } : {}),
       ...(partnerId ? { partnerId } : {}),
@@ -61,6 +62,7 @@ export async function searchCatalog(q: CatalogQuery): Promise<CatalogPage> {
   let products = await prisma.product.findMany({
     where: {
       active: true,
+      partner: { active: true },
       ...(q.category && q.category !== 'Todos' ? { category: q.category } : {}),
       ...(q.partnerId ? { partnerId: q.partnerId } : {}),
       ...(term

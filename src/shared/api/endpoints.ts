@@ -176,6 +176,7 @@ export const authApi = {
     promo: boolean;
   }) => api.put<void>('/me/notifications', body),
   notifications: () => api.get<AppNotification[]>('/me/notifications'),
+  markNotificationsRead: () => api.post<void>('/me/notifications/read', {}),
   changePassword: (body: { currentPassword: string; newPassword: string }) =>
     api.put<void>('/me/password', body),
   resendVerification: (email: string) =>
@@ -366,7 +367,6 @@ export const partnerApi = {
 export interface DriverSearchResult {
   id: string;
   name: string;
-  email: string;
   alreadyAffiliated: boolean;
 }
 export interface DriverAffiliate {

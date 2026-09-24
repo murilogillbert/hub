@@ -1,11 +1,16 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, Suspense, lazy, useState } from 'react';
 import { useAuth } from '@shared/hooks/useAuth';
-import { QrScanner } from '@shared/components/QrScanner/QrScanner';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { formatCurrency } from '@shared/utils/formatters';
 import { partnerApi, RedeemResult } from '@shared/api/endpoints';
 import { Icon } from '@shared/components/Icon/Icon';
 import './PartnerRedeemPage.css';
+
+// QrScanner (html5-qrcode, ~330KB) só entra no bundle de quem abre esta
+// página — nada disso pesa no chunk principal pra visitantes anônimos.
+const QrScanner = lazy(() =>
+  import('@shared/components/QrScanner/QrScanner').then((m) => ({ default: m.QrScanner })),
+);
 
 type Screen = 'home' | 'scan' | 'manual' | 'result';
 
@@ -124,14 +129,16 @@ export function PartnerRedeemPage() {
             <p className="totem__subtitle">
               Posicione o voucher do cliente dentro da área.
             </p>
-            <QrScanner
-              large
-              onScan={(code) => {
-                setCodeInput(code);
-                handleLookup(code);
-              }}
-              onError={setError}
-            />
+            <Suspense fallback={<p className="text-muted">Carregando câmera...</p>}>
+              <QrScanner
+                large
+                onScan={(code) => {
+                  setCodeInput(code);
+                  handleLookup(code);
+                }}
+                onError={setError}
+              />
+            </Suspense>
             <button className="totem__back" onClick={reset}>
               ← Voltar
             </button>

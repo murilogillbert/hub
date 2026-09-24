@@ -4,6 +4,7 @@ import { Card } from '@shared/components/Card/Card';
 import { Button } from '@shared/components/Button/Button';
 import { Input } from '@shared/components/Input/Input';
 import { QueryState } from '@shared/components/QueryState/QueryState';
+import { useToast } from '@shared/components/Toaster/ToastContext';
 import {
   adminApi,
   IntegrationField,
@@ -94,6 +95,7 @@ function FieldRow({
 
 export function AdminIntegrationsPage() {
   const qc = useQueryClient();
+  const toast = useToast();
   const groupsQuery = useQuery({
     queryKey: ['admin-integrations'],
     queryFn: () => adminApi.integrations(),
@@ -102,7 +104,11 @@ export function AdminIntegrationsPage() {
   const updateMut = useMutation({
     mutationFn: ({ key, value }: { key: string; value: string | null }) =>
       adminApi.updateIntegration(key, value),
-    onSuccess: (data) => qc.setQueryData(['admin-integrations'], data),
+    onSuccess: (data) => {
+      qc.setQueryData(['admin-integrations'], data);
+      toast.success('Configuração salva.');
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : 'Falha ao salvar.'),
   });
 
   const groups = groupsQuery.data ?? [];

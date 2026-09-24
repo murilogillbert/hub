@@ -3,7 +3,7 @@ import type { ProductDto, ProductUpsertRequest, UpdateMyPartnerProfileRequest } 
 import type { AffiliatePartnerDto } from '../dtos/affiliate.dto.js';
 import type { PartnerMetricsDto } from '../dtos/partner.dto.js';
 import type { RedeemResult } from '../dtos/orders.dto.js';
-import { driverCommissionFor, partnerNet, platformFeeFor, round2 } from '../domain/commissionRules.js';
+import { clampCommission, driverCommissionFor, partnerNet, platformFeeFor, round2 } from '../domain/commissionRules.js';
 import { AppError } from '../errors.js';
 import { prisma } from '../infra/prisma.js';
 import { parseProductKind, toAffiliatePartnerDto, toProductDto } from '../mappings.js';
@@ -242,7 +242,8 @@ export async function redeem(partnerId: string, actorId: string, code: string, c
   // pra exibir o líquido certo pro parceiro nesta tela/no audit log.
   const commissionByPartner = await driverAffiliateService.commissionMapForOrder(order);
   const commissionInfo = commissionByPartner.get(partnerId);
-  const commission = commissionInfo ? driverCommissionFor(subtotal, commissionInfo.percent) : 0;
+  const rawCommission = commissionInfo ? driverCommissionFor(subtotal, commissionInfo.percent) : 0;
+  const commission = clampCommission(subtotal, platformFee, cashback, rawCommission);
   const net = partnerNet(subtotal, platformFee, cashback, commission);
   const title = pending.map((i) => `${i.quantity}x ${i.productTitle}`).join(', ');
 

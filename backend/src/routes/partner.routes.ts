@@ -157,7 +157,7 @@ partnerRouter.get('/affiliate/link', ...guard, async (req, res) => {
 // ---------- Afiliação loja↔motorista (programa novo, independente do solar) ----------
 
 partnerRouter.get('/affiliate-drivers/search', ...guard, async (req, res) => {
-  res.json(envelope(await driverAffiliateService.searchDrivers(partnerId(req), String(req.query.q ?? ''))));
+  res.json(envelope(await driverAffiliateService.findDriverByCode(partnerId(req), String(req.query.q ?? ''))));
 });
 
 partnerRouter.get('/affiliate-drivers/metrics', ...guard, async (req, res) => {

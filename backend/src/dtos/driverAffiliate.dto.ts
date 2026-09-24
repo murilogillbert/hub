@@ -19,7 +19,6 @@ export type BulkCommissionRequest = z.infer<typeof bulkCommissionSchema>;
 export interface DriverSearchResultDto {
   id: string;
   name: string;
-  email: string;
   alreadyAffiliated: boolean;
 }
 

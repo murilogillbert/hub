@@ -1,10 +1,10 @@
 /**
  * Cliente HTTP central. Injeta JWT, trata 401 (refresh→logout) e
- * desembrulha o envelope { data } da API .NET.
+ * desembrulha o envelope { data } da API.
  */
 
 const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5029/api/v1';
+  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api/v1';
 
 /** Origem do servidor (sem /api/v1) — usada para servir /uploads. */
 export const SERVER_ORIGIN = BASE_URL.replace(/\/api\/v1\/?$/, '');

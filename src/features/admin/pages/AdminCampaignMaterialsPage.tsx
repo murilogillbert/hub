@@ -35,10 +35,12 @@ export function AdminCampaignMaterialsPage() {
     mutationFn: (m: { id: string; title: string; description: string; fileUrl: string; active: boolean }) =>
       adminApi.updateCampaignMaterial(m.id, m),
     onSuccess: invalidate,
+    onError: (e) => toast.error(e instanceof Error ? e.message : 'Falha ao atualizar material.'),
   });
   const remove = useMutation({
     mutationFn: (id: string) => adminApi.deleteCampaignMaterial(id),
     onSuccess: invalidate,
+    onError: (e) => toast.error(e instanceof Error ? e.message : 'Falha ao remover material.'),
   });
 
   const items = q.data ?? [];

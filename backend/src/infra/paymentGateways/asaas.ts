@@ -1,4 +1,4 @@
-import { driverCommissionFor, partnerNet, platformFeeFor } from '../../domain/commissionRules.js';
+import { clampCommission, driverCommissionFor, partnerNet, platformFeeFor } from '../../domain/commissionRules.js';
 import { AppError } from '../../errors.js';
 import * as driverAffiliateService from '../../services/driverAffiliateService.js';
 import { getSetting } from '../settingsProvider.js';
@@ -58,20 +58,36 @@ async function baseUrlAndHeaders(): Promise<{ baseUrl: string; headers: Record<s
  * a Asaas transfere pro parceiro e o que é debitado do líquido dele aqui. */
 async function buildSplits(order: OrderForPayment, chargeAmount: number): Promise<{ walletId: string; fixedValue: number }[]> {
   const commissionByPartner = await driverAffiliateService.commissionMapForOrder(order);
-  const byPartner = new Map<string, { walletId: string; net: number }>();
+
+  // Agrega por parceiro ANTES de aplicar a comissão (mesma ordem de
+  // operações de paymentService.approve()) — clampCommission por item
+  // isolado daria um total diferente de clampar uma vez sobre o subtotal do
+  // parceiro, o que faria o split real divergir do valor creditado.
+  const byPartner = new Map<string, { walletId: string | null; subtotal: number; fee: number; cashback: number }>();
   for (const item of order.items) {
-    const walletId = item.partner?.asaasWalletId;
-    if (!walletId) continue;
-    const fee = platformFeeFor(item.lineTotal.toNumber(), item.partner.feePercent.toNumber());
-    const commissionInfo = commissionByPartner.get(item.partnerId);
-    const commission = commissionInfo ? driverCommissionFor(item.lineTotal.toNumber(), commissionInfo.percent) : 0;
-    const net = partnerNet(item.lineTotal.toNumber(), fee, item.cashbackEarned.toNumber(), commission);
-    const entry = byPartner.get(item.partnerId) ?? { walletId, net: 0 };
-    entry.net += net;
+    const entry = byPartner.get(item.partnerId) ?? {
+      walletId: item.partner?.asaasWalletId ?? null,
+      subtotal: 0,
+      fee: 0,
+      cashback: 0,
+    };
+    entry.subtotal += item.lineTotal.toNumber();
+    entry.fee += platformFeeFor(item.lineTotal.toNumber(), item.partner.feePercent.toNumber());
+    entry.cashback += item.cashbackEarned.toNumber();
     byPartner.set(item.partnerId, entry);
   }
 
-  const splits = [...byPartner.values()]
+  const splitsByPartner = new Map<string, { walletId: string; net: number }>();
+  for (const [partnerId, agg] of byPartner) {
+    if (!agg.walletId) continue;
+    const commissionInfo = commissionByPartner.get(partnerId);
+    const rawCommission = commissionInfo ? driverCommissionFor(agg.subtotal, commissionInfo.percent) : 0;
+    const commission = clampCommission(agg.subtotal, agg.fee, agg.cashback, rawCommission);
+    const net = partnerNet(agg.subtotal, agg.fee, agg.cashback, commission);
+    splitsByPartner.set(partnerId, { walletId: agg.walletId, net });
+  }
+
+  const splits = [...splitsByPartner.values()]
     .map((v) => ({ walletId: v.walletId, fixedValue: Math.round(v.net * 100) / 100 }))
     .filter((s) => s.fixedValue > 0);
 

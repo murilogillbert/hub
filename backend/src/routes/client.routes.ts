@@ -53,7 +53,7 @@ clientRouter.post(
 );
 
 clientRouter.get('/orders/:id/payment-status', ...guard, async (req, res) => {
-  res.json(envelope(await paymentService.status(req.params.id as string)));
+  res.json(envelope(await paymentService.status(req.params.id as string, userId(req))));
 });
 
 // ---------- Afiliação loja↔motorista (lado motorista) ----------

@@ -73,6 +73,11 @@ export function ClientLayout({ children }: ClientLayoutProps) {
                 <Icon name="wallet" size={17} /> Meu cashback
               </NavLink>
             )}
+            {user?.role === 'partner' && (
+              <NavLink to="/parceiro">
+                <Icon name="store" size={17} /> Painel da loja
+              </NavLink>
+            )}
           </nav>
           <div className="layout-client__user">
             {isAuthenticated && user ? (

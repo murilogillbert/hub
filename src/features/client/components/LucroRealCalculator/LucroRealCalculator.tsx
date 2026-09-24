@@ -33,7 +33,7 @@ interface LucroRealCalculatorProps {
 }
 
 export function LucroRealCalculator({
-  whatsappNumber = '5511999999999',
+  whatsappNumber = '556182187476',
   intro,
 }: LucroRealCalculatorProps) {
   const toast = useToast();

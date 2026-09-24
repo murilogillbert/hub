@@ -107,6 +107,7 @@ function CategorySuggestionsCard() {
 
 export function AdminCategoriesPage() {
   const qc = useQueryClient();
+  const toast = useToast();
   const q = useQuery({
     queryKey: ['admin-categories'],
     queryFn: () => adminApi.categories(),
@@ -135,10 +136,12 @@ export function AdminCategoriesPage() {
     mutationFn: (c: Category) =>
       adminApi.updateCategory(c.id, c.name, c.active),
     onSuccess: invalidate,
+    onError: (e) => toast.error(e instanceof Error ? e.message : 'Falha ao atualizar categoria.'),
   });
   const deleteMut = useMutation({
     mutationFn: (id: string) => adminApi.deleteCategory(id),
     onSuccess: invalidate,
+    onError: (e) => toast.error(e instanceof Error ? e.message : 'Falha ao remover categoria.'),
   });
 
   const cats = q.data ?? [];
