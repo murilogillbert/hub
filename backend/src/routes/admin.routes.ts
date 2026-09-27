@@ -3,6 +3,7 @@ import { createPayoutSchema } from '../dtos/admin.dto.js';
 import { categoryUpsertSchema, partnerUpsertSchema, storeUpsertSchema } from '../dtos/catalog.dto.js';
 import { envelope } from '../dtos/common.dto.js';
 import { adminUserCreateSchema, adminUserUpdateSchema } from '../dtos/auth.dto.js';
+import { markDriverRewardPaidSchema } from '../dtos/driverRewardPayout.dto.js';
 import { updateSettingSchema } from '../dtos/settings.dto.js';
 import { campaignMaterialSchema, createApiKeySchema } from '../dtos/affiliate.dto.js';
 import { ROLES, requireAuth, requireRole, userId } from '../middleware/auth.js';
@@ -13,6 +14,7 @@ import * as assistantService from '../services/assistantService.js';
 import * as campaignMaterialService from '../services/campaignMaterialService.js';
 import * as categoryService from '../services/categoryService.js';
 import * as categorySuggestionService from '../services/categorySuggestionService.js';
+import * as driverRewardPayoutService from '../services/driverRewardPayoutService.js';
 import * as serviceApiKeyService from '../services/serviceApiKeyService.js';
 import * as settingsService from '../services/settingsService.js';
 import * as storeService from '../services/storeService.js';
@@ -190,6 +192,28 @@ adminRouter.delete('/survey/whatsapp', ...guard, async (_req, res) => {
   await surveyWhatsappService.disconnect();
   res.status(204).send();
 });
+
+// ---------- Repasse manual (comissão de afiliado / recompensa da pesquisa) ----------
+adminRouter.get('/driver-payouts/summary', ...guard, async (_req, res) => {
+  res.json(envelope(await driverRewardPayoutService.summary()));
+});
+adminRouter.get('/driver-payouts', ...guard, async (req, res) => {
+  const q = req.query as Record<string, string | undefined>;
+  res.json(
+    envelope(
+      await driverRewardPayoutService.history(q.driverId, q.page ? Number(q.page) : 1, q.pageSize ? Number(q.pageSize) : 20),
+    ),
+  );
+});
+adminRouter.post(
+  '/driver-payouts/:driverId/mark-paid',
+  ...guard,
+  validateBody(markDriverRewardPaidSchema),
+  async (req, res) => {
+    await driverRewardPayoutService.markPaid(userId(req), req.params.driverId as string, req.body);
+    res.status(204).send();
+  },
+);
 
 adminRouter.get('/audit-logs', ...guard, async (req, res) => {
   const q = req.query as Record<string, string | undefined>;

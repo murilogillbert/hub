@@ -472,6 +472,26 @@ export interface PayoutSummary {
   paid: number;
   available: number;
 }
+export interface DriverRewardSummary {
+  driverId: string;
+  driverName: string;
+  driverEmail: string;
+  commissionEarned: number;
+  commissionPaid: number;
+  commissionOwed: number;
+  surveyEarned: number;
+  surveyPaid: number;
+  surveyOwed: number;
+}
+export interface DriverRewardPayout {
+  id: string;
+  driverId: string;
+  driverName: string;
+  source: 'DriverCommission' | 'SurveyReward';
+  amount: number;
+  note: string;
+  createdAt: string;
+}
 
 export const adminApi = {
   metrics: () => api.get<AdminMetrics>('/admin/metrics'),
@@ -557,6 +577,19 @@ export const adminApi = {
     periodEnd: string;
     note?: string;
   }) => api.post<PartnerPayout>('/admin/payouts', body),
+  driverPayoutSummary: () =>
+    api.get<DriverRewardSummary[]>('/admin/driver-payouts/summary'),
+  driverPayouts: (params?: { driverId?: string; page?: number; pageSize?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.driverId) qs.set('driverId', params.driverId);
+    qs.set('page', String(params?.page ?? 1));
+    qs.set('pageSize', String(params?.pageSize ?? 20));
+    return api.get<PagedResult<DriverRewardPayout>>(`/admin/driver-payouts?${qs.toString()}`);
+  },
+  markDriverRewardPaid: (
+    driverId: string,
+    body: { source: 'DriverCommission' | 'SurveyReward'; amount?: number; note?: string },
+  ) => api.post<void>(`/admin/driver-payouts/${driverId}/mark-paid`, body),
   leads: () => api.get<LeadDto[]>('/admin/leads'),
   integrations: () => api.get<IntegrationGroup[]>('/admin/integrations'),
   updateIntegration: (key: string, value: string | null) =>

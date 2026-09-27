@@ -164,6 +164,7 @@ model User {
   driverAffiliates    DriverAffiliate[]
   driverCommissionEntries DriverCommissionEntry[]
   affiliateOrders     Order[] @relation("OrderAffiliateDriver")
+  driverRewardPayouts DriverRewardPayout[]
 
   @@map("users")
 }
@@ -629,6 +630,34 @@ model DriverCommissionEntry {
   // em código (1 lançamento por parceiro por pedido) e acelera a checagem.
   @@unique([orderId, partnerId])
   @@map("driver_commission_entries")
+}
+
+enum DriverRewardSource {
+  /// Comissão do programa de afiliação loja↔motorista (DriverCommissionEntry).
+  DriverCommission
+  /// Recompensa da pesquisa de opinião (SurveyLead.rewardAmount).
+  SurveyReward
+}
+
+/// Repasse manual lançado pelo Admin quando paga um motorista por fora (Pix)
+/// pelo saldo de comissão de afiliado ou de recompensa da pesquisa — "saldo
+/// devedor" de cada fonte = soma do ganho (DriverCommissionEntry ou
+/// SurveyLead.rewardAmount) menos a soma destes repasses. Ao lançar, desconta
+/// o mesmo valor do cashbackBalance do motorista (ver
+/// driverRewardPayoutService.markPaid) pra não deixar ele gastar no app o
+/// que já foi pago por fora.
+model DriverRewardPayout {
+  id        String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  driverId  String             @map("driver_id") @db.Uuid
+  driver    User               @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  source    DriverRewardSource
+  amount    Decimal            @db.Decimal(12, 2)
+  note      String             @default("") @db.VarChar(400)
+  createdBy String?            @map("created_by") @db.Uuid
+  createdAt DateTime           @default(now()) @map("created_at")
+
+  @@index([driverId, source, createdAt])
+  @@map("driver_reward_payouts")
 }
 
 /// Pedido de saque de um afiliado — autoatendimento + aprovação do financeiro.

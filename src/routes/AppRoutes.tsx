@@ -43,6 +43,7 @@ import { AdminDashboardPage } from '@features/admin/pages/AdminDashboardPage';
 import { AdminSalesPage } from '@features/admin/pages/AdminSalesPage';
 import { AdminPartnersPage } from '@features/admin/pages/AdminPartnersPage';
 import { AdminPayoutsPage } from '@features/admin/pages/AdminPayoutsPage';
+import { AdminDriverPayoutsPage } from '@features/admin/pages/AdminDriverPayoutsPage';
 import { AdminStoresPage } from '@features/admin/pages/AdminStoresPage';
 import { AdminUsersPage } from '@features/admin/pages/AdminUsersPage';
 import { AdminIntegrationsPage } from '@features/admin/pages/AdminIntegrationsPage';
@@ -171,6 +172,7 @@ export function AppRoutes() {
           <Route path="vendas" element={<AdminSalesPage />} />
           <Route path="parceiros" element={<AdminPartnersPage />} />
           <Route path="repasses" element={<AdminPayoutsPage />} />
+          <Route path="pagamentos-motoristas" element={<AdminDriverPayoutsPage />} />
           <Route path="unidades" element={<AdminStoresPage />} />
           <Route path="usuarios" element={<AdminUsersPage />} />
           <Route path="categorias" element={<AdminCategoriesPage />} />

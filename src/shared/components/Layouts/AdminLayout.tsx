@@ -45,6 +45,9 @@ export function AdminLayout() {
           <NavLink to="/admin/repasses">
             <Icon name="banknote" size={17} /> Repasses
           </NavLink>
+          <NavLink to="/admin/pagamentos-motoristas">
+            <Icon name="banknote" size={17} /> Pagamentos de motoristas
+          </NavLink>
           <NavLink to="/admin/unidades">
             <Icon name="store" size={17} /> Unidades
           </NavLink>
