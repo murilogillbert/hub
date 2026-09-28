@@ -124,9 +124,10 @@ export function FinanceiroAffiliatesPage() {
       >
         <form className="stack" onSubmit={submit}>
           <div className="input-field">
-            <label className="input-field__label">Tipo</label>
+            <label htmlFor="financeiroaffiliates-tipo" className="input-field__label">Tipo</label>
             <div className="input-field__box">
               <select
+                id="financeiroaffiliates-tipo"
                 className="input-field__el"
                 value={type}
                 onChange={(e) => setType(e.target.value as 'credit' | 'debit')}

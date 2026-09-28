@@ -260,7 +260,7 @@ export function AdminUsersPage() {
       {usersPage && (
         <div className="admin-pagination">
           <span>
-            Pagina {usersPage.page} de {usersPage.totalPages} - {usersPage.total} usuario(s)
+            Página {usersPage.page} de {usersPage.totalPages} - {usersPage.total} usuário(s)
           </span>
           <div className="row">
             <button
@@ -322,9 +322,10 @@ export function AdminUsersPage() {
               )}
               <div className="row">
                 <div className="input-field">
-                  <label className="input-field__label">Perfil</label>
+                  <label htmlFor="adminusers-perfil" className="input-field__label">Perfil</label>
                   <div className="input-field__box">
                     <select
+                      id="adminusers-perfil"
                       className="input-field__el"
                       value={edit.role}
                       onChange={(e) => set('role', e.target.value as Role)}
@@ -350,11 +351,12 @@ export function AdminUsersPage() {
               {edit.role === 'partner' && (
                 <>
                   <div className="input-field">
-                    <label className="input-field__label">
+                    <label htmlFor="adminusers-parceiro-vinculado" className="input-field__label">
                       Parceiro vinculado
                     </label>
                     <div className="input-field__box">
                       <select
+                        id="adminusers-parceiro-vinculado"
                         className="input-field__el"
                         value={edit.partnerId}
                         onChange={(e) => set('partnerId', e.target.value)}

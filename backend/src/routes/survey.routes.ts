@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { Router } from 'express';
+import { config } from '../config.js';
 import { envelope } from '../dtos/common.dto.js';
 import { getSetting } from '../infra/settingsProvider.js';
 import { requireAuth, requireRole, userId } from '../middleware/auth.js';
@@ -45,7 +46,10 @@ function verifySvixSignature(secret: string, id: string, timestamp: string, rawB
 /** Sem requireAuth — o Formbricks autentica via assinatura HMAC (Svix), não
  * por header custom. Se Survey:WebhookSecret não estiver configurado ainda,
  * cai pro webhookId simples (mesmo nível de segurança que o webhook do n8n
- * da pesquisa solar já usa) em vez de bloquear tudo. */
+ * da pesquisa solar já usa). Sem nenhum dos dois, falha fechada (503) —
+ * cada lead inédito paga o motorista, então aceitar POST anônimo abriria
+ * caminho pra leads falsos. Só em dev (PAYMENT_WEBHOOK_REQUIRE_SIGNATURE=false)
+ * aceita sem configuração, como os webhooks de pagamento. */
 surveyRouter.post('/webhook', async (req, res) => {
   const secret = await getSetting('Survey:WebhookSecret');
 
@@ -60,7 +64,12 @@ surveyRouter.post('/webhook', async (req, res) => {
     }
   } else {
     const expectedId = await getSetting('Survey:ExpectedWebhookId');
-    if (expectedId && req.body?.webhookId !== expectedId) {
+    if (!expectedId) {
+      if (config.webhook.requireSignature) {
+        res.status(503).json({ error: 'webhook_secret_not_configured' });
+        return;
+      }
+    } else if (req.body?.webhookId !== expectedId) {
       res.status(401).json({ error: 'invalid_webhook_id' });
       return;
     }

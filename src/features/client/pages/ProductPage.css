@@ -11,7 +11,7 @@
 }
 
 .product-page__back:hover {
-  color: var(--color-primary);
+  color: var(--color-text-green);
 }
 
 .product-page__main {

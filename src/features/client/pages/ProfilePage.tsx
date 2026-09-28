@@ -17,7 +17,7 @@ export function ProfilePage() {
       <header className="client-area__header">
         <div>
           <h2>Minha conta</h2>
-          <p className="text-muted">Atualize suas informacoes e preferencias.</p>
+          <p className="text-muted">Atualize suas informações e preferências.</p>
         </div>
       </header>
 

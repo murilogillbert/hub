@@ -54,8 +54,8 @@ export function AdminAuditPage() {
             onChange={(e) => resetPage(setAction, e.target.value)}
           />
           <Input
-            label="Usuario"
-            placeholder="ID do usuario"
+            label="Usuário"
+            placeholder="ID do usuário"
             value={userId}
             onChange={(e) => resetPage(setUserId, e.target.value)}
           />
@@ -87,7 +87,7 @@ export function AdminAuditPage() {
               <tr>
                 <th>Data</th>
                 <th>Evento</th>
-                <th>Usuario</th>
+                <th>Usuário</th>
                 <th>Entidade</th>
                 <th>Payload</th>
               </tr>
@@ -120,7 +120,7 @@ export function AdminAuditPage() {
       {data && (
         <div className="admin-pagination">
           <span>
-            Pagina {data.page} de {data.totalPages} - {data.total} evento(s)
+            Página {data.page} de {data.totalPages} - {data.total} evento(s)
           </span>
           <div className="row">
             <button

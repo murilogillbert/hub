@@ -48,7 +48,7 @@
 
 .confirmation__voucher-info strong {
   font-size: var(--font-xl);
-  color: var(--color-primary);
+  color: var(--color-text-green);
   margin-bottom: var(--space-3);
 }
 

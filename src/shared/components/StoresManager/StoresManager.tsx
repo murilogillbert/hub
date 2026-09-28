@@ -273,9 +273,10 @@ export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
         <Card>
           <div className="stores-manager__filter">
             <div className="input-field">
-              <label className="input-field__label">Parceiro</label>
+              <label htmlFor="storesmanager-parceiro" className="input-field__label">Parceiro</label>
               <div className="input-field__box">
                 <select
+                  id="storesmanager-parceiro"
                   className="input-field__el"
                   value={selectedPartnerId}
                   onChange={(e) => {
@@ -325,9 +326,10 @@ export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
 
             {isAdmin && (
               <div className="input-field">
-                <label className="input-field__label">Parceiro</label>
+                <label htmlFor="storesmanager-form-parceiro" className="input-field__label">Parceiro</label>
                 <div className="input-field__box">
                   <select
+                    id="storesmanager-form-parceiro"
                     className="input-field__el"
                     value={form.partnerId}
                     onChange={(e) => set('partnerId', e.target.value)}
@@ -352,9 +354,10 @@ export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
                 required
               />
               <div className="input-field">
-                <label className="input-field__label">Categoria</label>
+                <label htmlFor="storesmanager-categoria" className="input-field__label">Categoria</label>
                 <div className="input-field__box">
                   <select
+                    id="storesmanager-categoria"
                     className="input-field__el"
                     value={form.category}
                     onChange={(e) => set('category', e.target.value)}

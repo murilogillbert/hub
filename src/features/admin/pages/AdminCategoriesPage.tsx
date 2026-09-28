@@ -174,9 +174,10 @@ export function AdminCategoriesPage() {
             placeholder="Ex.: Pet Shop"
           />
           <div className="input-field" style={{ maxWidth: 200 }}>
-            <label className="input-field__label">Tipo</label>
+            <label htmlFor="admincategories-tipo" className="input-field__label">Tipo</label>
             <div className="input-field__box">
               <select
+                id="admincategories-tipo"
                 className="input-field__el"
                 value={type}
                 onChange={(e) =>
@@ -217,6 +218,7 @@ export function AdminCategoriesPage() {
                   <td>
                     <input
                       className="admin-cat__name"
+                      aria-label={`Nome da categoria ${c.name}`}
                       defaultValue={c.name}
                       onBlur={(e) => {
                         const v = e.target.value.trim();

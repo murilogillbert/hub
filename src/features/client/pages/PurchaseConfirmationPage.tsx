@@ -21,7 +21,7 @@ export function PurchaseConfirmationPage() {
     return (
       <div className="confirmation confirmation--empty">
         <h2>Nenhuma compra recente</h2>
-        <p className="text-muted">Voce pode acessar seus vouchers em "Meus itens".</p>
+        <p className="text-muted">Você pode acessar seus vouchers em "Meus itens".</p>
         <Link to="/conta/itens">
           <Button>Ir para meus itens</Button>
         </Link>
@@ -35,7 +35,7 @@ export function PurchaseConfirmationPage() {
         loading={orderQuery.isLoading}
         error={orderQuery.error}
         empty={!order && !orderQuery.isLoading}
-        emptyLabel="Pedido nao encontrado."
+        emptyLabel="Pedido não encontrado."
       >
         <div />
       </QueryState>
@@ -58,7 +58,7 @@ export function PurchaseConfirmationPage() {
           <h3>{order.productTitle}</h3>
           <small className="text-soft">Valor pago</small>
           <strong>{formatCurrency(order.paidPrice)}</strong>
-          <small className="text-soft">Codigo do voucher</small>
+          <small className="text-soft">Código do voucher</small>
           <code className="confirmation__code">{formatCode(order.code)}</code>
         </div>
         <div className="confirmation__voucher-qr">

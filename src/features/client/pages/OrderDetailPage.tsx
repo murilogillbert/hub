@@ -108,7 +108,7 @@ export function OrderDetailPage() {
               </dl>
 
               <div className="order-detail__code">
-                <span className="text-muted">Codigo do voucher</span>
+                <span className="text-muted">Código do voucher</span>
                 <code>{formatCode(order.code)}</code>
               </div>
             </Card>
@@ -175,7 +175,7 @@ export function OrderDetailPage() {
                   <p className="text-muted">
                     {selectedStore
                       ? `${selectedStore.name} - ${selectedStore.city}/${selectedStore.state}`
-                      : 'Este parceiro ainda nao possui unidade com mapa.'}
+                      : 'Este parceiro ainda não possui unidade com mapa.'}
                   </p>
                 </div>
                 {stores.length > 0 && (
@@ -204,7 +204,7 @@ export function OrderDetailPage() {
             </Card>
 
             <Link to="/conta/historico" className="order-detail__history-link">
-              Ver historico completo
+              Ver histórico completo
             </Link>
           </div>
         )}

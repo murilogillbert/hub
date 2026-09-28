@@ -230,6 +230,7 @@
   height: 72px;
   border-radius: 50%;
   border: 2px solid var(--color-border);
+  object-fit: cover;
 }
 
 .profile__top strong {
@@ -268,4 +269,12 @@
   .history__stats {
     grid-template-columns: 1fr;
   }
+}
+
+/* Item do carrinho (miniatura + nome). Antes vinha do CSS do admin, que agora
+ * só carrega nas páginas do admin. */
+.admin-partners__cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
 }

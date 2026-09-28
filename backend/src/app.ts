@@ -21,10 +21,11 @@ import { webhookRouter } from './routes/webhook.routes.js';
 export function createApp() {
   const app = express();
 
-  // Confia em exatamente 1 hop de proxy reverso para obter o IP real (rate
-  // limit / webhook) — `true` confiaria em qualquer proxy e permitiria
-  // spoofar X-Forwarded-For para burlar o rate limit.
-  app.set('trust proxy', 1);
+  // Confia em exatamente N hops de proxy reverso (TRUST_PROXY_HOPS, padrão 1)
+  // para obter o IP real (rate limit / webhook / antifraude do Asaas) — `true`
+  // confiaria em qualquer proxy e permitiria spoofar X-Forwarded-For para
+  // burlar o rate limit.
+  app.set('trust proxy', config.trustProxyHops);
 
   app.use(helmet());
 
