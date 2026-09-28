@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import { AppError } from '../errors.js';
+import { isUserActive } from '../infra/auth/accountStatus.js';
 import { verifyAccessToken } from '../infra/auth/jwt.js';
 import { prisma } from '../infra/prisma.js';
 
@@ -34,17 +35,21 @@ declare global {
 }
 
 /** Exige um usuário autenticado (qualquer papel). Equivalente a [Authorize]. */
-export function requireAuth(req: Request, _res: Response, next: NextFunction): void {
+export async function requireAuth(req: Request, _res: Response, next: NextFunction): Promise<void> {
   const header = req.headers.authorization;
   const token = header?.startsWith('Bearer ') ? header.slice('Bearer '.length) : null;
   if (!token) throw new AppError('Não autenticado.', 401);
+  let auth: AuthContext;
   try {
     const claims = verifyAccessToken(token);
-    req.auth = { userId: claims.sub, role: claims.role, partnerId: claims.partnerId ?? null };
-    next();
+    auth = { userId: claims.sub, role: claims.role, partnerId: claims.partnerId ?? null };
   } catch {
     throw new AppError('Não autenticado.', 401);
   }
+  // Conta excluída (ex.: pelo app OpenDriver) derruba tokens já emitidos.
+  if (!(await isUserActive(auth.userId))) throw new AppError('Não autenticado.', 401);
+  req.auth = auth;
+  next();
 }
 
 /** Exige um dos papéis informados (Admin sempre passa nas policies Client/Partner,

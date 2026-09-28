@@ -40,8 +40,11 @@ describe('paymentService.process', () => {
     const { process } = await import('../src/services/paymentService.js');
 
     const partner = await db.prisma.partner.create({ data: { name: 'Cafe', segment: 'Food', active: true } });
+    // Saldo 20 com 15 já reservados: orderService.createOrder desconta o
+    // cashback usado na CRIAÇÃO do pedido (o pedido abaixo é criado direto
+    // no banco, então a reserva é simulada aqui). A aprovação só credita o ganho.
     const customer = await db.prisma.user.create({
-      data: { name: 'Ana', email: 'ana@example.com', passwordHash: 'x', cashbackBalance: 20 },
+      data: { name: 'Ana', email: 'ana@example.com', passwordHash: 'x', cashbackBalance: 20 - 15 },
     });
     const product = await db.prisma.product.create({
       data: {
