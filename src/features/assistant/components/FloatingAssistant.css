@@ -280,9 +280,23 @@
 }
 
 @media (max-width: 520px) {
+  /* No celular vira um botão redondo compacto: não cobre campos, filtros
+     nem o rodapé (o rótulo continua no aria-label). */
   .assistant-fab {
-    right: var(--space-5);
-    bottom: 84px;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    justify-content: center;
+    letter-spacing: 0;
+  }
+  .assistant-fab__label {
+    display: none;
+  }
+  .assistant-fab__badge {
+    width: 36px;
+    height: 36px;
   }
   .assistant-panel {
     right: 0;

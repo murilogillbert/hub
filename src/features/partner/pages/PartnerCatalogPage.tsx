@@ -233,9 +233,10 @@ export function PartnerCatalogPage() {
             </div>
             <div className="row">
               <div className="input-field">
-                <label className="input-field__label">Categoria</label>
+                <label htmlFor="partnercatalog-categoria" className="input-field__label">Categoria</label>
                 <div className="input-field__box">
                   <select
+                    id="partnercatalog-categoria"
                     className="input-field__el"
                     value={form.category}
                     onChange={(e) => set('category', e.target.value)}
@@ -250,9 +251,10 @@ export function PartnerCatalogPage() {
                 </div>
               </div>
               <div className="input-field">
-                <label className="input-field__label">Tipo</label>
+                <label htmlFor="partnercatalog-tipo" className="input-field__label">Tipo</label>
                 <div className="input-field__box">
                   <select
+                    id="partnercatalog-tipo"
                     className="input-field__el"
                     value={form.kind}
                     onChange={(e) => set('kind', e.target.value)}

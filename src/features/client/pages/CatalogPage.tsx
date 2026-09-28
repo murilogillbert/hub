@@ -10,9 +10,9 @@ import { usePageMeta } from '@shared/hooks/usePageMeta';
 import './CatalogPage.css';
 
 const SORTS = [
-  { v: 'relevance', l: 'Relevancia' },
-  { v: 'price_asc', l: 'Menor preco' },
-  { v: 'price_desc', l: 'Maior preco' },
+  { v: 'relevance', l: 'Relevância' },
+  { v: 'price_asc', l: 'Menor preço' },
+  { v: 'price_desc', l: 'Maior preço' },
   { v: 'rating', l: 'Melhor avaliados' },
 ] as const;
 
@@ -177,6 +177,12 @@ export function CatalogPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [filters.page]);
 
+  // No celular os filtros ficam recolhidos: o produto aparece primeiro (1ª dobra).
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const activeFilters = [filters.category, filters.state, filters.city, filters.minPrice, filters.maxPrice, filters.partnerId].filter(
+    (v) => v !== undefined && v !== '',
+  ).length;
+
   const clearAll = () => {
     setSearchInput('');
     setPlaceSearch('');
@@ -188,15 +194,16 @@ export function CatalogPage() {
     <div className="catalog">
       <header className="catalog__head">
         <div>
-          <h1>Catalogo</h1>
+          <h1>Catálogo</h1>
           <p className="text-muted">
             {data
-              ? `${data.total} produto(s) - pagina ${data.page} de ${data.totalPages}`
+              ? `${data.total} produto(s) · página ${data.page} de ${data.totalPages}`
               : 'Carregando ofertas...'}
           </p>
         </div>
         <form className="catalog__search" onSubmit={submitSearch}>
           <input
+            aria-label="Buscar produto, loja ou restaurante"
             placeholder="Buscar produto, loja ou restaurante..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -207,12 +214,24 @@ export function CatalogPage() {
         </form>
       </header>
 
+      <button
+        type="button"
+        className="catalog__filters-toggle"
+        aria-expanded={filtersOpen}
+        aria-controls="catalog-filters"
+        onClick={() => setFiltersOpen((v) => !v)}
+      >
+        {filtersOpen ? 'Ocultar filtros' : 'Filtros'}
+        {activeFilters > 0 ? <span className="catalog__filters-count">{activeFilters}</span> : null}
+      </button>
+
       <div className="catalog__layout">
-        <aside className="catalog__filters">
+        <aside id="catalog-filters" className={`catalog__filters ${filtersOpen ? 'is-open' : ''}`}>
           <div className="catalog__filter catalog__filter--place">
-            <label>Local ou restaurante</label>
+            <label htmlFor="catalog-place">Local ou restaurante</label>
             <div className="catalog__place-row">
               <input
+                id="catalog-place"
                 list="catalog-place-options"
                 placeholder="Digite nome, bairro, cidade..."
                 value={placeSearch}
@@ -239,8 +258,9 @@ export function CatalogPage() {
           </div>
 
           <div className="catalog__filter">
-            <label>Categoria</label>
+            <label htmlFor="catalog-category">Categoria</label>
             <select
+              id="catalog-category"
               value={filters.category ?? ''}
               onChange={(e) =>
                 patch({ category: e.target.value || undefined })
@@ -256,8 +276,9 @@ export function CatalogPage() {
           </div>
 
           <div className="catalog__filter">
-            <label>Estado</label>
+            <label htmlFor="catalog-state">Estado</label>
             <select
+              id="catalog-state"
               value={filters.state ?? ''}
               onChange={(e) =>
                 patch({
@@ -277,8 +298,9 @@ export function CatalogPage() {
           </div>
 
           <div className="catalog__filter">
-            <label>Cidade</label>
+            <label htmlFor="catalog-city">Cidade</label>
             <select
+              id="catalog-city"
               value={filters.city ?? ''}
               onChange={(e) =>
                 patch({
@@ -298,13 +320,14 @@ export function CatalogPage() {
 
           <div className="catalog__filter">
             <label>
-              Faixa de preco (R$ {filters.minPrice ?? f?.minPrice ?? 0} -{' '}
+              Faixa de preço (R$ {filters.minPrice ?? f?.minPrice ?? 0} -{' '}
               {filters.maxPrice ?? f?.maxPrice ?? 0})
             </label>
             <div className="row">
               <input
                 type="number"
-                placeholder="min"
+                aria-label="Preço mínimo"
+                placeholder="mín"
                 min={f?.minPrice ?? 0}
                 value={filters.minPrice ?? ''}
                 onChange={(e) =>
@@ -317,7 +340,8 @@ export function CatalogPage() {
               />
               <input
                 type="number"
-                placeholder="max"
+                aria-label="Preço máximo"
+                placeholder="máx"
                 max={f?.maxPrice ?? 0}
                 value={filters.maxPrice ?? ''}
                 onChange={(e) =>
@@ -332,8 +356,9 @@ export function CatalogPage() {
           </div>
 
           <div className="catalog__filter">
-            <label>Ordenar por</label>
+            <label htmlFor="catalog-sort">Ordenar por</label>
             <select
+              id="catalog-sort"
               value={filters.sort}
               onChange={(e) =>
                 patch({ sort: e.target.value as CatalogQuery['sort'] })
@@ -348,8 +373,9 @@ export function CatalogPage() {
           </div>
 
           <div className="catalog__filter">
-            <label>Itens por pagina</label>
+            <label htmlFor="catalog-page-size">Itens por página</label>
             <select
+              id="catalog-page-size"
               value={filters.pageSize}
               onChange={(e) => patch({ pageSize: Number(e.target.value) })}
             >

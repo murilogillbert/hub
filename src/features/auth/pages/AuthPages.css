@@ -26,14 +26,14 @@
 }
 
 .auth-page__alt a {
-  color: var(--color-primary);
+  color: var(--color-text-green);
   font-weight: 600;
 }
 
 .auth-page__forgot {
   display: inline-block;
   font-size: var(--font-sm);
-  color: var(--color-primary);
+  color: var(--color-text-green);
   font-weight: 600;
   margin-top: calc(-1 * var(--space-2));
 }
@@ -46,7 +46,7 @@
 }
 
 .auth-page__back:hover {
-  color: var(--color-primary);
+  color: var(--color-text-green);
 }
 
 /* ---- Seletor Cliente | Parceiro ---- */

@@ -93,8 +93,8 @@ export function AdminApiKeysPage() {
             placeholder="Ex.: energia-solar-api"
           />
           <div className="input-field">
-            <label className="input-field__label">Permissões</label>
-            <div className="row">
+            <span id="apikeys-scopes" className="input-field__label">Permissões</span>
+            <div className="row" role="group" aria-labelledby="apikeys-scopes">
               {SCOPES.map((s) => (
                 <label key={s.value} className="row" style={{ gap: 'var(--space-1)' }}>
                   <input

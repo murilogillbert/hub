@@ -91,6 +91,7 @@ export function AdminSalesPage() {
           <div className="admin-filters__select">
             <label>Parceiro</label>
             <select
+              aria-label="Filtrar por parceiro"
               value={partnerFilter}
               onChange={(e) => {
                 setPartnerFilter(e.target.value);
@@ -108,6 +109,7 @@ export function AdminSalesPage() {
           <div className="admin-filters__select">
             <label>Status</label>
             <select
+              aria-label="Filtrar por status"
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
@@ -178,7 +180,7 @@ export function AdminSalesPage() {
       {salesPage && (
         <div className="admin-pagination">
           <span>
-            Pagina {salesPage.page} de {salesPage.totalPages} - {salesPage.total} venda(s)
+            Página {salesPage.page} de {salesPage.totalPages} - {salesPage.total} venda(s)
           </span>
           <div className="row">
             <button

@@ -62,7 +62,7 @@ export function AdminAffiliateApplicationsPage() {
         </div>
         <div className="admin-filters__select">
           <label>Status</label>
-          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+          <select aria-label="Filtrar por situação" value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="pending">Pendentes</option>
             <option value="approved">Aprovadas</option>
             <option value="rejected">Rejeitadas</option>

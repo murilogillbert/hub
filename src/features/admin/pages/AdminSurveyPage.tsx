@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { Card } from '@shared/components/Card/Card';
 import { Button } from '@shared/components/Button/Button';
 import { StatCard } from '@shared/components/StatCard/StatCard';
@@ -9,6 +10,7 @@ import { QueryState } from '@shared/components/QueryState/QueryState';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { formatDateTime, formatCurrency } from '@shared/utils/formatters';
 import { adminApi, SurveyLead } from '@shared/api/endpoints';
+import { ApiError } from '@shared/api/client';
 import { downloadTextFile, buildCsv, csvCell } from '@shared/utils/exportReport';
 import './AdminPages.css';
 
@@ -216,9 +218,12 @@ function SurveyWhatsappCard() {
     queryKey: ['admin-survey-whatsapp-status'],
     queryFn: () => adminApi.surveyWhatsappStatus(),
     refetchInterval: polling ? 3000 : false,
+    // 503 = Evolution API não configurada: tentar de novo não resolve.
+    retry: (count, err) => !(err instanceof ApiError && err.status === 503) && count < 1,
   });
 
   const connected = statusQuery.data?.status === 'connected';
+  const notConfigured = statusQuery.error instanceof ApiError && statusQuery.error.status === 503;
 
   useEffect(() => {
     if (connected) {
@@ -260,7 +265,21 @@ function SurveyWhatsappCard() {
       </p>
 
       <div style={{ marginTop: 'var(--space-3)' }}>
-        {connected ? (
+        {notConfigured ? (
+          <p role="status">
+            <span className="badge badge-warning">Não configurado</span>{' '}
+            Informe a URL e a chave da Evolution API em{' '}
+            <Link to="/admin/integracoes">Admin → Integrações</Link> para parear o
+            número da pesquisa.
+          </p>
+        ) : statusQuery.isError ? (
+          <div className="row" style={{ alignItems: 'center' }}>
+            <span className="text-muted">Não foi possível verificar o WhatsApp agora.</span>
+            <Button variant="secondary" onClick={() => statusQuery.refetch()} disabled={statusQuery.isFetching}>
+              Tentar de novo
+            </Button>
+          </div>
+        ) : connected ? (
           <div className="row" style={{ alignItems: 'center' }}>
             <span className="badge badge-accent">WhatsApp conectado</span>
             <Button variant="secondary" onClick={() => disconnectMut.mutate()} disabled={disconnectMut.isPending}>

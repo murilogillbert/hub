@@ -135,9 +135,10 @@ function StoreProfileCard() {
       <div className="profile__form">
         <Input label="Nome da loja" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
         <div className="input-field">
-          <label className="input-field__label">Segmento</label>
+          <label htmlFor="partnerprofile-segmento" className="input-field__label">Segmento</label>
           <div className="input-field__box">
             <select
+              id="partnerprofile-segmento"
               className="input-field__el"
               value={form.segment}
               onChange={(e) => setForm((f) => ({ ...f, segment: e.target.value }))}
@@ -153,9 +154,10 @@ function StoreProfileCard() {
         </div>
         <div className="row">
           <div className="input-field" style={{ maxWidth: 160 }}>
-            <label className="input-field__label">Tipo de documento</label>
+            <label htmlFor="partnerprofile-tipo-de-documento" className="input-field__label">Tipo de documento</label>
             <div className="input-field__box">
               <select
+                id="partnerprofile-tipo-de-documento"
                 className="input-field__el"
                 value={form.documentType}
                 onChange={(e) => {
@@ -309,9 +311,10 @@ function PixKeyCard() {
         <div className="stack" style={{ marginTop: 12 }}>
           <div className="row">
             <div className="input-field" style={{ maxWidth: 200 }}>
-              <label className="input-field__label">Tipo de chave</label>
+              <label htmlFor="partnerprofile-tipo-de-chave" className="input-field__label">Tipo de chave</label>
               <div className="input-field__box">
                 <select
+                  id="partnerprofile-tipo-de-chave"
                   className="input-field__el"
                   value={pixKeyType}
                   onChange={(e) => setPixKeyType(e.target.value as PixKeyType)}

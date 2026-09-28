@@ -11,12 +11,6 @@ implementação.
   Asaas a cada pedido, mesmo pro mesmo comprador — com o tempo acumula clientes
   duplicados lá. Fácil de resolver depois (buscar por `externalReference` antes
   de criar), não trava nada agora.
-- **IP real do cliente no `trust proxy`**: o Cloudflare hoje fica na frente do
-  Traefik, que fica na frente do backend — dois saltos de proxy, mas o Express
-  só confia em 1 (`app.set('trust proxy', 1)`). Isso pode fazer o IP que mandamos
-  pro Asaas na tokenização de cartão (usado pra análise de risco deles) não ser o
-  IP real do cliente. Não impede pagamentos, só reduz a qualidade desse sinal
-  anti-fraude.
 - **Cadastro de afiliado (aprovação) não passa pelo fluxo de verificação de
   e-mail**: quando o admin aprova um afiliado, a conta é criada direto com a
   senha padrão `123456` — não recebe e-mail de verificação (só o de boas-vindas
@@ -159,22 +153,35 @@ aconteceria se algum dia ficarem sem valor, não o estado atual.
   pra `aggregate`/`groupBy` é um projeto à parte (mexe em ~8 métricas
   derivadas de uma vez), não entrou nesta rodada pra não arriscar quebrar
   dashboard que já funciona sob pressão de tempo.
-- **Resto do frontend sem `React.lazy`** — só `QrScanner` foi isolado nesta
-  rodada (maior ganho isolado). Dividir o restante das 45+ rotas (admin,
-  financeiro etc.) em chunks é mais trabalho mecânico, menor ganho marginal.
 - **Configurações de WhatsApp Business não fazem nada** — a tela Admin →
   Integrações descreve confirmação de compra/voucher por WhatsApp, mas
   `WhatsApp:Token`/`WhatsApp:PhoneNumber` nunca são lidos; preferências de
   notificação do usuário são salvas mas nunca checadas antes de mandar algo.
-- **Webhook da pesquisa aceita tudo se a config sumir** — hoje protegido de
-  verdade (confirmado), mas se `Survey:WebhookSecret` e
-  `Survey:ExpectedWebhookId` ficarem vazios ao mesmo tempo, o código abre em
-  vez de fechar — trocar pra "falha fechada".
 - **`resolveApplicationSchema`** (comissão na aprovação de afiliado solar)
   nunca é lido pela rota — todo afiliado aprovado recebe o fee padrão.
 - **Export não usado**: `generateOrderCode`/`formatDate` em
   `formatters.ts`, `CardHeader`/`CardTitle` em `Card.tsx`,
   `timingSafeEqualHex` — limpeza de baixo risco, baixo valor, não priorizada.
+
+### Rodada de interface e acessibilidade — 2026-09-28
+
+- ~~IP real do cliente no `trust proxy`~~ — agora vem de `TRUST_PROXY_HOPS`
+  (padrão 1). Com Cloudflare na frente do Traefik, defina `2` no Coolify.
+- ~~Resto do frontend sem `React.lazy`~~ — páginas de admin, parceiro,
+  financeiro e OpenDriver viraram chunks próprios (bundle inicial 308 KB →
+  172 KB). Um `ErrorBoundary` global troca a tela branca por uma mensagem com
+  "Recarregar" e, se a aba pedir um chunk de versão antiga após deploy,
+  recarrega sozinho uma vez.
+- ~~Webhook da pesquisa aceita tudo se a config sumir~~ — falha fechada (503)
+  sem `Survey:WebhookSecret` nem `Survey:ExpectedWebhookId`
+  (teste: `backend/tests/surveyWebhook.test.ts`).
+- Admin → Pesquisa: sem Evolution API configurada, o card do WhatsApp explica
+  o que falta e leva para Integrações (antes mostrava "Conectar" que falhava).
+- Acessibilidade: todos os campos com rótulo associado (22 selects/textareas,
+  filtros do catálogo, categorias, vendas), contraste dos links verdes
+  (`--color-text-green`), botão do assistente sem cobrir conteúdo no celular,
+  filtros do catálogo recolhíveis no celular, estatísticas em 2 colunas,
+  gráficos sem estourar a largura da tela, acentuação corrigida.
 
 ## Ideias maiores (avaliar depois, com mais tempo)
 

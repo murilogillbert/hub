@@ -116,11 +116,12 @@ export function AffiliateLandingPage() {
               />
             </div>
             <div className="input-field">
-              <label className="input-field__label">
+              <label htmlFor="affiliatelanding-conte-um-pouco-sobre-voce-opci" className="input-field__label">
                 Conte um pouco sobre você (opcional)
               </label>
               <div className="input-field__box">
                 <textarea
+                  id="affiliatelanding-conte-um-pouco-sobre-voce-opci"
                   className="input-field__el"
                   rows={3}
                   value={form.message}

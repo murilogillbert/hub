@@ -20,6 +20,9 @@ function parseBoolEnv(value: string | undefined, fallback: boolean): boolean {
 
 export const config = {
   port: parseIntEnv(process.env.PORT, 5000),
+  /** Quantos proxies reversos ficam na frente da API (Traefik = 1; Cloudflare
+   * na frente do Traefik = 2). Define de onde vem o IP real do cliente. */
+  trustProxyHops: Math.max(0, parseIntEnv(process.env.TRUST_PROXY_HOPS, 1)),
   jwt: {
     secret: process.env.JWT_SECRET ?? 'dev-only-secret-change-me-please-32bytes-min',
     issuer: 'opendriverhub',

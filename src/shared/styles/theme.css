@@ -39,7 +39,10 @@
   --color-on-primary: var(--color-navy);
 
   /* Cashback / saldos positivos / valores em dinheiro (também lima) */
-  --color-accent: var(--color-lime-dark);
+  /* Verde para TEXTO sobre fundo claro: o limão (1,7:1) e o lime-dark (2,7:1)
+     não atingem o contraste mínimo de leitura (4,5:1). Este dá ~5:1. */
+  --color-text-green: #4d7c0f;
+  --color-accent: var(--color-text-green);
   --color-accent-soft: var(--color-lime-soft);
 
   /* Info = azul (links, palavras destacadas no copy, status "pendente") */

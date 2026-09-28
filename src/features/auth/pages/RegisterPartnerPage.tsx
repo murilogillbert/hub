@@ -164,9 +164,10 @@ export function RegisterPartnerPage() {
             required
           />
           <div className="input-field">
-            <label className="input-field__label">Segmento da loja</label>
+            <label htmlFor="registerpartner-segmento-da-loja" className="input-field__label">Segmento da loja</label>
             <div className="input-field__box">
               <select
+                id="registerpartner-segmento-da-loja"
                 className="input-field__el"
                 value={form.segment}
                 onChange={(e) =>
@@ -197,9 +198,10 @@ export function RegisterPartnerPage() {
             />
           )}
           <div className="input-field">
-            <label className="input-field__label">Tipo de documento</label>
+            <label htmlFor="registerpartner-tipo-de-documento" className="input-field__label">Tipo de documento</label>
             <div className="input-field__box">
               <select
+                id="registerpartner-tipo-de-documento"
                 className="input-field__el"
                 value={form.documentType}
                 onChange={(e) => {

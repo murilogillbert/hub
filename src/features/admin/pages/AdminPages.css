@@ -18,8 +18,13 @@
 
 .admin-page__charts {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   gap: var(--space-4);
+}
+
+/* Gráficos com muitas colunas rolam dentro do card em vez de alargar a página. */
+.admin-page__charts > * {
+  min-width: 0;
 }
 
 .admin-toplist {
@@ -133,7 +138,7 @@
   height: 36px;
   border-radius: 50%;
   background: var(--color-primary-soft);
-  color: var(--color-primary);
+  color: var(--color-text-green);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -207,7 +212,7 @@
   }
   .admin-page__charts,
   .admin-integrations {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .admin-filters {
     grid-template-columns: 1fr;
@@ -215,8 +220,10 @@
 }
 
 @media (max-width: 600px) {
+  /* Duas colunas compactas no celular: os indicadores cabem numa tela só. */
   .admin-page__stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
   }
   .admin-page__header {
     flex-direction: column;

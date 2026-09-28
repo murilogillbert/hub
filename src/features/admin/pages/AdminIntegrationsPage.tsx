@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@shared/components/Card/Card';
 import { Button } from '@shared/components/Button/Button';
@@ -31,10 +31,12 @@ function FieldRow({
         ? { cls: 'badge-primary', label: '.env' }
         : { cls: 'badge-danger', label: 'não definido' };
 
+  const inputId = useId();
+
   return (
     <div className="admin-integrations__field">
       <div className="row-between">
-        <label className="input-field__label">{field.label}</label>
+        <label htmlFor={inputId} className="input-field__label">{field.label}</label>
         <span className={`badge ${sourceBadge.cls}`}>{sourceBadge.label}</span>
       </div>
 
@@ -60,6 +62,7 @@ function FieldRow({
       ) : (
         <div className="row">
           <Input
+            id={inputId}
             type={field.secret ? 'password' : 'text'}
             placeholder={field.secret ? 'Cole o novo valor' : ''}
             value={value}

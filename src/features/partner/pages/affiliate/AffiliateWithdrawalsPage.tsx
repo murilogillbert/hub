@@ -132,9 +132,10 @@ export function AffiliateWithdrawalsPage() {
           {providingOverride && (
             <div className="row">
               <div className="input-field" style={{ maxWidth: 200 }}>
-                <label className="input-field__label">Tipo de chave</label>
+                <label htmlFor="affiliatewithdrawals-tipo-de-chave" className="input-field__label">Tipo de chave</label>
                 <div className="input-field__box">
                   <select
+                    id="affiliatewithdrawals-tipo-de-chave"
                     className="input-field__el"
                     value={overridePixKeyType}
                     onChange={(e) => setOverridePixKeyType(e.target.value as PixKeyType)}

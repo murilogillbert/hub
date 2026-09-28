@@ -192,8 +192,8 @@ export function FloatingAssistant() {
         aria-label="Abrir assistente do OpenDriverHub"
         className={`assistant-fab ${isOpen ? 'is-hidden' : ''}`}
       >
-        <span className="assistant-fab__badge">AI</span>
-        Assistente
+        <span className="assistant-fab__badge" aria-hidden="true">AI</span>
+        <span className="assistant-fab__label">Assistente</span>
       </button>
 
       <div

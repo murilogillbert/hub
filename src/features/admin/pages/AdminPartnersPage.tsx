@@ -179,9 +179,10 @@ export function AdminPartnersPage() {
                 onChange={(e) => set('name', e.target.value)}
               />
               <div className="input-field">
-                <label className="input-field__label">Segmento</label>
+                <label htmlFor="adminpartners-segmento" className="input-field__label">Segmento</label>
                 <div className="input-field__box">
                   <select
+                    id="adminpartners-segmento"
                     className="input-field__el"
                     value={form.segment}
                     onChange={(e) => set('segment', e.target.value)}
@@ -204,9 +205,10 @@ export function AdminPartnersPage() {
             </div>
             <div className="row">
               <div className="input-field" style={{ maxWidth: 160 }}>
-                <label className="input-field__label">Tipo de documento</label>
+                <label htmlFor="adminpartners-tipo-de-documento" className="input-field__label">Tipo de documento</label>
                 <div className="input-field__box">
                   <select
+                    id="adminpartners-tipo-de-documento"
                     className="input-field__el"
                     value={form.documentType}
                     onChange={(e) => {
@@ -368,7 +370,7 @@ export function AdminPartnersPage() {
       {partnersPage && (
         <div className="admin-pagination">
           <span>
-            Pagina {partnersPage.page} de {partnersPage.totalPages} - {partnersPage.total} parceiro(s)
+            Página {partnersPage.page} de {partnersPage.totalPages} - {partnersPage.total} parceiro(s)
           </span>
           <div className="row">
             <button

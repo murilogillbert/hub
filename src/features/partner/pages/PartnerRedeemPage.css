@@ -174,7 +174,7 @@
 }
 
 .totem__back:hover {
-  color: var(--color-primary);
+  color: var(--color-text-green);
 }
 
 /* ---- Resultado ---- */

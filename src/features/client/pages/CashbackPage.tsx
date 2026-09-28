@@ -43,7 +43,7 @@ export function CashbackPage() {
           <strong className="history__stat">{formatCurrency(used)}</strong>
         </Card>
         <Card>
-          <small className="text-muted">Movimentacoes</small>
+          <small className="text-muted">Movimentações</small>
           <strong className="history__stat">{entries.length}</strong>
         </Card>
       </div>
@@ -53,7 +53,7 @@ export function CashbackPage() {
           loading={entriesQuery.isLoading}
           error={entriesQuery.error}
           empty={entries.length === 0}
-          emptyLabel="Ainda nao ha movimentacoes de cashback."
+          emptyLabel="Ainda não há movimentações de cashback."
           variant="list"
         >
           <table className="history__table">
@@ -62,7 +62,7 @@ export function CashbackPage() {
                 <th>Data</th>
                 <th>Tipo</th>
                 <th>Pedido</th>
-                <th>Descricao</th>
+                <th>Descrição</th>
                 <th>Valor</th>
               </tr>
             </thead>

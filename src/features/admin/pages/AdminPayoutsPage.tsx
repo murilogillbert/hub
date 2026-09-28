@@ -202,9 +202,10 @@ export function AdminPayoutsPage() {
         <form className="stack" onSubmit={submit}>
           <h3>Lançar repasse</h3>
           <div className="input-field">
-            <label className="input-field__label">Parceiro</label>
+            <label htmlFor="adminpayouts-parceiro" className="input-field__label">Parceiro</label>
             <div className="input-field__box">
               <select
+                id="adminpayouts-parceiro"
                 className="input-field__el"
                 value={partnerId}
                 onChange={(e) => {
