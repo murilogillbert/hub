@@ -1,3 +1,4 @@
+import { isDeletedEmail } from '../infra/auth/accountStatus.js';
 import type {
   AuthResponse,
   ChangePasswordRequest,
@@ -140,7 +141,7 @@ export async function refresh(refreshToken: string): Promise<AuthResponse> {
   const userId = validateRefreshToken(refreshToken);
   if (!userId) throw new AppError('Refresh token inválido.', 401);
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) throw new AppError('Usuário não encontrado.', 401);
+  if (!user || isDeletedEmail(user.email)) throw new AppError('Usuário não encontrado.', 401);
   return build(user);
 }
 
