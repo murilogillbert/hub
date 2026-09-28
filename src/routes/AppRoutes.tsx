@@ -53,6 +53,12 @@ import { AdminAffiliateApplicationsPage } from '@features/admin/pages/AdminAffil
 import { AdminCampaignMaterialsPage } from '@features/admin/pages/AdminCampaignMaterialsPage';
 import { AdminApiKeysPage } from '@features/admin/pages/AdminApiKeysPage';
 import { AdminProfilePage } from '@features/admin/pages/AdminProfilePage';
+import { OpenDriverDashboardPage } from '@features/opendriver/pages/OpenDriverDashboardPage';
+import { OpenDriverDriversPage } from '@features/opendriver/pages/OpenDriverDriversPage';
+import { OpenDriverPayoutsPage } from '@features/opendriver/pages/OpenDriverPayoutsPage';
+import { OpenDriverPricingPage } from '@features/opendriver/pages/OpenDriverPricingPage';
+import { OpenDriverRidesPage } from '@features/opendriver/pages/OpenDriverRidesPage';
+import { OpenDriverSafetyPage } from '@features/opendriver/pages/OpenDriverSafetyPage';
 import { AdminSurveyPage } from '@features/admin/pages/AdminSurveyPage';
 
 import { FinanceiroWithdrawalsPage } from '@features/financeiro/pages/FinanceiroWithdrawalsPage';
@@ -183,6 +189,13 @@ export function AppRoutes() {
           <Route path="afiliados/chaves-api" element={<AdminApiKeysPage />} />
           <Route path="pesquisa" element={<AdminSurveyPage />} />
           <Route path="perfil" element={<AdminProfilePage />} />
+          {/* OpenDriver (app de corridas) — API própria, mesmo login */}
+          <Route path="opendriver" element={<OpenDriverDashboardPage />} />
+          <Route path="opendriver/motoristas" element={<OpenDriverDriversPage />} />
+          <Route path="opendriver/corridas" element={<OpenDriverRidesPage />} />
+          <Route path="opendriver/saques" element={<OpenDriverPayoutsPage />} />
+          <Route path="opendriver/precos" element={<OpenDriverPricingPage />} />
+          <Route path="opendriver/seguranca" element={<OpenDriverSafetyPage />} />
         </Route>
       </Route>
 

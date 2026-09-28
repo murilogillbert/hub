@@ -68,6 +68,26 @@ export function AdminLayout() {
             <Icon name="clipboard" size={17} /> Pesquisa de opinião
           </NavLink>
 
+          <span className="layout-internal__nav-label">OpenDriver (corridas)</span>
+          <NavLink to="/admin/opendriver" end>
+            <Icon name="chart" size={17} /> Visão geral
+          </NavLink>
+          <NavLink to="/admin/opendriver/motoristas">
+            <Icon name="car" size={17} /> Motoristas
+          </NavLink>
+          <NavLink to="/admin/opendriver/corridas">
+            <Icon name="mapPin" size={17} /> Corridas
+          </NavLink>
+          <NavLink to="/admin/opendriver/saques">
+            <Icon name="wallet" size={17} /> Saques
+          </NavLink>
+          <NavLink to="/admin/opendriver/precos">
+            <Icon name="money" size={17} /> Preços
+          </NavLink>
+          <NavLink to="/admin/opendriver/seguranca">
+            <Icon name="shield" size={17} /> Segurança
+          </NavLink>
+
           <span className="layout-internal__nav-label">Sistema</span>
           <NavLink to="/admin/usuarios">
             <Icon name="users" size={17} /> Usuários

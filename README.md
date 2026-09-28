@@ -54,7 +54,10 @@ reaproveitada). Preencha `MINIO_*` no `.env.example`.
 build = raiz do repositório** (Dockerfile location: [`web.Dockerfile`](web.Dockerfile),
 build Vite → Nginx). Env var de **build** (não runtime): `VITE_API_BASE_URL`
 apontando pro domínio do backend (passo 4) — o Vite embute isso no build,
-então precisa estar configurado *antes* de buildar.
+então precisa estar configurado *antes* de buildar. Para as telas
+**Admin → OpenDriver** (app de corridas), defina também
+`VITE_OPENDRIVER_API_URL` com a URL da API do OpenDriver e inclua o domínio
+deste painel no `CORS_ORIGINS` daquela API.
 
 **4. App do backend no Coolify** — Build pack = Dockerfile, **contexto de
 build = raiz do repositório** (Dockerfile location: [`backend/Dockerfile`](backend/Dockerfile),

@@ -1,0 +1,52 @@
+.od-doc {
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-alt);
+}
+
+.od-docs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.od-kv {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px var(--space-4);
+  font-size: var(--font-sm);
+}
+
+.od-kv dt {
+  color: var(--color-text-muted);
+}
+
+.od-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.od-timeline {
+  font-size: var(--font-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.od-pricing {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.od-row-click {
+  cursor: pointer;
+}
+
+.od-row-click:hover {
+  background: var(--color-surface-alt);
+}
