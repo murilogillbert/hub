@@ -88,7 +88,11 @@ export function ClientLayout({ children }: ClientLayoutProps) {
                   </span>
                   <NotificationsBell />
                 </span>
-                <Link to="/conta/perfil" className="layout-client__avatar" onClick={closeMenu}>
+                <Link
+                  to={user.role === 'admin' ? '/admin' : '/conta/perfil'}
+                  className="layout-client__avatar"
+                  onClick={closeMenu}
+                >
                   <img src={resolveImageUrl(user.avatarUrl) || user.avatarUrl} alt={user.name} />
                   <span className="layout-client__avatar-info">
                     <strong>{user.name}</strong>

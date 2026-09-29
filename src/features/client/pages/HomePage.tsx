@@ -158,6 +158,11 @@ export function HomePage() {
             <Link to="/cadastro/motorista">
               <Button size="lg">Sou Motorista →</Button>
             </Link>
+            <Link to="/cadastro/passageiro">
+              <Button size="lg" variant="secondary" className="on-dark">
+                Quero ser Passageiro
+              </Button>
+            </Link>
             <Link to="/cadastro/parceiro">
               <Button size="lg" variant="secondary" className="on-dark">
                 Quero ser Parceiro

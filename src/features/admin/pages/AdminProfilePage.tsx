@@ -4,6 +4,7 @@ import {
   PasswordCard,
   ProfileBasicsCard,
 } from '@shared/components/AccountSettings/AccountSettingsCards';
+import { SurveyLinkCard } from '@features/client/components/SurveyLinkCard';
 import './AdminPages.css';
 
 export function AdminProfilePage() {
@@ -20,6 +21,7 @@ export function AdminProfilePage() {
         <ProfileBasicsCard />
         <PasswordCard />
         <NotificationsCard />
+        <SurveyLinkCard />
         <LogoutCard />
       </div>
     </div>
