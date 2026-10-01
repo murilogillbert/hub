@@ -19,10 +19,11 @@ export async function disconnect(): Promise<void> {
   await evolutionApi.disconnectInstance(INSTANCE_NAME);
 }
 
-/** Os vídeos configurados (um por linha em Survey:VideoUrls), embaralhados —
- * cada lead recebe os 4 em uma ordem diferente. Os 4 têm que chegar, só
- * espaçados (ver surveyLeadService.scheduleVideoDeliveries); não sorteia
- * só 1 mais. */
+/** Os vídeos configurados (um por linha em Survey:VideoUrls). O PRIMEIRO da
+ * lista configurada é fixo (sempre vai primeiro pra todo lead); os demais
+ * são embaralhados entre si — cada lead recebe o restante numa ordem
+ * diferente. Todos têm que chegar, só espaçados (ver
+ * surveyLeadService.scheduleVideoDeliveries); não sorteia só 1. */
 export async function shuffledVideoUrls(): Promise<string[]> {
   const raw = await getSetting('Survey:VideoUrls');
   if (!raw) return [];
@@ -30,11 +31,13 @@ export async function shuffledVideoUrls(): Promise<string[]> {
     .split(/\r?\n|,/)
     .map((u) => u.trim())
     .filter(Boolean);
-  for (let i = urls.length - 1; i > 0; i--) {
+  if (urls.length <= 1) return urls;
+  const [pinned, ...rest] = urls;
+  for (let i = rest.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [urls[i], urls[j]] = [urls[j], urls[i]];
+    [rest[i], rest[j]] = [rest[j], rest[i]];
   }
-  return urls;
+  return [pinned!, ...rest];
 }
 
 /** Monta a mensagem a partir do template configurável (Admin → Integrações
