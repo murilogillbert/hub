@@ -6,6 +6,7 @@ import type { RedeemResult } from '../dtos/orders.dto.js';
 import { clampCommission, driverCommissionFor, partnerNet, platformFeeFor, round2 } from '../domain/commissionRules.js';
 import { AppError } from '../errors.js';
 import { prisma } from '../infra/prisma.js';
+import { sendPush } from '../infra/push.js';
 import { parseProductKind, toAffiliatePartnerDto, toProductDto } from '../mappings.js';
 import * as driverAffiliateService from './driverAffiliateService.js';
 
@@ -301,6 +302,14 @@ export async function redeem(partnerId: string, actorId: string, code: string, c
         payloadJson: JSON.stringify({ code: fresh.code, partnerId, net, cashback, subtotal, commission }),
       },
     });
+  });
+
+  // Push do mesmo aviso que acabou de ser gravado em `notifications`, para quem usa o app. Depois
+  // do commit e fire-and-forget: falha de push não desfaz o resgate.
+  void sendPush(order.customerId, {
+    title: 'Voucher resgatado',
+    body: `${title} foi resgatado.`,
+    data: { type: 'order_redeemed', orderId: order.id },
   });
 
   return {

@@ -72,6 +72,45 @@ const CATALOG: Group[] = [
     ],
   },
   {
+    id: 'opendriver',
+    name: 'OpenDriver (app de corridas)',
+    description:
+      'Serviço de corridas que divide este banco e este login. Usa a MESMA conta Asaas do grupo acima — estas chaves são só o que é específico dele.',
+    icon: '🚗',
+    fields: [
+      {
+        key: 'OpenDriver:AsaasWebhookToken',
+        label: 'Webhook Token do Asaas (opcional — sem valor, usa o do grupo Asaas)',
+        secret: true,
+      },
+      { key: 'OpenDriver:SafetyEmail', label: 'E-mail que recebe alertas de emergência', secret: false },
+      { key: 'OpenDriver:EmailFromName', label: 'Nome do remetente nos e-mails do app', secret: false },
+    ],
+  },
+  {
+    id: 'infosimples',
+    name: 'Infosimples (Detran)',
+    description:
+      'Consulta de CRLV por placa + RENAVAM para aprovar o veículo do motorista automaticamente. Sem token, todo veículo cai em revisão manual. Cobertura atual: MT e MS.',
+    icon: '🪪',
+    fields: [{ key: 'Infosimples:Token', label: 'Token da API', secret: true }],
+  },
+  {
+    id: 'maps',
+    name: 'Google Maps',
+    description: 'Fallback de geocodificação do app de corridas. Sem chave, usa só o provedor padrão (OSM/Nominatim).',
+    icon: '🗺️',
+    fields: [{ key: 'Google:MapsApiKey', label: 'Maps API Key', secret: true }],
+  },
+  {
+    id: 'internal',
+    name: 'Comunicação entre serviços',
+    description:
+      'Chave que o hub e o OpenDriver usam para falar um com o outro na EXCLUSÃO DE CONTA (a conta é a mesma nos dois, e cada um apaga o seu schema). Crie a chave em Chaves de API com os escopos account:read e account:purge e cole o valor aqui. Sem ela, excluir conta é recusado — ver docs/normalizacao-banco.md.',
+    icon: '🔗',
+    fields: [{ key: 'Internal:AccountSyncKey', label: 'Chave de serviço (odh_svc_...)', secret: true }],
+  },
+  {
     id: 'survey',
     name: 'Pesquisa de opinião',
     description:

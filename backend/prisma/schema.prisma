@@ -516,6 +516,22 @@ model Notification {
   @@map("notifications")
 }
 
+/// Aparelho registrado para receber notificação push (app mobile — ../../hub-mobile).
+/// Sem relação declarada para User, igual a Notification acima: é tabela auxiliar e o
+/// vínculo é só pelo user_id. Um token pertence a UM usuário por vez (chave única no
+/// token), porque o mesmo aparelho pode trocar de conta.
+model PushToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique @db.VarChar(200)
+  platform  String   @db.VarChar(10)
+  createdAt DateTime @default(now()) @map("created_at")
+  lastSeen  DateTime @default(now()) @map("last_seen")
+
+  @@index([userId])
+  @@map("push_tokens")
+}
+
 /// Evento de webhook de pagamento recebido (rastreabilidade + dedupe).
 model PaymentEvent {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid

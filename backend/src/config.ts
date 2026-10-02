@@ -31,6 +31,8 @@ export const config = {
     refreshTtlSeconds: parseIntEnv(process.env.JWT_REFRESH_TTL_SECONDS, 7 * 24 * 60 * 60),
   },
   paymentProvider: (process.env.PAYMENT_PROVIDER ?? 'mock').toLowerCase(),
+  /** API do OpenDriver (servidor-a-servidor, exclusão de conta). Sem ela a exclusão é recusada. */
+  opendriverApiUrl: (process.env.OPENDRIVER_API_URL ?? '').replace(/\/+$/, ''),
   corsOrigins: (process.env.CORS_ORIGINS ?? 'http://localhost:5173')
     .split(',')
     .map((s) => s.trim())

@@ -12,10 +12,14 @@ import './AdminPages.css';
 const SCOPES = [
   { value: 'affiliate:read', label: 'Consultar afiliados' },
   { value: 'affiliate:write', label: 'Registrar eventos de link (lead/venda)' },
+  // Exclusão de conta entre o hub e o OpenDriver (docs/normalizacao-banco.md). Os dois juntos,
+  // numa chave só, cadastrada depois em Integrações → Comunicação entre serviços.
+  { value: 'account:read', label: 'Consultar impedimentos de exclusão de conta' },
+  { value: 'account:purge', label: 'Apagar dados de conta excluída (OpenDriver)' },
 ];
 
 /** Chaves de API para integrações servidor-a-servidor (n8n, energia-solar-api,
- * ...) chamando /api/v1/service/*. */
+ * OpenDriver, ...) chamando /api/v1/service/* e /api/v1/internal/*. */
 export function AdminApiKeysPage() {
   const qc = useQueryClient();
   const toast = useToast();

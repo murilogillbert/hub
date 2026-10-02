@@ -1,9 +1,10 @@
 import { z } from 'zod';
+import { passwordSchema } from '../domain/password.js';
 
 export const registerSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
-  password: z.string().min(6),
+  password: passwordSchema,
   cpf: z.string().optional(),
   phone: z.string().optional(),
   role: z.enum(['Passenger', 'Driver']),
@@ -13,7 +14,7 @@ export type RegisterRequest = z.infer<typeof registerSchema>;
 export const partnerRegisterSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
-  password: z.string().min(6),
+  password: passwordSchema,
   phone: z.string().optional(),
   storeName: z.string().min(1),
   segment: z.string().min(1),
@@ -79,9 +80,27 @@ export type ForgotPasswordRequest = z.infer<typeof forgotPasswordSchema>;
 
 export const resetPasswordSchema = z.object({
   token: z.string().min(10),
-  newPassword: z.string().min(6),
+  newPassword: passwordSchema,
 });
 export type ResetPasswordRequest = z.infer<typeof resetPasswordSchema>;
+
+/** Registro do aparelho para push (app mobile — ../../hub-mobile). */
+export const registerPushTokenSchema = z.object({
+  token: z.string().regex(/^Expo(nent)?PushToken\[.+\]$/, 'Token de push inválido.'),
+  platform: z.enum(['ios', 'android']),
+});
+export type RegisterPushTokenRequest = z.infer<typeof registerPushTokenSchema>;
+
+export const unregisterPushTokenSchema = z.object({
+  token: z.string().min(1),
+});
+export type UnregisterPushTokenRequest = z.infer<typeof unregisterPushTokenSchema>;
+
+/** Exclusão de conta pelo app (App Store 5.1.1(v) / Google Play). Confirmada com a senha. */
+export const deleteAccountSchema = z.object({
+  password: z.string().min(1),
+});
+export type DeleteAccountRequest = z.infer<typeof deleteAccountSchema>;
 
 export interface UserDto {
   id: string;

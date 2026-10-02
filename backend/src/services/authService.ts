@@ -2,17 +2,23 @@ import { isDeletedEmail } from '../infra/auth/accountStatus.js';
 import type {
   AuthResponse,
   ChangePasswordRequest,
+  DeleteAccountRequest,
   LoginRequest,
   NotificationDto,
   PartnerRegisterRequest,
+  RegisterPushTokenRequest,
   RegisterRequest,
+  UnregisterPushTokenRequest,
   UpdateNotificationsRequest,
   UpdateProfileRequest,
   UserDto,
 } from '../dtos/auth.dto.js';
 import { config } from '../config.js';
+import { passwordProblem } from '../domain/password.js';
 import { AppError } from '../errors.js';
+import { opendriverDeletionBlockers, purgeOpendriverAccount } from '../infra/accountSync.js';
 import { hashPassword, verifyPassword } from '../infra/auth/passwordHasher.js';
+import * as accountPurgeService from './accountPurgeService.js';
 import { issueTokens, validateRefreshToken } from '../infra/auth/jwt.js';
 import { issueToken, consumeToken } from '../infra/auth/verificationTokens.js';
 import { sendEmail } from '../infra/email/emailFacade.js';
@@ -181,8 +187,10 @@ export async function changePassword(userId: string, req: ChangePasswordRequest)
   if (!user) throw new AppError('Usuário não encontrado.', 404);
   if (!verifyPassword(req.currentPassword, user.passwordHash))
     throw new AppError('Senha atual incorreta.', 400);
-  if (!req.newPassword || req.newPassword.length < 6)
-    throw new AppError('A nova senha deve ter pelo menos 6 caracteres.', 400);
+  // Mesma regra do cadastro e do OpenDriver (domain/password.ts) — contas antigas só são afetadas
+  // quando a senha de fato muda.
+  const problem = passwordProblem(req.newPassword ?? '');
+  if (problem) throw new AppError(problem, 400);
   await prisma.user.update({ where: { id: userId }, data: { passwordHash: hashPassword(req.newPassword) } });
 }
 
@@ -197,6 +205,54 @@ export async function notifications(userId: string): Promise<NotificationDto[]> 
 
 export async function markNotificationsRead(userId: string): Promise<void> {
   await prisma.notification.updateMany({ where: { userId, readAt: null }, data: { readAt: new Date() } });
+}
+
+/** Registra o aparelho para push. Um token pertence a UM usuário por vez (troca de conta no mesmo celular). */
+export async function registerPushToken(userId: string, req: RegisterPushTokenRequest): Promise<void> {
+  await prisma.pushToken.upsert({
+    where: { token: req.token },
+    create: { userId, token: req.token, platform: req.platform },
+    update: { userId, platform: req.platform, lastSeen: new Date() },
+  });
+}
+
+export async function removePushToken(userId: string, req: UnregisterPushTokenRequest): Promise<void> {
+  await prisma.pushToken.deleteMany({ where: { token: req.token, userId } });
+}
+
+/**
+ * Exclusão de conta pedida pela pessoa (App Store 5.1.1(v) / Google Play exigem o pedido dentro do
+ * app). Orquestra os DOIS serviços, porque a conta é a mesma nos dois: `public.users` é
+ * compartilhada, mas cada serviço é dono do seu schema e dos arquivos que subiu.
+ *
+ * A linha de `users` é **anonimizada**, não apagada: pedidos, extrato de cashback, comissões e
+ * repasses apontam pra ela e precisam continuar íntegros para a contabilidade das lojas.
+ *
+ * Ordem deliberada:
+ *  1. senha e papel conferidos aqui;
+ *  2. impedimentos somados dos dois lados (pedido em aberto aqui, corrida em andamento lá) — se o
+ *     OpenDriver não responder, a exclusão é recusada, nunca feita pela metade;
+ *  3. OpenDriver apaga o lado dele (inclui foto de CNH, selfie e CRLV no storage);
+ *  4. hub apaga o lado dele e anonimiza `users` por último.
+ *
+ * O passo 4 vem no fim porque os dois purges são idempotentes: se algo falhar no meio, a conta
+ * continua viva e a pessoa pode repetir até concluir. O contrário — conta morta com dado pessoal
+ * sobrando no outro schema — é o resultado que não pode acontecer.
+ *
+ * Contas de loja/equipe não se excluem sozinhas: têm repasse e obrigação fiscal em aberto.
+ */
+export async function deleteAccount(userId: string, req: DeleteAccountRequest): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new AppError('Usuário não encontrado.', 404);
+  if (!verifyPassword(req.password, user.passwordHash)) throw new AppError('Senha incorreta.', 400);
+  if (user.partnerId || user.role === 'Partner' || user.role === 'Admin' || user.role === 'Financeiro')
+    throw new AppError('Contas de loja ou da equipe são encerradas pelo suporte.', 409);
+
+  const blockers = [...(await accountPurgeService.deletionBlockers(userId)), ...(await opendriverDeletionBlockers(userId))];
+  if (blockers.length) throw new AppError(`${blockers.join(' ')} Resolva antes de excluir a conta.`, 409);
+
+  await purgeOpendriverAccount(userId);
+  await accountPurgeService.purgeHubAccount(userId);
 }
 
 export async function resendVerification(email: string): Promise<void> {

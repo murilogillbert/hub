@@ -10,6 +10,7 @@ import { authRouter } from './routes/auth.routes.js';
 import { catalogRouter } from './routes/catalog.routes.js';
 import { clientRouter } from './routes/client.routes.js';
 import { financeiroRouter } from './routes/financeiro.routes.js';
+import { internalRouter } from './routes/internal.routes.js';
 import { meRouter } from './routes/me.routes.js';
 import { partnerRouter } from './routes/partner.routes.js';
 import { redirectRouter } from './routes/redirect.routes.js';
@@ -64,6 +65,8 @@ export function createApp() {
   app.use('/api/v1/admin', adminRouter);
   app.use('/api/v1/financeiro', financeiroRouter);
   app.use('/api/v1/service', serviceRouter);
+  // Chamadas do OpenDriver (exclusão de conta) — autenticadas por ServiceApiKey, nunca por usuário.
+  app.use('/api/v1', internalRouter);
   app.use('/api/v1/survey', surveyRouter);
   app.use('/api/v1/payments/webhook', webhookRouter);
   app.use('/api/v1/uploads', uploadsRouter);

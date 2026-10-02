@@ -5,6 +5,7 @@ import { AppError } from '../errors.js';
 import { paymentGateway } from '../infra/paymentGateways/index.js';
 import * as codes from '../infra/paymentGateways/paymentCodes.js';
 import { prisma } from '../infra/prisma.js';
+import { sendPush } from '../infra/push.js';
 import { parsePaymentMethod } from '../mappings.js';
 import * as driverAffiliateService from './driverAffiliateService.js';
 import type { Prisma } from '@prisma/client';
@@ -222,6 +223,8 @@ async function cancelOrder(orderId: string, reason: string): Promise<void> {
 }
 
 async function approve(orderId: string, voucherCode: string | null): Promise<void> {
+  /** Preenchido dentro da transação para o push sair DEPOIS do commit (rede nunca dentro do $transaction). */
+  let notify: { userId: string; code: string; cashbackEarned: number } | null = null;
   await prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({
       where: { id: orderId },
@@ -300,7 +303,22 @@ async function approve(orderId: string, voucherCode: string | null): Promise<voi
         message: `Voucher do pedido ${order.code} liberado. Cashback de R$ ${cashbackEarned.toFixed(2)} creditado na sua conta.`,
       },
     });
+    notify = { userId: order.customerId, code: order.code, cashbackEarned };
   });
+
+  // Push do mesmo aviso, para quem usa o app. Fire-and-forget: a notificação em `notifications`
+  // já está gravada e é a fonte da verdade, então falha de push não desfaz nem repete nada.
+  if (notify) {
+    const { userId, code, cashbackEarned } = notify as { userId: string; code: string; cashbackEarned: number };
+    void sendPush(userId, {
+      title: 'Pagamento confirmado',
+      body:
+        cashbackEarned > 0
+          ? `Voucher do pedido ${code} liberado e R$ ${cashbackEarned.toFixed(2)} de cashback na conta.`
+          : `Voucher do pedido ${code} liberado.`,
+      data: { type: 'order_paid', code },
+    });
+  }
 }
 
 async function addCashbackEntry(
