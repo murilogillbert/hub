@@ -129,9 +129,25 @@ export interface CampaignMaterialDto {
 // ---------- Chaves de API de serviço ----------
 export const createApiKeySchema = z.object({
   label: z.string().min(1),
-  // `account:*` é usado pelo OpenDriver na exclusão de conta entre os dois serviços
-  // (docs/normalizacao-banco.md). Enum fechado de propósito: escopo só existe se estiver aqui.
-  scopes: z.array(z.enum(['affiliate:read', 'affiliate:write', 'account:read', 'account:purge'])).min(1),
+  // `account:*` é usado na exclusão de conta entre os serviços do ecossistema
+  // (docs/normalizacao-banco.md) — hoje OpenDriver e OpenAd. `ads:*` é do OpenAd:
+  // `ads:earning:write` autoriza o OpenAd a creditar repasse de anúncio em
+  // `opendriver.driver_earnings`, e `ads:payout:read` permite conferir o total devido.
+  //
+  // Enum fechado de propósito: escopo só existe se estiver aqui. Uma chave pedida com escopo
+  // fora da lista é recusada na criação, não descoberta em produção como 403 silencioso.
+  scopes: z
+    .array(
+      z.enum([
+        'affiliate:read',
+        'affiliate:write',
+        'account:read',
+        'account:purge',
+        'ads:earning:write',
+        'ads:payout:read',
+      ])
+    )
+    .min(1),
 });
 export type CreateApiKeyRequest = z.infer<typeof createApiKeySchema>;
 

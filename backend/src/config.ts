@@ -33,6 +33,13 @@ export const config = {
   paymentProvider: (process.env.PAYMENT_PROVIDER ?? 'mock').toLowerCase(),
   /** API do OpenDriver (servidor-a-servidor, exclusão de conta). Sem ela a exclusão é recusada. */
   opendriverApiUrl: (process.env.OPENDRIVER_API_URL ?? '').replace(/\/+$/, ''),
+  /**
+   * API do OpenAd (anúncios em telas automotivas), terceiro serviço do ecossistema.
+   *
+   * Usada no mesmo fan-out de exclusão de conta. Fail-closed como a do OpenDriver: sem ela a
+   * exclusão é recusada, em vez de anonimizar aqui e deixar dado do anunciante vivo lá.
+   */
+  openadApiUrl: (process.env.OPENAD_API_URL ?? '').replace(/\/+$/, ''),
   corsOrigins: (process.env.CORS_ORIGINS ?? 'http://localhost:5173')
     .split(',')
     .map((s) => s.trim())

@@ -16,7 +16,12 @@ import type {
 import { config } from '../config.js';
 import { passwordProblem } from '../domain/password.js';
 import { AppError } from '../errors.js';
-import { opendriverDeletionBlockers, purgeOpendriverAccount } from '../infra/accountSync.js';
+import {
+  openadDeletionBlockers,
+  opendriverDeletionBlockers,
+  purgeOpenadAccount,
+  purgeOpendriverAccount,
+} from '../infra/accountSync.js';
 import { hashPassword, verifyPassword } from '../infra/auth/passwordHasher.js';
 import * as accountPurgeService from './accountPurgeService.js';
 import { issueTokens, validateRefreshToken } from '../infra/auth/jwt.js';
@@ -230,10 +235,12 @@ export async function removePushToken(userId: string, req: UnregisterPushTokenRe
  *
  * Ordem deliberada:
  *  1. senha e papel conferidos aqui;
- *  2. impedimentos somados dos dois lados (pedido em aberto aqui, corrida em andamento lá) — se o
- *     OpenDriver não responder, a exclusão é recusada, nunca feita pela metade;
+ *  2. impedimentos somados dos **três** lados (pedido em aberto aqui, corrida em andamento no
+ *     OpenDriver, campanha no ar ou crédito não consumido no OpenAd) — se qualquer um não
+ *     responder, a exclusão é recusada, nunca feita pela metade;
  *  3. OpenDriver apaga o lado dele (inclui foto de CNH, selfie e CRLV no storage);
- *  4. hub apaga o lado dele e anonimiza `users` por último.
+ *  4. OpenAd anonimiza o anunciante e arquiva campanha e criativo;
+ *  5. hub apaga o lado dele e anonimiza `users` por último.
  *
  * O passo 4 vem no fim porque os dois purges são idempotentes: se algo falhar no meio, a conta
  * continua viva e a pessoa pode repetir até concluir. O contrário — conta morta com dado pessoal
@@ -248,10 +255,31 @@ export async function deleteAccount(userId: string, req: DeleteAccountRequest): 
   if (user.partnerId || user.role === 'Partner' || user.role === 'Admin' || user.role === 'Financeiro')
     throw new AppError('Contas de loja ou da equipe são encerradas pelo suporte.', 409);
 
-  const blockers = [...(await accountPurgeService.deletionBlockers(userId)), ...(await opendriverDeletionBlockers(userId))];
+  /**
+   * Os impedimentos são coletados dos três serviços **antes** de qualquer purga.
+   *
+   * Em paralelo, não em sequência: são três chamadas independentes com teto de 10 s cada, e
+   * encadeá-las faria o pior caso ser 30 s de espera para a pessoa que clicou em excluir.
+   * `Promise.all` rejeita na primeira falha, que é exatamente o comportamento desejado —
+   * serviço que não responde recusa a exclusão inteira (fail-closed).
+   */
+  const [doHub, doOpendriver, doOpenad] = await Promise.all([
+    accountPurgeService.deletionBlockers(userId),
+    opendriverDeletionBlockers(userId),
+    openadDeletionBlockers(userId),
+  ]);
+  const blockers = [...doHub, ...doOpendriver, ...doOpenad];
   if (blockers.length) throw new AppError(`${blockers.join(' ')} Resolva antes de excluir a conta.`, 409);
 
+  /**
+   * As purgas, ao contrário, são **sequenciais**. Cada uma é idempotente, então uma falha no
+   * meio deixa a conta viva e a operação repetível; em paralelo, uma rejeição abortaria as
+   * outras em estado indeterminado e sem ordem conhecida de recuperação.
+   *
+   * O hub por último, sempre: enquanto `users` não for anonimizada, a pessoa consegue repetir.
+   */
   await purgeOpendriverAccount(userId);
+  await purgeOpenadAccount(userId);
   await accountPurgeService.purgeHubAccount(userId);
 }
 
