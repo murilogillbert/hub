@@ -11,6 +11,7 @@ import { catalogRouter } from './routes/catalog.routes.js';
 import { clientRouter } from './routes/client.routes.js';
 import { financeiroRouter } from './routes/financeiro.routes.js';
 import { internalRouter } from './routes/internal.routes.js';
+import { legalRouter } from './routes/legal.routes.js';
 import { meRouter } from './routes/me.routes.js';
 import { partnerRouter } from './routes/partner.routes.js';
 import { redirectRouter } from './routes/redirect.routes.js';
@@ -54,6 +55,12 @@ export function createApp() {
   // Link curto de indicação do afiliado — fora de /api/v1 de propósito
   // (pensado pra ser compartilhado como hub.com/r/CODE).
   app.use(redirectRouter);
+
+  // Política de privacidade e termos, públicos e fora de /api/v1: são páginas que a revisão
+  // da Apple e do Google **abrem no navegador**, e o endereço precisa ser colável numa ficha
+  // de loja. Mesmo caminho que o opendriver usa (`/legal/...`), para o ecossistema ter um
+  // padrão só.
+  app.use('/legal', legalRouter);
 
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1', catalogRouter);
