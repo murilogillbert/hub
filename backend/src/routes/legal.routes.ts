@@ -1,4 +1,5 @@
 import { Router, type Response } from 'express';
+import { paginaExclusao } from './legal.exclusao.js';
 
 /**
  * Política de privacidade e termos de uso do OpenDriverHub, servidos **pelo backend**.
@@ -146,6 +147,49 @@ ${identificacao()}
 <p>Dúvidas, pedidos de titular e suporte: <a href="mailto:${contato()}">${contato()}</a>.</p>
 <p>Você também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD).</p>`
   );
+});
+
+/**
+ * Exigencia do Google Play: link **na web**, sem login, para pedir exclusao de conta e dados.
+ * O app ja tinha a tela interna; o link web nao existia e e campo obrigatorio da ficha.
+ */
+legalRouter.get('/exclusao-de-conta', (_req, res) => {
+  paginaExclusao(res, {
+    produto: 'OpenDriverHub',
+    caminhoNoApp: 'Conta → Excluir minha conta',
+    atualizadoEm: UPDATED_AT,
+    controlador: CONTROLADOR,
+    apagados: [
+      'Nome, e-mail, telefone, CPF e foto de perfil (anonimizados).',
+      'Senha e todas as sessões ativas.',
+      'Endereços salvos e preferências de notificação.',
+      'Token de notificação do aparelho.',
+      'Avaliações que você escreveu deixam de ser associadas a você.',
+      'Dados de parceiro, quando aplicável: documentos enviados para análise e chave Pix.',
+    ],
+    retidos: [
+      {
+        oque: 'Pedidos, pagamentos e vouchers emitidos',
+        prazo: '5 anos',
+        motivo: 'Código de Defesa do Consumidor e legislação fiscal',
+      },
+      {
+        oque: 'Lançamentos de cashback e de comissão de afiliado',
+        prazo: '5 anos',
+        motivo: 'Obrigação fiscal e contábil',
+      },
+      {
+        oque: 'Registros de emissão de nota fiscal',
+        prazo: 'conforme a legislação tributária',
+        motivo: 'Obrigação legal',
+      },
+    ],
+    bloqueios: [
+      'Há pedido em aberto, aguardando separação, entrega ou resgate de voucher.',
+      'Há saldo de cashback ou comissão a receber — saque ou use o saldo antes.',
+      'Você é parceiro com repasse pendente.',
+    ],
+  });
 });
 
 legalRouter.get('/termos', (_req, res) => {
