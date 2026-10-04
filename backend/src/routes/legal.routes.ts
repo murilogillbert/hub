@@ -79,7 +79,7 @@ function identificacao(): string {
   CNPJ ${esc(CONTROLADOR.cnpj)}<br>
   ${esc(CONTROLADOR.endereco)}<br>
   Encarregado pelo tratamento de dados pessoais (DPO):
-  <a href="mailto:${contato()}">${contato()}</a>
+  <!--email_off--><a href="mailto:${contato()}">${contato()}</a><!--/email_off-->
 </p>`;
 }
 
@@ -144,7 +144,7 @@ ${identificacao()}
 <p>O ecossistema opera telas de anúncio em veículos, pela plataforma OpenDriver Ads. <b>Essa operação não usa os seus dados do OpenDriverHub</b>: o anúncio é escolhido pela região e pelo horário do veículo, não por quem está dentro dele, e não há atribuição de anúncio a pessoa.</p>
 
 <h2>8. Contato</h2>
-<p>Dúvidas, pedidos de titular e suporte: <a href="mailto:${contato()}">${contato()}</a>.</p>
+<p>Dúvidas, pedidos de titular e suporte: <!--email_off--><a href="mailto:${contato()}">${contato()}</a><!--/email_off-->.</p>
 <p>Você também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD).</p>`
   );
 });
@@ -250,6 +250,6 @@ ${identificacao()}
 <p>Podemos alterar estes termos; mudanças relevantes são avisadas no app com antecedência razoável. O uso continuado após o aviso significa concordância.</p>
 
 <h2>10. Contato e foro</h2>
-<p>Dúvidas e suporte: <a href="mailto:${contato()}">${contato()}</a>. Aplica-se a legislação brasileira, e fica eleito o foro da comarca de Brasília/DF, sem prejuízo do direito do consumidor de demandar no foro do seu domicílio.</p>`
+<p>Dúvidas e suporte: <!--email_off--><a href="mailto:${contato()}">${contato()}</a><!--/email_off-->. Aplica-se a legislação brasileira, e fica eleito o foro da comarca de Brasília/DF, sem prejuízo do direito do consumidor de demandar no foro do seu domicílio.</p>`
   );
 });
