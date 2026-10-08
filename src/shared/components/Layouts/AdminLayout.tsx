@@ -3,6 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { SidebarUser } from '@shared/components/SidebarUser/SidebarUser';
 import { Logo } from '@shared/components/Logo/Logo';
 import { Icon } from '@shared/components/Icon/Icon';
+import { PaymentModeBanner } from '@shared/components/PaymentModeBanner/PaymentModeBanner';
 import './Layouts.css';
 
 export function AdminLayout() {
@@ -111,6 +112,7 @@ export function AdminLayout() {
         <SidebarUser />
       </aside>
       <main className="layout-internal__main">
+        <PaymentModeBanner />
         <Outlet />
       </main>
     </div>

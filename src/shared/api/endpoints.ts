@@ -592,6 +592,12 @@ export const adminApi = {
   ) => api.post<void>(`/admin/driver-payouts/${driverId}/mark-paid`, body),
   leads: () => api.get<LeadDto[]>('/admin/leads'),
   integrations: () => api.get<IntegrationGroup[]>('/admin/integrations'),
+  /**
+   * Só o provedor de pagamento em vigor. Separada de `integrations()` porque a faixa de aviso
+   * carrega em toda tela do admin, e não vale trazer o catálogo inteiro a cada navegação.
+   */
+  paymentMode: () =>
+    api.get<{ hub: string; opendriver: string; simulated: boolean; warning: string | null }>('/admin/payment-mode'),
   updateIntegration: (key: string, value: string | null) =>
     api.put<IntegrationGroup[]>('/admin/integrations', { key, value }),
   categories: () => api.get<Category[]>('/admin/categories'),
@@ -659,6 +665,10 @@ export interface IntegrationField {
   hasValue: boolean;
   preview: string;
   source: 'db' | 'env' | 'unset';
+  /** Quando presente, o campo é uma escolha: a tela mostra um seletor, não caixa de texto. */
+  options?: string[];
+  /** Explicação curta sob o campo, para o operador não precisar adivinhar o efeito. */
+  hint?: string;
 }
 export interface IntegrationGroup {
   id: string;
@@ -666,6 +676,11 @@ export interface IntegrationGroup {
   description: string;
   icon: string;
   connected: boolean;
+  /**
+   * Alerta do grupo, em destaque. Hoje só o grupo de pagamento usa: enquanto o provedor é
+   * `mock`, o sistema finge que cobra, e isso tem de aparecer na tela.
+   */
+  warning: string | null;
   fields: IntegrationField[];
 }
 

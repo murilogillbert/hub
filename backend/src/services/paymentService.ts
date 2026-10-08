@@ -2,7 +2,7 @@ import type { ProcessPaymentRequest } from '../dtos/orders.dto.js';
 import type { PaymentStatusSnapshot } from '../infra/paymentGateways/types.js';
 import { clampCommission, driverCommissionFor, platformFeeFor, round2 } from '../domain/commissionRules.js';
 import { AppError } from '../errors.js';
-import { paymentGateway } from '../infra/paymentGateways/index.js';
+import { getPaymentGateway } from '../infra/paymentGateways/index.js';
 import * as codes from '../infra/paymentGateways/paymentCodes.js';
 import { prisma } from '../infra/prisma.js';
 import { sendPush } from '../infra/push.js';
@@ -38,6 +38,9 @@ export async function process(
   if (order.status !== 'PendingPayment') throw new AppError('Pedido não está aguardando pagamento.', 409);
 
   const method = parsePaymentMethod(req.method);
+  // Resolvido uma vez por cobrança: o provedor é configuração em runtime, e trocar no meio de
+  // uma cobrança faria o pagamento ser processado por um gateway e gravado com o nome de outro.
+  const paymentGateway = await getPaymentGateway();
 
   // Asaas exige CPF/CNPJ do cliente pra criar a cobrança — sem isso ele cairia
   // no CPF de teste (Asaas:DefaultCpfCnpj), o que corrompe o cliente real lá.
@@ -111,7 +114,7 @@ export async function status(orderId: string, customerId: string): Promise<Payme
 
   let current = order;
   if (order.status === 'PendingPayment') {
-    const sync = await paymentGateway.sync(order);
+    const sync = await (await getPaymentGateway()).sync(order);
     if (sync?.paymentStatus === 'approved') {
       await approve(order.id, sync.voucherCode);
       current = (await prisma.order.findUnique({ where: { id: orderId }, include: orderInclude }))!;
@@ -152,6 +155,9 @@ export async function reconcilePending(): Promise<void> {
     include: orderInclude,
     take: 200,
   });
+  // Resolvido uma vez para o lote inteiro: 200 pedidos não devem produzir 200 leituras de
+  // configuração, e o provedor não muda no meio de uma conciliação.
+  const paymentGateway = await getPaymentGateway();
   for (const order of pending) {
     const sync = await paymentGateway.sync(order);
     if (sync?.paymentStatus === 'approved') await approve(order.id, sync.voucherCode);
@@ -164,6 +170,7 @@ export async function reconcileByExternal(externalId: string, eventType: string,
     include: orderInclude,
   });
 
+  const paymentGateway = await getPaymentGateway();
   let result = 'ignored';
   if (order) {
     if (order.status === 'PendingPayment') {

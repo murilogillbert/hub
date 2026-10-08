@@ -1,11 +1,21 @@
 import type { IntegrationFieldDto, IntegrationGroupDto, UpdateSettingRequest } from '../dtos/settings.dto.js';
 import { AppError } from '../errors.js';
 import { prisma } from '../infra/prisma.js';
+import { clearSettingsCache } from '../infra/settingsProvider.js';
 
 interface Field {
   key: string;
   label: string;
   secret: boolean;
+  /**
+   * Valores aceitos, quando o campo é uma escolha e não texto livre.
+   *
+   * Existe por causa do provedor de pagamento: digitar `asas` numa caixa de texto deixaria o
+   * sistema em `mock` **silenciosamente**, porque a seleção cai no padrão quando não
+   * reconhece o valor. Esse é exatamente o modo de falha que esta frente existe para matar.
+   */
+  options?: string[];
+  hint?: string;
 }
 interface Group {
   id: string;
@@ -15,7 +25,40 @@ interface Group {
   fields: Field[];
 }
 
+/** O que a plataforma aceita como provedor de pagamento, por serviço. */
+export const PAYMENT_PROVIDERS_HUB = ['mock', 'asaas', 'mercadopago'] as const;
+export const PAYMENT_PROVIDERS_OPENDRIVER = ['mock', 'asaas'] as const;
+
 const CATALOG: Group[] = [
+  {
+    /**
+     * Grupo novo, e o primeiro da lista de propósito: enquanto o provedor é `mock`, o sistema
+     * **finge** que cobrou — o gateway simulado gera um QR falso e aprova sozinho depois de
+     * 5 minutos. A diferença entre "cobrou" e "fingiu que cobrou" não aparecia em nenhum
+     * lugar da interface, e a pior forma de descobrir isso é semanas depois.
+     */
+    id: 'payments',
+    name: 'Provedor de pagamento',
+    description:
+      'Qual gateway processa o dinheiro de verdade. Enquanto estiver em "mock", nada é cobrado: o Pix gera um QR falso e a cobrança é aprovada sozinha depois de 5 minutos. Vale na hora, sem redeploy.',
+    icon: '💰',
+    fields: [
+      {
+        key: 'Payments:Provider',
+        label: 'Provedor do hub (loja e marketplace)',
+        secret: false,
+        options: [...PAYMENT_PROVIDERS_HUB],
+        hint: 'Sem valor aqui, vale PAYMENT_PROVIDER do ambiente, e o padrão dela é mock.',
+      },
+      {
+        key: 'OpenDriver:PaymentProvider',
+        label: 'Provedor do OpenDriver (corridas) — opcional',
+        secret: false,
+        options: [...PAYMENT_PROVIDERS_OPENDRIVER],
+        hint: 'Sem valor, o OpenDriver usa o provedor do hub acima. Serve para ligar um serviço antes do outro, e porque o OpenDriver não implementa Mercado Pago.',
+      },
+    ],
+  },
   {
     id: 'whatsapp',
     name: 'WhatsApp Business',
@@ -139,6 +182,7 @@ const CATALOG: Group[] = [
 ];
 
 const ALLOWED_KEYS = new Set(CATALOG.flatMap((g) => g.fields.map((f) => f.key)));
+const FIELD_BY_KEY = new Map(CATALOG.flatMap((g) => g.fields.map((f) => [f.key, f] as const)));
 
 function mask(value: string): string {
   const v = value.trim();
@@ -151,9 +195,36 @@ function envValue(key: string): string | null {
   return env && env.trim() !== '' ? env : null;
 }
 
+/** Resolve o valor em vigor de uma chave a partir das linhas já carregadas. */
+function efetivo(rows: { key: string; value: string }[], key: string): string | null {
+  const dbRow = rows.find((r) => r.key === key);
+  const dbVal = dbRow && dbRow.value.trim() !== '' ? dbRow.value : null;
+  return dbVal ?? envValue(key);
+}
+
+/**
+ * Provedor em vigor em cada serviço, sem consultar o banco de novo.
+ *
+ * O OpenDriver tem override próprio e cai no do hub quando não tem — mesmo padrão que
+ * `OpenDriver:AsaasWebhookToken` já usa. O motivo de existir o override: o OpenDriver não
+ * implementa Mercado Pago, e sem a distinção um hub em `mercadopago` deixaria o OpenDriver em
+ * `mock` sem nada indicar isso.
+ */
+function provedoresEmVigor(rows: { key: string; value: string }[]) {
+  const hub = (efetivo(rows, 'Payments:Provider') ?? 'mock').toLowerCase();
+  const od = (efetivo(rows, 'OpenDriver:PaymentProvider') ?? hub).toLowerCase();
+  return {
+    hub,
+    // Valor que o OpenDriver não reconhece vira `mock` lá; refletir isso aqui evita a tela
+    // dizer "mercadopago" para um serviço que está, de fato, simulando.
+    opendriver: (PAYMENT_PROVIDERS_OPENDRIVER as readonly string[]).includes(od) ? od : 'mock',
+  };
+}
+
 export async function getGroups(): Promise<IntegrationGroupDto[]> {
   const rows = await prisma.integrationSetting.findMany();
   const result: IntegrationGroupDto[] = [];
+  const provedores = provedoresEmVigor(rows);
 
   for (const g of CATALOG) {
     const fields: IntegrationFieldDto[] = [];
@@ -164,32 +235,105 @@ export async function getGroups(): Promise<IntegrationGroupDto[]> {
       const effective = dbVal ?? envVal;
       const source: 'db' | 'env' | 'unset' = dbVal !== null ? 'db' : envVal !== null ? 'env' : 'unset';
       const preview = effective === null ? '' : f.secret ? mask(effective) : effective;
-      fields.push({ key: f.key, label: f.label, secret: f.secret, hasValue: effective !== null, preview, source });
+      fields.push({
+        key: f.key,
+        label: f.label,
+        secret: f.secret,
+        hasValue: effective !== null,
+        preview,
+        source,
+        options: f.options,
+        hint: f.hint,
+      });
     }
+
+    // Mesmo texto da rota enxuta `/admin/payment-mode`, de uma função só: duas redações do
+    // mesmo alerta divergiriam na primeira edição.
+    const warning = g.id === 'payments' ? avisoDePagamento(provedores) : null;
+
+    /**
+     * `connected` olhava só para os campos secretos, e o grupo de pagamento não tem nenhum —
+     * sem este caso ele apareceria sempre como "Incompleto". Aqui "configurado" significa
+     * outra coisa: provedor de verdade escolhido nos dois serviços.
+     */
     const connected =
-      fields.filter((x) => g.fields.find((cf) => cf.key === x.key)!.secret).every((x) => x.hasValue) &&
-      fields.some((x) => x.hasValue);
-    result.push({ id: g.id, name: g.name, description: g.description, icon: g.icon, connected, fields });
+      g.id === 'payments'
+        ? provedores.hub !== 'mock' && provedores.opendriver !== 'mock'
+        : fields.filter((x) => FIELD_BY_KEY.get(x.key)!.secret).every((x) => x.hasValue) &&
+          fields.some((x) => x.hasValue);
+
+    result.push({ id: g.id, name: g.name, description: g.description, icon: g.icon, connected, warning, fields });
   }
   return result;
+}
+
+/** Texto do alerta de pagamento simulado, ou `null` quando os dois serviços cobram de verdade. */
+function avisoDePagamento(p: { hub: string; opendriver: string }): string | null {
+  const simulados = [
+    p.hub === 'mock' && 'o hub (loja e marketplace)',
+    p.opendriver === 'mock' && 'o OpenDriver (corridas)',
+  ].filter(Boolean) as string[];
+  if (!simulados.length) return null;
+  return `Pagamento SIMULADO em ${simulados.join(' e ')}. Nada é cobrado de verdade: o Pix gera um QR falso e a cobrança é aprovada sozinha depois de 5 minutos.`;
+}
+
+/**
+ * Provedor em vigor, para quem precisa só disso.
+ *
+ * A faixa de aviso do painel carrega em toda tela administrativa; trazer o catálogo inteiro de
+ * integrações a cada navegação, com todos os segredos mascarados, seria carga desnecessária no
+ * caminho mais percorrido. Duas chaves bastam.
+ */
+export async function getPaymentMode(): Promise<{
+  hub: string;
+  opendriver: string;
+  simulated: boolean;
+  warning: string | null;
+}> {
+  const rows = await prisma.integrationSetting.findMany({
+    where: { key: { in: ['Payments:Provider', 'OpenDriver:PaymentProvider'] } },
+  });
+  const p = provedoresEmVigor(rows);
+  return { ...p, simulated: p.hub === 'mock' || p.opendriver === 'mock', warning: avisoDePagamento(p) };
 }
 
 export async function updateSetting(actorId: string, req: UpdateSettingRequest): Promise<void> {
   if (!ALLOWED_KEYS.has(req.key)) throw new AppError('Chave de configuração inválida.', 400);
 
+  const campo = FIELD_BY_KEY.get(req.key)!;
+  const valor = req.value?.trim() ?? '';
+  /**
+   * Campo com opções é validado aqui, e não só na tela.
+   *
+   * Sem isto, um valor errado no provedor de pagamento não dá erro nenhum: a seleção não
+   * reconhece, cai no padrão `mock`, e o sistema volta a fingir que cobra — com a tela
+   * mostrando o valor digitado como se estivesse valendo.
+   */
+  if (valor && campo.options && !campo.options.includes(valor.toLowerCase())) {
+    throw new AppError(`Valor inválido para ${campo.label}. Use um destes: ${campo.options.join(', ')}.`, 400);
+  }
+
   const row = await prisma.integrationSetting.findUnique({ where: { key: req.key } });
 
-  if (!req.value || req.value.trim() === '') {
+  // Campo com opções é gravado em minúsculas: a comparação na seleção do gateway é por
+  // igualdade, e "Asaas" gravado assim cairia no padrão `mock` sem avisar.
+  const paraGravar = campo.options ? valor.toLowerCase() : valor;
+
+  if (paraGravar === '') {
     // Vazio → remove customização e volta ao .env.
     if (row) await prisma.integrationSetting.delete({ where: { key: req.key } });
   } else if (!row) {
-    await prisma.integrationSetting.create({ data: { key: req.key, value: req.value.trim(), updatedBy: actorId } });
+    await prisma.integrationSetting.create({ data: { key: req.key, value: paraGravar, updatedBy: actorId } });
   } else {
     await prisma.integrationSetting.update({
       where: { key: req.key },
-      data: { value: req.value.trim(), updatedBy: actorId, updatedAt: new Date() },
+      data: { value: paraGravar, updatedBy: actorId, updatedAt: new Date() },
     });
   }
+
+  // A mudança tem de valer na hora nesta instância; sem isto, o cache de 30 s do
+  // `settingsProvider` continuaria entregando o valor antigo para quem já o consultou.
+  clearSettingsCache(req.key);
 
   await prisma.auditLog.create({
     data: {
@@ -197,8 +341,14 @@ export async function updateSetting(actorId: string, req: UpdateSettingRequest):
       action: 'settings.update',
       entityType: 'IntegrationSetting',
       entityId: req.key,
-      // Nunca registramos o valor do segredo, só se foi definido ou limpo.
-      payloadJson: JSON.stringify({ key: req.key, cleared: !req.value || req.value.trim() === '' }),
+      // Nunca registramos o valor do segredo, só se foi definido ou limpo. Campo com opções
+      // não é segredo e o valor importa na auditoria: trocar o provedor de pagamento é a
+      // mudança mais consequente desta tela.
+      payloadJson: JSON.stringify({
+        key: req.key,
+        cleared: valor === '',
+        ...(campo.options && valor ? { value: valor.toLowerCase() } : {}),
+      }),
     },
   });
 }

@@ -288,3 +288,17 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Alerta de grupo em Integrações. Hoje só o provedor de pagamento usa: enquanto ele é "mock",
+   o sistema finge que cobra, e isso precisa ser impossível de não ver. Por isso cor de perigo
+   e borda à esquerda, e não um texto cinza a mais na tela. */
+.admin-integrations__warning {
+  margin: 0;
+  padding: var(--space-3);
+  border-left: 3px solid var(--color-danger);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  color: var(--color-text);
+  font-size: var(--font-sm);
+  font-weight: 600;
+}

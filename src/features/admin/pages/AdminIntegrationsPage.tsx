@@ -33,6 +33,45 @@ function FieldRow({
 
   const inputId = useId();
 
+  /**
+   * Campo com opções é um seletor, não caixa de texto.
+   *
+   * O motivo é o provedor de pagamento: digitado à mão, `asas` não daria erro nenhum — a
+   * seleção do gateway não reconheceria, cairia no padrão `mock`, e o sistema voltaria a
+   * fingir que cobra. O servidor também recusa valor fora da lista; o seletor é para o
+   * operador não precisar descobrir isso por erro.
+   */
+  if (field.options?.length) {
+    const atual = field.hasValue ? field.preview : '';
+    return (
+      <div className="admin-integrations__field">
+        <div className="row-between">
+          <label htmlFor={inputId} className="input-field__label">{field.label}</label>
+          <span className={`badge ${sourceBadge.cls}`}>{sourceBadge.label}</span>
+        </div>
+        <div className="row">
+          <div className="admin-filters__select">
+            <select
+              id={inputId}
+              value={atual}
+              disabled={saving}
+              onChange={(e) => onSave(field.key, e.target.value || null)}
+            >
+              <option value="">— usar o padrão —</option>
+              {field.options.map((o) => (
+                <option key={o} value={o}>
+                  {o === 'mock' ? 'mock (simulado — não cobra)' : o}
+                </option>
+              ))}
+            </select>
+          </div>
+          {atual === 'mock' ? <span className="badge badge-danger">simulado</span> : null}
+        </div>
+        {field.hint ? <small className="text-muted">{field.hint}</small> : null}
+      </div>
+    );
+  }
+
   return (
     <div className="admin-integrations__field">
       <div className="row-between">
@@ -92,6 +131,7 @@ function FieldRow({
           </Button>
         </div>
       )}
+      {field.hint ? <small className="text-muted">{field.hint}</small> : null}
     </div>
   );
 }
@@ -109,6 +149,10 @@ export function AdminIntegrationsPage() {
       adminApi.updateIntegration(key, value),
     onSuccess: (data) => {
       qc.setQueryData(['admin-integrations'], data);
+      // A faixa de "pagamento simulado" vive no layout e tem cache próprio. Sem invalidar,
+      // trocar o provedor aqui deixaria a faixa na tela por até 5 minutos, como se a mudança
+      // não tivesse valido.
+      void qc.invalidateQueries({ queryKey: ['admin-payment-mode'] });
       toast.success('Configuração salva.');
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : 'Falha ao salvar.'),
@@ -152,6 +196,12 @@ export function AdminIntegrationsPage() {
                   {g.connected ? 'Configurado' : 'Incompleto'}
                 </span>
               </header>
+
+              {g.warning ? (
+                <p className="admin-integrations__warning" role="alert">
+                  {g.warning}
+                </p>
+              ) : null}
 
               {g.fields.map((f) => (
                 <FieldRow

@@ -5,6 +5,7 @@ import express from 'express';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { config } from '../src/config.js';
 import { __setPrismaForTests } from '../src/infra/prisma.js';
+import { clearSettingsCache } from '../src/infra/settingsProvider.js';
 
 /**
  * Webhook da pesquisa (Formbricks): cada lead inédito paga o motorista, então
@@ -50,6 +51,13 @@ describe('POST /survey/webhook', () => {
 
   beforeEach(() => {
     settings.clear();
+    /**
+     * `getSetting` passou a ter cache de 30 s (acrescentado quando o provedor de pagamento
+     * passou a ser lido de lá, para não virar uma consulta ao banco por cobrança). Sem limpar
+     * aqui, o `null` do primeiro caso ficaria valendo e os casos seguintes veriam "nada
+     * configurado" — eles falhavam com 503 onde esperavam 401.
+     */
+    clearSettingsCache();
     handled.mockClear();
     delete process.env.Survey__WebhookSecret;
     delete process.env.Survey__ExpectedWebhookId;

@@ -57,6 +57,19 @@ adminRouter.put('/integrations', ...guard, validateBody(updateSettingSchema), as
   res.json(envelope(await settingsService.getGroups()));
 });
 
+/**
+ * Provedor de pagamento em vigor, só isso.
+ *
+ * Existe separada de `/integrations` porque a faixa de aviso de "pagamento simulado" fica no
+ * layout do admin e carrega em **toda** tela administrativa. Reusar `/integrations` para isso
+ * significaria trazer o catálogo inteiro — com todos os segredos mascarados — a cada
+ * navegação. A rota é protegida do mesmo jeito, então não é vazamento; é carga desnecessária
+ * no caminho mais percorrido do painel.
+ */
+adminRouter.get('/payment-mode', ...guard, async (_req, res) => {
+  res.json(envelope(await settingsService.getPaymentMode()));
+});
+
 adminRouter.get('/metrics', ...guard, async (_req, res) => {
   res.json(envelope(await adminService.metrics()));
 });
