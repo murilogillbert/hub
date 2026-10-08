@@ -5,6 +5,7 @@ import { hashPassword } from '../infra/auth/passwordHasher.js';
 import { sendEmail } from '../infra/email/emailFacade.js';
 import { prisma } from '../infra/prisma.js';
 import { toAffiliateApplicationDto, tryParseApplicationStatus } from '../mappings.js';
+import { avatarPadrao } from '../domain/avatar.js';
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
@@ -80,7 +81,8 @@ export async function approve(id: string, actorId: string): Promise<AffiliateApp
         active: true,
         city: app.city,
         state: app.state,
-        logoUrl: `https://api.dicebear.com/9.x/icons/svg?seed=${encodeURIComponent(app.name)}`,
+        // Vazio: a tela desenha as iniciais. Ver domain/avatar.ts.
+        logoUrl: avatarPadrao(),
       },
     });
     await tx.user.create({
@@ -91,7 +93,7 @@ export async function approve(id: string, actorId: string): Promise<AffiliateApp
         role: 'Partner',
         phone: app.phone || null,
         partnerId: partner.id,
-        avatarUrl: `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(app.name)}`,
+        avatarUrl: avatarPadrao(),
       },
     });
     return tx.affiliateApplication.update({

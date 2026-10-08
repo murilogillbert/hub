@@ -1,13 +1,13 @@
 import { ReactNode, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@shared/components/Card/Card';
+import { Avatar } from '@shared/components/Avatar/Avatar';
 import { Input } from '@shared/components/Input/Input';
 import { Button } from '@shared/components/Button/Button';
 import { useAuth } from '@shared/hooks/useAuth';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { isValidCpf, isValidPhone, maskCpf, maskPhone } from '@shared/utils/masks';
 import { authApi, uploadsApi } from '@shared/api/endpoints';
-import { resolveImageUrl } from '@shared/api/client';
 import { Icon } from '@shared/components/Icon/Icon';
 
 /** Avatar + dados pessoais (nome/e-mail/telefone/CPF) — usado por todos os
@@ -57,11 +57,7 @@ export function ProfileBasicsCard({ extraBadge }: { extraBadge?: ReactNode }) {
     <>
       <Card>
         <div className="profile__top">
-          <img
-            src={resolveImageUrl(user?.avatarUrl) || user?.avatarUrl}
-            alt={user?.name}
-            className="profile__avatar"
-          />
+          <Avatar nome={user?.name ?? ''} url={user?.avatarUrl} size={72} className="profile__avatar" />
           <div>
             <strong>{user?.name}</strong>
             <small className="text-muted">{user?.email}</small>

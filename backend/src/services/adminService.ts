@@ -20,13 +20,9 @@ import { AppError } from '../errors.js';
 import { hashPassword } from '../infra/auth/passwordHasher.js';
 import { prisma } from '../infra/prisma.js';
 import { toAuditLogDto, toOrderDto, toPartnerDto, toUserDto, tryParseOrderStatus } from '../mappings.js';
+import { avatarPadrao } from '../domain/avatar.js';
 
-function dicebearIcon(seed: string): string {
-  return `https://api.dicebear.com/9.x/icons/svg?seed=${encodeURIComponent(seed)}`;
-}
-function dicebearAvatar(seed: string): string {
-  return `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
-}
+
 
 const orderInclude = { customer: true, items: { include: { partner: true } } } as const;
 
@@ -216,7 +212,8 @@ export async function createPartner(req: PartnerUpsertRequest): Promise<PartnerD
     data: {
       name: req.name,
       segment: req.segment,
-      logoUrl: req.logoUrl?.trim() ? req.logoUrl : dicebearIcon(req.name),
+      // Vazio quando o operador não enviou logo: a tela desenha as iniciais do nome da loja.
+    logoUrl: req.logoUrl?.trim() ? req.logoUrl : avatarPadrao(),
       feePercent: req.feePercent,
       active: req.active,
       cnpj: req.cnpj?.trim() ?? '',
@@ -320,7 +317,7 @@ export async function createUser(req: AdminUserCreateRequest): Promise<UserDto> 
       role,
       cashbackBalance: round2(req.cashbackBalance),
       partnerId,
-      avatarUrl: dicebearAvatar(req.name),
+      avatarUrl: avatarPadrao(),
     },
   });
 

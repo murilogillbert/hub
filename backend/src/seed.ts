@@ -20,7 +20,7 @@ export async function ensureAdmin(): Promise<void> {
       email,
       passwordHash: hashPassword(password),
       role: 'Admin',
-      avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=admin',
+      avatarUrl: '',
     },
   });
 }
@@ -72,7 +72,7 @@ export async function seedDemo(): Promise<void> {
       name: 'Estação do Café',
       segment: 'Cafeteria',
       feePercent: 10,
-      logoUrl: 'https://api.dicebear.com/9.x/icons/svg?seed=cafe&backgroundType=gradientLinear',
+      logoUrl: '',
       joinedAt: new Date('2025-08-12'),
       cnpj: '12.345.678/0001-90',
       city: 'São Paulo',
@@ -86,7 +86,7 @@ export async function seedDemo(): Promise<void> {
       name: 'CineHub',
       segment: 'Cinema',
       feePercent: 12,
-      logoUrl: 'https://api.dicebear.com/9.x/icons/svg?seed=cinema&backgroundType=gradientLinear',
+      logoUrl: '',
       joinedAt: new Date('2025-09-02'),
       cnpj: '23.456.789/0001-01',
       city: 'Belo Horizonte',
@@ -100,7 +100,7 @@ export async function seedDemo(): Promise<void> {
       name: 'BurgerLab',
       segment: 'Restaurante',
       feePercent: 15,
-      logoUrl: 'https://api.dicebear.com/9.x/icons/svg?seed=burger&backgroundType=gradientLinear',
+      logoUrl: '',
       joinedAt: new Date('2025-10-21'),
       cnpj: '34.567.890/0001-12',
       city: 'São Paulo',
@@ -114,7 +114,7 @@ export async function seedDemo(): Promise<void> {
       name: 'EduDigital',
       segment: 'Loja Digital',
       feePercent: 8,
-      logoUrl: 'https://api.dicebear.com/9.x/icons/svg?seed=tech&backgroundType=gradientLinear',
+      logoUrl: '',
       joinedAt: new Date('2026-01-08'),
       cnpj: '45.678.901/0001-23',
     },
@@ -124,7 +124,7 @@ export async function seedDemo(): Promise<void> {
       name: 'Studio Belle',
       segment: 'Salão de Beleza',
       feePercent: 12,
-      logoUrl: 'https://api.dicebear.com/9.x/icons/svg?seed=belle&backgroundType=gradientLinear',
+      logoUrl: '',
       joinedAt: new Date('2025-11-03'),
       cnpj: '56.789.012/0001-34',
       city: 'São Paulo',
@@ -138,7 +138,7 @@ export async function seedDemo(): Promise<void> {
       name: 'VidaFit',
       segment: 'Academia',
       feePercent: 10,
-      logoUrl: 'https://api.dicebear.com/9.x/icons/svg?seed=fit&backgroundType=gradientLinear',
+      logoUrl: '',
       joinedAt: new Date('2025-12-01'),
       cnpj: '67.890.123/0001-45',
       city: 'Rio de Janeiro',
@@ -233,16 +233,16 @@ export async function seedDemo(): Promise<void> {
 
   const pwd = hashPassword('Demo@123');
   const cliente = await prisma.user.create({
-    data: { name: 'Mariana Souza', email: 'cliente@demo.com', passwordHash: pwd, role: 'Client', cashbackBalance: 12.45, avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=mariana' },
+    data: { name: 'Mariana Souza', email: 'cliente@demo.com', passwordHash: pwd, role: 'Client', cashbackBalance: 12.45, avatarUrl: '' },
   });
   const pedro = await prisma.user.create({
     data: { name: 'Pedro Lima', email: 'pedro@demo.com', passwordHash: pwd, role: 'Client', cashbackBalance: 3.99 },
   });
   await prisma.user.create({
-    data: { name: 'João Silva (BurgerLab)', email: 'parceiro@demo.com', passwordHash: pwd, role: 'Partner', partnerId: pBurger.id, avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=joao' },
+    data: { name: 'João Silva (BurgerLab)', email: 'parceiro@demo.com', passwordHash: pwd, role: 'Partner', partnerId: pBurger.id, avatarUrl: '' },
   });
   await prisma.user.create({
-    data: { name: 'Admin OpenDriverHub', email: 'admin@demo.com', passwordHash: pwd, role: 'Admin', avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=admin' },
+    data: { name: 'Admin OpenDriverHub', email: 'admin@demo.com', passwordHash: pwd, role: 'Admin', avatarUrl: '' },
   });
 
   const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);

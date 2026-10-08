@@ -3,10 +3,10 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '@shared/hooks/useAuth';
 import { useCart } from '@shared/context/CartContext';
 import { formatCurrency } from '@shared/utils/formatters';
-import { resolveImageUrl } from '@shared/api/client';
 import { FloatingAssistant } from '@features/assistant/components/FloatingAssistant';
 import { NotificationsBell } from '@shared/components/NotificationsBell/NotificationsBell';
 import { Logo } from '@shared/components/Logo/Logo';
+import { Avatar } from '@shared/components/Avatar/Avatar';
 import { Icon } from '@shared/components/Icon/Icon';
 import { VerifyEmailBanner } from '@shared/components/VerifyEmailBanner/VerifyEmailBanner';
 import './Layouts.css';
@@ -101,7 +101,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
                   className="layout-client__avatar"
                   onClick={closeMenu}
                 >
-                  <img src={resolveImageUrl(user.avatarUrl) || user.avatarUrl} alt={user.name} />
+                  <Avatar nome={user.name} url={user.avatarUrl} size={40} />
                   <span className="layout-client__avatar-info">
                     <strong>{user.name}</strong>
                     <small>{user.email}</small>

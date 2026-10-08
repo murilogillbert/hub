@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '@shared/hooks/useAuth';
-import { resolveImageUrl } from '@shared/api/client';
+import { Avatar } from '@shared/components/Avatar/Avatar';
 import './SidebarUser.css';
 
 const PROFILE_ROUTE_BY_ROLE: Record<string, string> = {
@@ -20,7 +20,7 @@ export function SidebarUser() {
 
   return (
     <Link to={profileRoute} className="layout-internal__user sidebar-user" title="Meu perfil">
-      <img src={resolveImageUrl(user.avatarUrl) || user.avatarUrl} alt={user.name} />
+      <Avatar nome={user.name} url={user.avatarUrl} size={40} />
       <div>
         <strong>{user.name}</strong>
         <small>{user.email}</small>

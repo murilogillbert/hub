@@ -29,13 +29,12 @@ import { issueToken, consumeToken } from '../infra/auth/verificationTokens.js';
 import { sendEmail } from '../infra/email/emailFacade.js';
 import { prisma } from '../infra/prisma.js';
 import { isValidPartnerDocument, toNotificationDto, toUserDto } from '../mappings.js';
+import { avatarPadrao } from '../domain/avatar.js';
 
 const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
 
-function dicebearAvatar(seed: string, style: 'avataaars' | 'icons' = 'avataaars', extra = ''): string {
-  return `https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(seed)}${extra}`;
-}
+
 
 /** Dispara o e-mail de verificação — nunca bloqueia o fluxo que a chamou
  * (mesmo padrão do e-mail de boas-vindas do afiliado). */
@@ -79,7 +78,7 @@ export async function register(req: RegisterRequest): Promise<AuthResponse> {
       role: req.role,
       phone: req.phone,
       cpf: req.cpf?.trim() || null,
-      avatarUrl: dicebearAvatar(req.name),
+      avatarUrl: avatarPadrao(),
     },
   });
   await sendVerificationEmail(user.id, user.name, user.email);
@@ -111,7 +110,7 @@ export async function registerPartner(req: PartnerRegisterRequest): Promise<Auth
         state: (req.state ?? '').trim(),
         lat: req.lat ?? 0,
         lng: req.lng ?? 0,
-        logoUrl: dicebearAvatar(req.storeName, 'icons', '&backgroundType=gradientLinear'),
+        logoUrl: avatarPadrao(),
       },
     });
 
@@ -131,7 +130,7 @@ export async function registerPartner(req: PartnerRegisterRequest): Promise<Auth
         role: 'Partner',
         phone: req.phone,
         partnerId: partner.id,
-        avatarUrl: dicebearAvatar(req.name),
+        avatarUrl: avatarPadrao(),
       },
     });
   });

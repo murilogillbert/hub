@@ -1,0 +1,18 @@
+.avatar {
+  border-radius: 50%;
+  display: inline-block;
+  flex: 0 0 auto;
+  object-fit: cover;
+  vertical-align: middle;
+}
+
+.avatar--iniciais {
+  align-items: center;
+  color: #fff;
+  display: inline-flex;
+  font-weight: 700;
+  justify-content: center;
+  /* Sem seleção: é um ícone, e selecionar as letras não faz sentido. */
+  user-select: none;
+  line-height: 1;
+}
