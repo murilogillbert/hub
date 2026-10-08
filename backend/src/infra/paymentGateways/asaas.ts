@@ -12,7 +12,20 @@ import type {
   PixPayload,
 } from './types.js';
 
-function mapStatus(s: string | undefined | null): 'approved' | 'rejected' | 'pending' {
+/**
+ * Exportada para `infra/adCreditCharges.ts`, que cria cobrança Pix **sem pedido**.
+ *
+ * O crédito de veiculação do OpenAd não tem `Order`: é o anunciante comprando saldo num painel
+ * web. `IPaymentGateway.process` recebe `OrderForPayment` em todos os parâmetros que importam
+ * (cliente, itens, split por parceiro), então não dá para reusá-lo — e alargar a interface para
+ * caber os dois casos faria toda implementação carregar um parâmetro que metade ignora.
+ *
+ * Reusar o mapeamento é o que importa: `RECEIVED|CONFIRMED|RECEIVED_IN_CASH` é aprovado e
+ * `REFUNDED|...` é recusado, e essa tabela precisa ser **uma** — duas cópias divergiriam no
+ * primeiro status novo que o Asaas introduzir, e a divergência apareceria como crédito não
+ * lançado.
+ */
+export function mapStatus(s: string | undefined | null): 'approved' | 'rejected' | 'pending' {
   if (s === 'RECEIVED' || s === 'CONFIRMED' || s === 'RECEIVED_IN_CASH') return 'approved';
   if (
     s === 'REFUNDED' ||
@@ -25,12 +38,12 @@ function mapStatus(s: string | undefined | null): 'approved' | 'rejected' | 'pen
   return 'pending'; // PENDING, OVERDUE, AWAITING_RISK_ANALYSIS, ...
 }
 
-function extractError(body: Record<string, any>): string {
+export function extractError(body: Record<string, any>): string {
   const first = body?.errors?.[0];
   return first?.description ?? 'falha na comunicação com o Asaas';
 }
 
-async function baseUrlAndHeaders(): Promise<{ baseUrl: string; headers: Record<string, string> }> {
+export async function baseUrlAndHeaders(): Promise<{ baseUrl: string; headers: Record<string, string> }> {
   const token = await getSetting('Asaas:ApiKey');
   if (!token) throw new AppError('Asaas não configurado. Defina a API Key em Admin → Integrações.', 503);
   const env = await getSetting('Asaas:Environment');

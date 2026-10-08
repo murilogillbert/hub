@@ -132,7 +132,8 @@ export const createApiKeySchema = z.object({
   // `account:*` é usado na exclusão de conta entre os serviços do ecossistema
   // (docs/normalizacao-banco.md) — hoje OpenDriver e OpenAd. `ads:*` é do OpenAd:
   // `ads:earning:write` autoriza o OpenAd a creditar repasse de anúncio em
-  // `opendriver.driver_earnings`, e `ads:payout:read` permite conferir o total devido.
+  // `opendriver.driver_earnings`, `ads:payout:read` permite conferir o total devido, e
+  // `ads:credit:*` cobre a compra de crédito de veiculação por Pix.
   //
   // Enum fechado de propósito: escopo só existe se estiver aqui. Uma chave pedida com escopo
   // fora da lista é recusada na criação, não descoberta em produção como 403 silencioso.
@@ -145,6 +146,13 @@ export const createApiKeySchema = z.object({
         'account:purge',
         'ads:earning:write',
         'ads:payout:read',
+        // Crédito de veiculação, nos dois sentidos: `charge` autoriza o OpenAd a pedir ao hub
+        // uma cobrança Pix (a conta do Asaas é do hub), e `write` autoriza o hub a confirmar,
+        // estornar ou lançar crédito no livro-caixa do OpenAd quando o pagamento se resolve.
+        // Dois escopos e não um porque as direções têm consequências diferentes: pedir cobrança
+        // não move saldo, lançar crédito move.
+        'ads:credit:charge',
+        'ads:credit:write',
       ])
     )
     .min(1),

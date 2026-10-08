@@ -7,6 +7,7 @@ import * as codes from '../infra/paymentGateways/paymentCodes.js';
 import { prisma } from '../infra/prisma.js';
 import { sendPush } from '../infra/push.js';
 import { parsePaymentMethod } from '../mappings.js';
+import * as adCreditService from './adCreditService.js';
 import * as driverAffiliateService from './driverAffiliateService.js';
 import type { Prisma } from '@prisma/client';
 
@@ -185,6 +186,22 @@ export async function reconcileByExternal(externalId: string, eventType: string,
       // Já processado anteriormente → idempotente, sem efeito colateral.
       result = order.status.toLowerCase();
     }
+  } else {
+    /**
+     * Nenhum pedido casou. Antes isso era sempre `ignored`, e é exatamente aqui que cai todo
+     * pagamento de **crédito de veiculação do OpenAd** — a compra de saldo do anunciante não
+     * tem `Order` no hub.
+     *
+     * `tratarPagamentoSemPedido` reconsulta o pagamento no provedor e devolve `null` quando a
+     * referência não é do OpenAd, de modo que um id desconhecido continua terminando em
+     * `ignored`, como antes.
+     *
+     * Deixado fora de `try`/`catch` de propósito: falha em lançar o crédito precisa chegar ao
+     * webhook como erro, para o Asaas reenviar. A retentativa do provedor é a fila de
+     * reprocessamento, e a rota do OpenAd é idempotente. Engolir o erro aqui deixaria um Pix
+     * pago sem crédito e sem nada tentando de novo.
+     */
+    result = (await adCreditService.tratarPagamentoSemPedido(externalId)) ?? 'ignored';
   }
 
   await prisma.paymentEvent.create({

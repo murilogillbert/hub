@@ -149,7 +149,7 @@ const CATALOG: Group[] = [
     id: 'internal',
     name: 'Comunicação entre serviços',
     description:
-      'Chave que o hub, o OpenDriver e o OpenAd usam para falar entre si na EXCLUSÃO DE CONTA (a conta é a mesma nos três, e cada um apaga o seu schema). Crie a chave em Chaves de API com os escopos account:read e account:purge e cole o valor aqui. A MESMA chave serve os dois destinos, porque os três validam contra a mesma tabela. Sem ela, excluir conta é recusado — ver docs/normalizacao-banco.md.',
+      'Chave que o hub, o OpenDriver e o OpenAd usam para falar entre si. Dois usos hoje: EXCLUSÃO DE CONTA (a conta é a mesma nos três, e cada um apaga o seu schema) e CRÉDITO DE VEICULAÇÃO (o hub confirma no OpenAd o Pix que o Asaas liquidou). Crie a chave em Chaves de API com os escopos account:read, account:purge e ads:credit:write, e cole o valor aqui. A MESMA chave serve os dois destinos, porque os três validam contra a mesma tabela. Sem ela, excluir conta é recusado e o crédito pago não entra — ver docs/normalizacao-banco.md.',
     icon: '🔗',
     fields: [{ key: 'Internal:AccountSyncKey', label: 'Chave de serviço (odh_svc_...)', secret: true }],
   },
@@ -157,7 +157,7 @@ const CATALOG: Group[] = [
     id: 'openad',
     name: 'OpenAd — anúncios em telas automotivas',
     description:
-      'Terceiro serviço do ecossistema: campanhas de anúncio em tablets instalados nos veículos. A URL é usada na exclusão de conta (fan-out) e a chave de repasse autoriza o OpenAd a creditar o motorista em OpenDriver → Ganhos. Crie a chave em Chaves de API com os escopos ads:earning:write e ads:payout:read. O piso de repasse e o peso do leilão NÃO ficam aqui: são do painel do próprio OpenAd, porque mudam sem redeploy.',
+      'Terceiro serviço do ecossistema: campanhas de anúncio em tablets instalados nos veículos. A URL é usada na exclusão de conta (fan-out) e para confirmar no OpenAd o crédito de veiculação pago por Pix; quando preenchida, vence OPENAD_API_URL. A chave de repasse autoriza o OpenAd a creditar o motorista em OpenDriver → Ganhos, e a mesma chave do OpenAd precisa de ads:credit:charge para pedir a cobrança Pix ao hub. Crie-a em Chaves de API com os escopos ads:earning:write, ads:payout:read e ads:credit:charge. O piso de repasse e o peso do leilão NÃO ficam aqui: são do painel do próprio OpenAd, porque mudam sem redeploy.',
     icon: '📺',
     fields: [
       { key: 'OpenAd:ApiUrl', label: 'URL da API do OpenAd (https://adsapi.opendriver.com.br)', secret: false },
