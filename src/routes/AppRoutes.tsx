@@ -66,6 +66,13 @@ const OpenDriverVehicleCategoriesPage = lazyPage(
 );
 const AdminSurveyPage = lazyPage(() => import('@features/admin/pages/AdminSurveyPage'), 'AdminSurveyPage');
 
+// Painel de crédito do anunciante (OpenAd). Carregado sob demanda: a maioria dos usuários do
+// hub nunca é anunciante, e a página traz o gerador de QR consigo.
+const CreditoDeAnuncioPage = lazyPage(
+  () => import('@features/anunciante/pages/CreditoDeAnuncioPage'),
+  'CreditoDeAnuncioPage',
+);
+
 const FinanceiroWithdrawalsPage = lazyPage(() => import('@features/financeiro/pages/FinanceiroWithdrawalsPage'), 'FinanceiroWithdrawalsPage');
 const FinanceiroAffiliatesPage = lazyPage(() => import('@features/financeiro/pages/FinanceiroAffiliatesPage'), 'FinanceiroAffiliatesPage');
 const FinanceiroProfilePage = lazyPage(() => import('@features/financeiro/pages/FinanceiroProfilePage'), 'FinanceiroProfilePage');
@@ -147,6 +154,14 @@ export function AppRoutes() {
           <Route path="/meus-itens/:id" element={<OrderDetailPage />} />
           <Route path="/conta/historico" element={<HistoryPage />} />
           <Route path="/conta/cashback" element={<CashbackPage />} />
+          {/*
+            Compra de crédito de veiculação do OpenAd.
+            Vive na área do cliente, e não numa área própria, porque "ser anunciante" não é um
+            papel do hub: é a existência de uma linha em `openad.ad_advertisers` para este
+            `users.id`. Criar um papel só para isto exigiria migration no enum e deixaria dois
+            lugares a manter em sincronia; a própria tela resolve a adesão.
+          */}
+          <Route path="/conta/credito-de-anuncio" element={<CreditoDeAnuncioPage />} />
           <Route path="/conta/perfil" element={<ProfilePage />} />
         </Route>
       </Route>

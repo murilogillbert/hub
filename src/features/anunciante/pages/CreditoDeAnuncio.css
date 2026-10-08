@@ -1,0 +1,126 @@
+/* Painel de crédito de veiculação do anunciante.
+   Usa os tokens de tema do hub (var(--...)); nada de valor fixo de cor. */
+
+.credito {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.credito__header h2 {
+  margin: 0 0 0.25rem;
+}
+
+.credito__saldo {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.credito__valor {
+  display: block;
+  font-size: 1.6rem;
+  line-height: 1.2;
+  margin: 0.35rem 0;
+}
+
+.credito__alerta {
+  border-left: 3px solid var(--color-danger, #c0392b);
+}
+
+.credito__colunas {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  align-items: start;
+}
+
+.credito__sugestoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.6rem 0;
+}
+
+.credito__sugestao {
+  background: var(--color-surface-muted, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.12));
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  font: inherit;
+  padding: 0.3rem 0.6rem;
+}
+
+.credito__sugestao:hover {
+  border-color: var(--color-primary, #1d6fa5);
+}
+
+.credito__previsao {
+  margin: 0.4rem 0 0.8rem;
+}
+
+.credito__tabela,
+.credito__lista {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.credito__tabela th,
+.credito__tabela td,
+.credito__lista th,
+.credito__lista td {
+  border-bottom: 1px solid var(--color-border, rgba(0, 0, 0, 0.08));
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.credito__lista th {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted, #666);
+}
+
+.credito__secao {
+  padding: var(--space-4) var(--space-4) 0;
+}
+
+.credito__secao h3 {
+  margin: 0;
+}
+
+.credito__pix-corpo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  align-items: flex-start;
+}
+
+.credito__pix-dados {
+  display: grid;
+  gap: 0.5rem;
+  flex: 1 1 280px;
+  min-width: 260px;
+}
+
+.credito__pix-rotulo {
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #666);
+}
+
+/* O código Pix é longo e não tem espaços: sem `word-break` ele estoura o cartão. */
+.credito__pix-codigo {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  word-break: break-all;
+  resize: vertical;
+  width: 100%;
+  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.12));
+  border-radius: var(--radius-sm, 6px);
+  padding: 0.5rem;
+  background: var(--color-surface-muted, rgba(0, 0, 0, 0.03));
+}
+
+.credito__mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+}

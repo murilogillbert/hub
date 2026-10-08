@@ -73,6 +73,14 @@ export function ClientLayout({ children }: ClientLayoutProps) {
                 <Icon name="wallet" size={17} /> Meu cashback
               </NavLink>
             )}
+            {/* OpenAd. Visível para qualquer conta logada de propósito: "ser anunciante" não é
+                um papel do hub, e a própria tela faz a adesão. Esconder atrás de um papel
+                deixaria o anunciante sem caminho para chegar aqui pelo navegador. */}
+            {isAuthenticated && (
+              <NavLink to="/conta/credito-de-anuncio">
+                <Icon name="tag" size={17} /> Anunciar
+              </NavLink>
+            )}
             {user?.role === 'partner' && (
               <NavLink to="/parceiro">
                 <Icon name="store" size={17} /> Painel da loja
