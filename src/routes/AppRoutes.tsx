@@ -60,6 +60,10 @@ const OpenDriverPayoutsPage = lazyPage(() => import('@features/opendriver/pages/
 const OpenDriverPricingPage = lazyPage(() => import('@features/opendriver/pages/OpenDriverPricingPage'), 'OpenDriverPricingPage');
 const OpenDriverRidesPage = lazyPage(() => import('@features/opendriver/pages/OpenDriverRidesPage'), 'OpenDriverRidesPage');
 const OpenDriverSafetyPage = lazyPage(() => import('@features/opendriver/pages/OpenDriverSafetyPage'), 'OpenDriverSafetyPage');
+const OpenDriverVehicleCategoriesPage = lazyPage(
+  () => import('@features/opendriver/pages/OpenDriverVehicleCategoriesPage'),
+  'OpenDriverVehicleCategoriesPage',
+);
 const AdminSurveyPage = lazyPage(() => import('@features/admin/pages/AdminSurveyPage'), 'AdminSurveyPage');
 
 const FinanceiroWithdrawalsPage = lazyPage(() => import('@features/financeiro/pages/FinanceiroWithdrawalsPage'), 'FinanceiroWithdrawalsPage');
@@ -196,6 +200,7 @@ export function AppRoutes() {
           <Route path="opendriver/corridas" element={<OpenDriverRidesPage />} />
           <Route path="opendriver/saques" element={<OpenDriverPayoutsPage />} />
           <Route path="opendriver/precos" element={<OpenDriverPricingPage />} />
+          <Route path="opendriver/categorias-veiculos" element={<OpenDriverVehicleCategoriesPage />} />
           <Route path="opendriver/seguranca" element={<OpenDriverSafetyPage />} />
         </Route>
       </Route>

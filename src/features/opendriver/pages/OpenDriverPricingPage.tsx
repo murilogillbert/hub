@@ -18,6 +18,9 @@ const FIELDS: { key: keyof Omit<Pricing, 'category' | 'label' | 'active' | 'upda
   { key: 'minimumFare', label: 'Tarifa mínima (R$)' },
   { key: 'platformFeePercent', label: 'Taxa da plataforma (%)' },
   { key: 'cancellationFee', label: 'Taxa de cancelamento (R$)' },
+  // Os dois campos abaixo faltavam, e a API os exige no PUT: salvar devolvia 400.
+  { key: 'cancellationPlatformFee', label: 'Parte da plataforma no cancelamento (R$)' },
+  { key: 'driverCancelPenalty', label: 'Desconto ao motorista por cancelar (R$)' },
 ];
 
 const parse = (v: string) => Number(v.replace(',', '.'));

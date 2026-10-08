@@ -84,6 +84,9 @@ export function AdminLayout() {
           <NavLink to="/admin/opendriver/precos">
             <Icon name="money" size={17} /> Preços
           </NavLink>
+          <NavLink to="/admin/opendriver/categorias-veiculos">
+            <Icon name="tag" size={17} /> Categoria dos veículos
+          </NavLink>
           <NavLink to="/admin/opendriver/seguranca">
             <Icon name="shield" size={17} /> Segurança
           </NavLink>

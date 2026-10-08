@@ -182,8 +182,100 @@ export interface Pricing {
   minimumFare: number;
   platformFeePercent: number;
   cancellationFee: number;
+  /**
+   * Estes dois faltavam aqui, e a tela de Preços **não conseguia salvar**: a API exige os dois
+   * no corpo do PUT (sem valor padrão), então o envio sem eles voltava 400. A API já os
+   * devolvia no GET; era só o tipo e o formulário que não os conheciam.
+   */
+  cancellationPlatformFee: number;
+  driverCancelPenalty: number;
   active: boolean;
   updatedAt: string;
+}
+
+// ------------------------------------------------- classificação de veículo (Econômico × Conforto)
+
+export type VehicleCategory = 'Economy' | 'Comfort';
+/** 'driver' = autodeclarada, 'auto' = decidida por regra, 'admin' = operador reclassificou. */
+export type CategorySource = 'driver' | 'auto' | 'admin';
+
+export interface CategoryRule {
+  id: string;
+  brand: string;
+  /** Vazio cobre a marca inteira. Casa por prefixo sobre o texto normalizado. */
+  modelPattern: string;
+  yearFrom: number | null;
+  yearTo: number | null;
+  category: VehicleCategory;
+  priority: number;
+  /** 'semente' veio do repositório, 'manual' do admin, 'importado' de CSV. */
+  source: string;
+  active: boolean;
+  updatedAt: string;
+}
+
+export type CategoryRuleInput = Omit<CategoryRule, 'id' | 'source' | 'updatedAt'>;
+
+export interface DivergenceRow {
+  id: string;
+  plate: string;
+  brand: string;
+  model: string;
+  year: number;
+  uf: string | null;
+  category: VehicleCategory;
+  categorySource: CategorySource;
+  categoryAuto: VehicleCategory | null;
+  detranBrand: string | null;
+  detranModel: string | null;
+  detranYear: number | null;
+  validationStatus: string;
+  driver: { id: string; name: string } | null;
+}
+
+export interface DetranProvider {
+  uf: string;
+  label: string;
+  endpoint: string;
+  requiresChassi: boolean;
+  requiresLogin: boolean;
+  requiresCpfCnpj: boolean;
+  loginSettingKey: string | null;
+  senhaSettingKey: string | null;
+  active: boolean;
+  notes: string | null;
+  /** Resultado da última consulta real desta UF — serve para saber se o caminho funciona. */
+  lastProbeAt: string | null;
+  lastProbeResult: string | null;
+  updatedAt: string;
+}
+
+export type DetranProviderInput = Omit<DetranProvider, 'uf' | 'lastProbeAt' | 'lastProbeResult' | 'updatedAt'>;
+
+export interface DetranTestResult {
+  httpStatus: number | null;
+  code: number | null;
+  message: string;
+  body: unknown;
+}
+
+/** Resultado da importação de CSV. Em ensaio (`aplicar: false`) vem `gravariam`; aplicada, `gravadas`. */
+export interface CategoryImportResult {
+  aplicado: boolean;
+  lidas: number;
+  gravariam?: number;
+  gravadas?: number;
+  apagadas?: number;
+  repetidasNoArquivo: number[];
+  erros: { linha: number; motivo: string; conteudo: string }[];
+  amostra?: { brand: string; modelPattern: string; category: VehicleCategory; priority: number }[];
+}
+
+export interface ReclassifyResult {
+  avaliados: number;
+  alterados: number;
+  divergentes: number;
+  amostra: { plate: string; de: VehicleCategory; para: VehicleCategory; calculada: VehicleCategory | null; divergencia: boolean }[];
 }
 
 export interface IncidentRow {
@@ -222,6 +314,32 @@ export const opendriverAdmin = {
   pricing: () => json<Pricing[]>('/pricing'),
   updatePricing: (category: string, body: Omit<Pricing, 'category' | 'updatedAt'>) =>
     json<Pricing[]>(`/pricing/${category}`, { method: 'PUT', body: JSON.stringify(body) }),
+  // ---------------------------------------------- classificação de veículo
+  vehicleDivergences: (p: { page?: number }) => json<Page<DivergenceRow>>(`/vehicles/divergences${qs({ ...p, pageSize: 20 })}`),
+  setVehicleCategory: (id: string, category: VehicleCategory, reason: string) =>
+    json<{ id: string }>(`/vehicles/${id}/category`, { method: 'PUT', body: JSON.stringify({ category, reason }) }),
+  /** Consulta o Detran de novo. **Consome crédito** da Infosimples. */
+  revalidateVehicle: (id: string) => post<{ id: string }>(`/vehicles/${id}/revalidate`),
+  /** Reaplica as regras sobre o retorno do Detran já guardado. Não consulta nada. */
+  reclassifyFleet: (aplicar: boolean) => post<ReclassifyResult>('/vehicles/reclassify-batch', { aplicar }),
+
+  categoryRules: (p: { brand?: string; category?: string; page?: number }) =>
+    json<Page<CategoryRule>>(`/vehicle-categories${qs({ ...p, pageSize: 50 })}`),
+  createCategoryRule: (body: CategoryRuleInput) => post<CategoryRule>('/vehicle-categories', body),
+  updateCategoryRule: (id: string, body: CategoryRuleInput) =>
+    json<CategoryRule>(`/vehicle-categories/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteCategoryRule: (id: string) => json<{ deleted: boolean }>(`/vehicle-categories/${id}`, { method: 'DELETE' }),
+  importCategoryRules: (csv: string, opts: { aplicar: boolean; substituirImportadas: boolean }) =>
+    post<CategoryImportResult>('/vehicle-categories/import', { csv, ...opts }),
+
+  detranProviders: () => json<DetranProvider[]>('/detran-providers'),
+  saveDetranProvider: (uf: string, body: DetranProviderInput) =>
+    json<DetranProvider[]>(`/detran-providers/${uf}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteDetranProvider: (uf: string) => json<DetranProvider[]>(`/detran-providers/${uf}`, { method: 'DELETE' }),
+  /** Consulta real, com placa digitada pelo operador. **Consome crédito**. */
+  testDetranProvider: (uf: string, body: { plate: string; renavam: string; chassi?: string; ownerDocument?: string }) =>
+    post<DetranTestResult>(`/detran-providers/${uf}/test`, body),
+
   incidents: (p: { status?: string; page?: number }) => json<Page<IncidentRow>>(`/incidents${qs({ ...p, pageSize: 30 })}`),
   setIncidentStatus: (id: string, status: IncidentRow['status']) => json<{ id: string }>(`/incidents/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
   recording: (id: string) => blobUrl(`/recordings/${id}`),
