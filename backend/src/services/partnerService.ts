@@ -9,6 +9,7 @@ import { prisma } from '../infra/prisma.js';
 import { sendPush } from '../infra/push.js';
 import { parseProductKind, toAffiliatePartnerDto, toProductDto } from '../mappings.js';
 import * as driverAffiliateService from './driverAffiliateService.js';
+import * as productStoreStockService from './productStoreStockService.js';
 
 /** Autoatendimento: o próprio parceiro (loja ou afiliado) edita seus dados.
  * feePercent/active/asaasWalletId ficam de fora de propósito — exclusivos do
@@ -213,8 +214,29 @@ function groupNamedValueCount<T>(items: T[], keyOf: (i: T) => string): NamedValu
   return [...map.entries()].map(([name, v]) => ({ name, value: round2(v.value), count: v.count }));
 }
 
-export async function redeem(partnerId: string, actorId: string, code: string, confirm: boolean): Promise<RedeemResult> {
+export async function redeem(
+  partnerId: string,
+  actorId: string,
+  code: string,
+  confirm: boolean,
+  storeId?: string,
+): Promise<RedeemResult> {
   const normalized = code.replace(/-/g, '').trim().toUpperCase();
+
+  /**
+   * A unidade, quando informada, tem de ser desta loja.
+   *
+   * O `storeId` vem do corpo. Sem a conferência, um lojista poderia baixar a contagem da
+   * unidade de outro parceiro — e o registro de "quem atendeu" apontaria para a loja errada
+   * numa auditoria de repasse.
+   */
+  if (storeId) {
+    const unidade = await prisma.partnerStore.findFirst({
+      where: { id: storeId, partnerId },
+      select: { id: true },
+    });
+    if (!unidade) throw new AppError('Unidade não encontrada nesta loja.', 403);
+  }
 
   const order = await prisma.order.findFirst({
     where: { code: { equals: normalized, mode: 'insensitive' } },
@@ -272,11 +294,29 @@ export async function redeem(partnerId: string, actorId: string, code: string, c
     const now = new Date();
     const redeemedIds = new Set(fresh.items.filter((i) => i.redeemedAt !== null).map((i) => i.id));
     for (const item of freshPending) {
-      await tx.orderItem.update({ where: { id: item.id }, data: { redeemedAt: now } });
+      await tx.orderItem.update({
+        where: { id: item.id },
+        // `redeemedStoreId` só é gravado quando a unidade veio: `null` significa "resgatado por
+        // um balcão que não informou a unidade", que é o caso de todos os clientes publicados.
+        data: { redeemedAt: now, ...(storeId ? { redeemedStoreId: storeId } : {}) },
+      });
+      /**
+       * Estoque da rede: inalterado, e continua sendo o número que autoriza a compra.
+       */
       await tx.product.updateMany({
         where: { id: item.productId, stock: { gte: item.quantity } },
         data: { stock: { decrement: item.quantity } },
       });
+      /**
+       * Contagem da unidade, quando sabemos qual é.
+       *
+       * `baixarNaUnidade` **nunca lança**: o cliente está no balcão com um voucher pago, e
+       * recusar a entrega porque uma contagem auxiliar está desatualizada seria o pior
+       * resultado possível. Contagem defasada é zerada e segue.
+       */
+      if (storeId) {
+        await productStoreStockService.baixarNaUnidade(tx, item.productId, storeId, item.quantity);
+      }
       redeemedIds.add(item.id);
     }
 

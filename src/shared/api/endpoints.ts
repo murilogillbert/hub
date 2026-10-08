@@ -328,6 +328,40 @@ export interface StoreUpsert {
   lng: number;
   category: string;
   imageUrl?: string;
+  /**
+   * Campos novos, opcionais.
+   *
+   * `undefined` significa "não mexe" no servidor. Importa aqui também: a tela de Admin envia
+   * este mesmo corpo sem conhecê-los, e se a ausência virasse `null` salvar o endereço pelo
+   * Admin apagaria o horário que o lojista cadastrou.
+   */
+  active?: boolean;
+  timezone?: string;
+  openingHours?: OpeningHours | null;
+}
+
+/** `{ seg: [{ de: '09:00', ate: '18:00' }] }`. Dia ausente = fechada. */
+export type OpeningHours = Partial<Record<DiaDaSemana, { de: string; ate: string }[]>>;
+export type DiaDaSemana = 'dom' | 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab';
+
+export interface ProductStoreStockItem {
+  storeId: string;
+  storeName: string;
+  city: string;
+  state: string;
+  quantity: number;
+  active: boolean;
+  updatedAt: string | null;
+}
+
+export interface ProductStoreStockPage {
+  /**
+   * `false` quando o produto nunca teve disponibilidade preenchida — e aí está disponível em
+   * **todas** as unidades. É o que separa "disponível em todas" de "esgotado em todas", e sem
+   * essa distinção a tela diria ao lojista que o produto acabou quando ele só não preencheu.
+   */
+  declared: boolean;
+  items: ProductStoreStockItem[];
 }
 export interface RedeemResult {
   orderId: string;
@@ -354,10 +388,25 @@ export const partnerApi = {
   updateStore: (id: string, body: StoreUpsert) =>
     api.put<PartnerStore>(`/partner/stores/${id}`, body),
   deleteStore: (id: string) => api.del<void>(`/partner/stores/${id}`),
-  redeem: (code: string, confirm: boolean) =>
+  /**
+   * Disponibilidade do produto por unidade.
+   *
+   * Rota separada do upsert do produto de propósito: `ProductUpsert` é enviado inteiro pelo
+   * painel e pelo app, e embutir a lista ali faria salvar o preço apagar a disponibilidade.
+   */
+  productStores: (productId: string) =>
+    api.get<ProductStoreStockPage>(`/partner/products/${productId}/stores`),
+  setProductStores: (
+    productId: string,
+    items: { storeId: string; quantity: number; active: boolean }[],
+  ) =>
+    api.put<ProductStoreStockPage>(`/partner/products/${productId}/stores`, { items }),
+  redeem: (code: string, confirm: boolean, storeId?: string) =>
     api.post<RedeemResult>(
       `/partner/redeem?confirm=${confirm}`,
-      { code },
+      // `storeId` só vai quando escolhido: o servidor trata ausência como "balcão que não
+      // informou a unidade", que é o comportamento de antes.
+      storeId ? { code, storeId } : { code },
     ),
   updateProfile: (body: UpdateMyPartnerProfile) =>
     api.put<AffiliatePartner>('/partner/profile', body),

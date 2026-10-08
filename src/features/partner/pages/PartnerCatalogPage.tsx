@@ -21,6 +21,7 @@ import { useToast } from '@shared/components/Toaster/ToastContext';
 import { formatMoneyInput, parseMoneyInput } from '@shared/utils/masks';
 import { Product } from '@shared/types';
 import { Icon } from '@shared/components/Icon/Icon';
+import { DisponibilidadePorUnidade } from '../components/DisponibilidadePorUnidade';
 import './PartnerPages.css';
 
 const EMPTY: ProductUpsert = {
@@ -52,6 +53,8 @@ export function PartnerCatalogPage() {
   const [form, setForm] = useState<ProductUpsert | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  /** Produto cuja disponibilidade por unidade está aberta. */
+  const [disponibilidade, setDisponibilidade] = useState<Product | null>(null);
 
   // Modo vitrine (somente visualização) — persiste no sessionStorage.
   const [showcase, setShowcase] = useState(
@@ -358,10 +361,21 @@ export function PartnerCatalogPage() {
                     </strong>
                   </div>
                   <div>
-                    <small className="text-soft">Estoque</small>
+                    <small className="text-soft">Estoque da rede</small>
                     <strong>{p.stock}</strong>
                   </div>
                 </div>
+                {/*
+                  Onde dá para retirar. Aparece só para produto físico: cartão-presente não se
+                  retira em loja, e o botão ali só confundiria.
+                */}
+                {!p.digital && (
+                  <small className="text-muted">
+                    {p.storeStockDeclared
+                      ? `Disponível em ${(p.availableStores ?? []).length} unidade(s)`
+                      : 'Disponível em todas as unidades'}
+                  </small>
+                )}
                 {!showcase && (
                   <div className="row">
                     <Button
@@ -371,6 +385,15 @@ export function PartnerCatalogPage() {
                     >
                       Editar
                     </Button>
+                    {!p.digital && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDisponibilidade(p)}
+                      >
+                        Unidades
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -392,6 +415,15 @@ export function PartnerCatalogPage() {
           ))}
         </div>
       </QueryState>
+
+      {disponibilidade && (
+        <DisponibilidadePorUnidade
+          productId={disponibilidade.id}
+          productTitle={disponibilidade.title}
+          stockDaRede={disponibilidade.stock}
+          onClose={() => setDisponibilidade(null)}
+        />
+      )}
 
       {showcase && (
         <div className="catalog-showcase__exit">

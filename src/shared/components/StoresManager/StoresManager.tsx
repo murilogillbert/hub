@@ -11,7 +11,9 @@ import {
   partnerApi,
   uploadsApi,
   StoreUpsert,
+  type OpeningHours,
 } from '@shared/api/endpoints';
+import { OpeningHoursEditor } from '@shared/components/OpeningHoursEditor/OpeningHoursEditor';
 import { resolveImageUrl } from '@shared/api/client';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { coordinateError, maskCoordinate } from '@shared/utils/masks';
@@ -29,7 +31,45 @@ interface StoreForm {
   lng: string;
   category: string;
   imageUrl: string;
+  active: boolean;
+  timezone: string;
+  openingHours: OpeningHours;
 }
+
+/**
+ * Fusos do Brasil, em lista fechada.
+ *
+ * Campo de texto livre deixaria `America/Sao Paulo` (com espaço) entrar e a unidade mostraria
+ * horário errado — o servidor recusa identificador inválido, mas uma lista evita a ida e volta.
+ * São os quatro fusos continentais mais Fernando de Noronha.
+ */
+const FUSOS = [
+  { valor: 'America/Sao_Paulo', rotulo: 'Brasília (GMT-3) — SP, RJ, MG, DF, GO, Sul, Nordeste' },
+  { valor: 'America/Campo_Grande', rotulo: 'Campo Grande (GMT-4) — MS' },
+  { valor: 'America/Cuiaba', rotulo: 'Cuiabá (GMT-4) — MT' },
+  { valor: 'America/Manaus', rotulo: 'Manaus (GMT-4) — AM, RO, RR, AC parcial' },
+  { valor: 'America/Rio_Branco', rotulo: 'Rio Branco (GMT-5) — AC' },
+  { valor: 'America/Belem', rotulo: 'Belém (GMT-3) — PA, AP' },
+  { valor: 'America/Noronha', rotulo: 'Fernando de Noronha (GMT-2)' },
+];
+
+/**
+ * Fuso sugerido a partir do estado, só no **cadastro de unidade nova**.
+ *
+ * Sugestão e não imposição: o mapa estado→fuso é correto para a maioria dos casos e errado em
+ * alguns (o Acre tem dois fusos, e o Pará também). O lojista vê o campo preenchido e corrige
+ * se precisar — melhor do que começar com Brasília para uma loja em Manaus.
+ */
+const FUSO_POR_UF: Record<string, string> = {
+  MS: 'America/Campo_Grande',
+  MT: 'America/Cuiaba',
+  AM: 'America/Manaus',
+  RO: 'America/Manaus',
+  RR: 'America/Manaus',
+  AC: 'America/Rio_Branco',
+  PA: 'America/Belem',
+  AP: 'America/Belem',
+};
 
 interface StoresManagerProps {
   mode: 'admin' | 'partner';
@@ -46,7 +86,44 @@ const EMPTY: StoreForm = {
   lng: '',
   category: '',
   imageUrl: '',
+  active: true,
+  timezone: 'America/Sao_Paulo',
+  openingHours: {},
 };
+
+const DIA_CURTO: Record<string, string> = {
+  dom: 'dom',
+  seg: 'seg',
+  ter: 'ter',
+  qua: 'qua',
+  qui: 'qui',
+  sex: 'sex',
+  sab: 'sáb',
+};
+
+/**
+ * Situação da unidade agora, em uma etiqueta.
+ *
+ * `openNow` vem **calculado pelo servidor**, no fuso da unidade. Recalcular aqui exigiria o
+ * fuso, a regra do intervalo que cruza a meia-noite e o relógio do navegador — três fontes de
+ * divergência para uma informação que o servidor já respondeu.
+ */
+function situacaoAgora(store: PartnerStore) {
+  if (store.active === false) {
+    return <span className="badge badge-warning">Fechada (desativada)</span>;
+  }
+  // Unidade sem horário declarado não tem situação a mostrar: ela aparece sempre no catálogo.
+  if (!store.openingHours || Object.keys(store.openingHours).length === 0) {
+    return <small className="text-muted">sem horário</small>;
+  }
+  if (store.openNow) return <span className="badge badge-accent">Aberta</span>;
+  const prox = store.nextOpening;
+  return (
+    <span className="badge badge-warning">
+      Fechada{prox ? ` · abre ${DIA_CURTO[prox.dia] ?? prox.dia} ${prox.hora}` : ''}
+    </span>
+  );
+}
 
 const hasCoords = (lat: number, lng: number) =>
   lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 && !(lat === 0 && lng === 0);
@@ -62,6 +139,14 @@ function toForm(store: PartnerStore): StoreForm {
     lng: String(store.lng),
     category: store.category,
     imageUrl: store.imageUrl ?? '',
+    /**
+     * `?? true` e `?? 'America/Sao_Paulo'`: uma resposta vinda do cache do navegador, gravada
+     * antes do deploy, não tem estes campos. Sem o padrão, abrir a edição de uma unidade
+     * desligaria ela ao salvar (`active: undefined` → `false` no formulário).
+     */
+    active: store.active ?? true,
+    timezone: store.timezone ?? 'America/Sao_Paulo',
+    openingHours: (store.openingHours ?? {}) as OpeningHours,
   };
 }
 
@@ -191,6 +276,14 @@ export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
       lng: Number(form.lng),
       category: form.category.trim(),
       imageUrl: form.imageUrl || undefined,
+      active: form.active,
+      timezone: form.timezone,
+      /**
+       * `null` quando nenhum dia está aberto — é como se apaga o horário no servidor. Mandar
+       * `{}` gravaria um objeto vazio, e `openingHours IS NULL` (que é como "não declarado" se
+       * consulta) deixaria de casar.
+       */
+      openingHours: Object.keys(form.openingHours).length > 0 ? form.openingHours : null,
     };
     if (editing) updateMut.mutate({ id: editing.id, body });
     else createMut.mutate(body);
@@ -387,7 +480,22 @@ export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
               <Input
                 label="Estado"
                 value={form.state}
-                onChange={(e) => set('state', e.target.value)}
+                onChange={(e) => {
+                  const uf = e.target.value.toUpperCase();
+                  setForm((atual) => ({
+                    ...atual,
+                    state: e.target.value,
+                    /**
+                     * Sugere o fuso a partir da UF **somente no cadastro novo**.
+                     *
+                     * Em edição não mexe: o lojista pode ter corrigido o fuso à mão (o Acre e o
+                     * Pará têm mais de um), e sobrescrever desfaria a correção dele a cada
+                     * toque no campo de estado.
+                     */
+                    timezone:
+                      !editing && FUSO_POR_UF[uf] ? FUSO_POR_UF[uf] : atual.timezone,
+                  }));
+                }}
                 maxLength={2}
                 required
               />
@@ -410,6 +518,53 @@ export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
                 required
               />
             </div>
+
+            <div className="stores-manager__grid">
+              <div className="input-field">
+                <label htmlFor="storesmanager-fuso" className="input-field__label">
+                  Fuso horário
+                </label>
+                <div className="input-field__box">
+                  <select
+                    id="storesmanager-fuso"
+                    className="input-field__el"
+                    value={form.timezone}
+                    onChange={(e) => set('timezone', e.target.value)}
+                  >
+                    {FUSOS.map((f) => (
+                      <option key={f.valor} value={f.valor}>
+                        {f.rotulo}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <small className="input-field__hint">
+                  Define a hora em que “aberto agora” é calculado. O servidor roda em UTC, então
+                  sem isto uma loja em MS apareceria fechada às 17h.
+                </small>
+              </div>
+
+              <div className="input-field">
+                <label className="input-field__label">Situação</label>
+                <label className="horario__toggle" style={{ paddingTop: 8 }}>
+                  <input
+                    type="checkbox"
+                    checked={form.active}
+                    onChange={(e) => set('active', e.target.checked)}
+                  />
+                  <span>Unidade em funcionamento</span>
+                </label>
+                <small className="input-field__hint">
+                  Desmarque para fechar temporariamente (reforma, férias) sem apagar a unidade e
+                  o estoque dela.
+                </small>
+              </div>
+            </div>
+
+            <OpeningHoursEditor
+              value={form.openingHours}
+              onChange={(h) => set('openingHours', h)}
+            />
 
             <div className="input-field">
               <label className="input-field__label">Imagem da unidade</label>
@@ -508,6 +663,7 @@ export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
                 <th>Local</th>
                 <th>Coordenadas</th>
                 <th>Categoria</th>
+                <th>Agora</th>
                 <th />
               </tr>
             </thead>
@@ -526,6 +682,7 @@ export function StoresManager({ mode, partners = [] }: StoresManagerProps) {
                   <td>
                     <span className="badge badge-primary">{store.category}</span>
                   </td>
+                  <td>{situacaoAgora(store)}</td>
                   <td>
                     <div className="row">
                       <Button

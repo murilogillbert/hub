@@ -80,6 +80,15 @@ export type ProcessPaymentRequest = z.infer<typeof processPaymentSchema>;
 
 export const redeemRequestSchema = z.object({
   code: z.string().min(1),
+  /**
+   * Em qual unidade o voucher está sendo apresentado.
+   *
+   * Opcional por necessidade: o balcão de resgate em produção hoje (painel web e
+   * `hub-mobile/parceiro/venda.tsx`) **não** envia este campo, e exigi-lo quebraria o resgate
+   * no instante do deploy. Quando vem, o resgate baixa a contagem daquela unidade e grava em
+   * `order_items.redeemed_store_id` quem atendeu.
+   */
+  storeId: z.string().uuid().optional(),
 });
 
 export interface RedeemResult {

@@ -1,5 +1,10 @@
 import { Router } from 'express';
-import { productUpsertSchema, storeUpsertSchema, updateMyPartnerProfileSchema } from '../dtos/catalog.dto.js';
+import {
+  productStoreStockSchema,
+  productUpsertSchema,
+  storeUpsertSchema,
+  updateMyPartnerProfileSchema,
+} from '../dtos/catalog.dto.js';
 import { envelope } from '../dtos/common.dto.js';
 import { redeemRequestSchema } from '../dtos/orders.dto.js';
 import { requestWithdrawalSchema, updatePixKeySchema } from '../dtos/affiliate.dto.js';
@@ -13,6 +18,7 @@ import * as affiliateWalletService from '../services/affiliateWalletService.js';
 import * as campaignMaterialService from '../services/campaignMaterialService.js';
 import * as driverAffiliateService from '../services/driverAffiliateService.js';
 import * as partnerService from '../services/partnerService.js';
+import * as productStoreStockService from '../services/productStoreStockService.js';
 import * as storeService from '../services/storeService.js';
 import * as whatsappConnectService from '../services/whatsappConnectService.js';
 
@@ -35,6 +41,40 @@ partnerRouter.delete('/products/:id', ...guard, async (req, res) => {
   await partnerService.deleteProduct(partnerId(req), req.params.id as string);
   res.status(204).send();
 });
+
+/**
+ * Disponibilidade do produto por unidade.
+ *
+ * Rota separada do upsert do produto de propósito. `productUpsertSchema` é enviado inteiro pelo
+ * painel web e pelo app, sem conhecer estes campos — embutir a lista de unidades ali faria
+ * salvar o preço pela tela antiga **apagar** a disponibilidade. Rota própria mantém as duas
+ * edições independentes.
+ *
+ * Isto NÃO é o estoque que autoriza a compra: esse é `products.stock`, editado no upsert e
+ * inalterado. Aqui é "onde dá para retirar" — ver `services/productStoreStockService.ts`.
+ */
+partnerRouter.get('/products/:id/stores', ...guard, async (req, res) => {
+  res.json(
+    envelope(await productStoreStockService.listar(partnerId(req), req.params.id as string)),
+  );
+});
+
+partnerRouter.put(
+  '/products/:id/stores',
+  ...guard,
+  validateBody(productStoreStockSchema),
+  async (req, res) => {
+    res.json(
+      envelope(
+        await productStoreStockService.definir(
+          partnerId(req),
+          req.params.id as string,
+          req.body,
+        ),
+      ),
+    );
+  },
+);
 
 partnerRouter.get('/stores', ...guard, async (req, res) => {
   res.json(envelope(await storeService.listForPartner(partnerId(req))));
@@ -60,7 +100,17 @@ partnerRouter.get('/metrics', ...guard, async (req, res) => {
 /** Valida o voucher (confirm=false) ou efetua o resgate (confirm=true). */
 partnerRouter.post('/redeem', ...guard, validateBody(redeemRequestSchema), async (req, res) => {
   const confirm = req.query.confirm === 'true';
-  res.json(envelope(await partnerService.redeem(partnerId(req), userId(req), req.body.code, confirm)));
+  res.json(
+    envelope(
+      await partnerService.redeem(
+        partnerId(req),
+        userId(req),
+        req.body.code,
+        confirm,
+        req.body.storeId,
+      ),
+    ),
+  );
 });
 
 // ---------- Programa de afiliados (kind = SolarAffiliate) ----------

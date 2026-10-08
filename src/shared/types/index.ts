@@ -30,10 +30,17 @@ export interface Product {
   imageUrl: string;
   category: string;
   rating: number;
+  /** Estoque da rede inteira. É o que autoriza a compra. */
   stock: number;
   digital: boolean;
   cities: string[];
   states: string[];
+  /**
+   * Unidades onde dá para retirar. Vazio com `storeStockDeclared: false` significa "todas"
+   * (nenhuma disponibilidade foi preenchida), não "nenhuma".
+   */
+  availableStores?: string[];
+  storeStockDeclared?: boolean;
 }
 
 export interface PartnerStore {
@@ -47,6 +54,17 @@ export interface PartnerStore {
   lng: number;
   category: string;
   imageUrl?: string;
+  /**
+   * Campos novos. Opcionais no tipo porque respostas em cache do navegador, gravadas antes do
+   * deploy, não os têm — e `store.openNow` sem a opcionalidade daria `undefined` tratado como
+   * `false`, mostrando toda loja como fechada até o cache expirar.
+   */
+  active?: boolean;
+  timezone?: string;
+  openingHours?: Partial<Record<string, { de: string; ate: string }[]>> | null;
+  /** Calculado pelo servidor, no fuso da unidade. */
+  openNow?: boolean;
+  nextOpening?: { dia: string; hora: string } | null;
 }
 
 export interface ReviewItem {

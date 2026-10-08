@@ -12,10 +12,27 @@ export interface ProductDto {
   imageUrl: string;
   category: string;
   rating: number;
+  /**
+   * Estoque da **rede inteira**. É o que autoriza a compra.
+   *
+   * Significado inalterado de propósito: três aplicativos publicados leem este campo. Onde dá
+   * para retirar é outra pergunta, respondida por `availableStores`.
+   */
   stock: number;
   digital: boolean;
   cities: string[];
   states: string[];
+  /**
+   * Aditivo. Unidades onde o produto está disponível.
+   *
+   * Vazio tem **dois** significados, e por isso vem acompanhado de `storeStockDeclared`:
+   * produto sem nenhuma linha de estoque por unidade está disponível em todas as unidades do
+   * parceiro (é o comportamento de hoje, e o acervo inteiro está assim), enquanto produto com
+   * linhas declaradas e nenhuma disponível está realmente esgotado em todas.
+   */
+  availableStores: string[];
+  /** `false` quando o produto não tem estoque por unidade declarado. */
+  storeStockDeclared: boolean;
 }
 
 export const productUpsertSchema = z.object({
@@ -107,6 +124,20 @@ export interface StoreDto {
   lng: number;
   category: string;
   imageUrl: string;
+  /** Aditivos. Cliente que não conhece ignora; os apps publicados não os enviam nem leem. */
+  active: boolean;
+  timezone: string;
+  openingHours: Record<string, { de: string; ate: string }[]> | null;
+  /**
+   * Resposta pronta, calculada no fuso da unidade.
+   *
+   * Vai no DTO em vez de deixar o cliente calcular porque o cliente não tem o fuso certo nem a
+   * regra do intervalo que cruza a meia-noite — e três clientes diferentes implementariam a
+   * mesma regra três vezes, com três resultados nas bordas.
+   */
+  openNow: boolean;
+  /** `null` quando não há horário declarado ou nenhuma abertura nos próximos 7 dias. */
+  nextOpening: { dia: string; hora: string } | null;
 }
 
 export interface NearbyStoreDto extends StoreDto {
@@ -123,8 +154,63 @@ export const storeUpsertSchema = z.object({
   lng: z.number(),
   category: z.string().min(1),
   imageUrl: z.string().optional().nullable(),
+  /**
+   * Campos novos, todos opcionais.
+   *
+   * Opcionais por necessidade, não por conveniência: o painel web atual e o app enviam o corpo
+   * inteiro neste mesmo `PUT`, sem conhecer estes campos. Se fossem obrigatórios, salvar uma
+   * unidade pela tela de hoje passaria a responder 400. E `undefined` precisa significar "não
+   * mexe", não "apaga" — senão editar o endereço pela tela antiga zeraria o horário.
+   */
+  active: z.boolean().optional(),
+  timezone: z.string().min(1).max(60).optional(),
+  /**
+   * Forma validada em `domain/openingHours.ts`, não aqui.
+   *
+   * O zod pararia na forma (`{ de, ate }` com texto); o que precisa de verificação é a
+   * semântica — HH:MM em faixa, sobreposição no mesmo dia, início igual ao fim. Essa regra tem
+   * teste próprio e mensagem que diz qual dia e qual intervalo está errado, o que um
+   * `z.record` não daria.
+   *
+   * `null` explícito apaga o horário; `undefined` deixa como está.
+   */
+  openingHours: z.unknown().optional(),
 });
 export type StoreUpsertRequest = z.infer<typeof storeUpsertSchema>;
+
+// ---------- Estoque por unidade ----------
+
+export interface ProductStoreStockDto {
+  storeId: string;
+  storeName: string;
+  city: string;
+  state: string;
+  quantity: number;
+  active: boolean;
+  /** `null` quando a unidade nunca foi preenchida para este produto. */
+  updatedAt: Date | null;
+}
+
+/**
+ * Define a disponibilidade de um produto nas unidades, em lote.
+ *
+ * Em lote, e não uma rota por unidade, porque a tela do lojista mostra todas as unidades juntas
+ * e o gesto natural é "ajustar e salvar". Uma chamada por linha produziria estado meio salvo se
+ * a terceira falhasse.
+ */
+export const productStoreStockSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        storeId: z.string().uuid(),
+        quantity: z.number().int().nonnegative(),
+        active: z.boolean().default(true),
+      })
+    )
+    .min(1)
+    .max(200),
+});
+export type ProductStoreStockRequest = z.infer<typeof productStoreStockSchema>;
 
 export interface CategoryDto {
   id: string;
@@ -151,6 +237,9 @@ export interface CatalogQuery {
   sort?: string;
   page: number;
   pageSize: number;
+  /** Aditivos. Ausentes = comportamento de antes, sem filtro nenhum. */
+  storeId?: string;
+  openNow?: boolean;
 }
 
 export interface CatalogPage {

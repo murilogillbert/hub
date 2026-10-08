@@ -1,0 +1,91 @@
+.horario {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.horario__dias {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.horario__dia {
+  align-items: start;
+  border-bottom: 1px solid var(--color-border, rgba(0, 0, 0, 0.08));
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: 140px 1fr;
+  padding: 0.4rem 0;
+}
+
+@media (max-width: 560px) {
+  .horario__dia {
+    grid-template-columns: 1fr;
+  }
+}
+
+.horario__toggle {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 0.45rem;
+  user-select: none;
+}
+
+.horario__intervalos {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.horario__intervalo {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.horario__hora {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.12));
+  border-radius: var(--radius-sm, 6px);
+  font: inherit;
+  padding: 0.25rem 0.4rem;
+}
+
+/* `18:00–02:00` é válido e comum; o aviso existe para o lojista não achar que digitou errado. */
+.horario__aviso {
+  background: var(--color-surface-muted, rgba(0, 0, 0, 0.05));
+  border-radius: 999px;
+  color: var(--color-text-muted, #666);
+  padding: 0.1rem 0.45rem;
+}
+
+.horario__remover {
+  background: none;
+  border: none;
+  color: var(--color-text-muted, #666);
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0 0.25rem;
+}
+
+.horario__remover:hover {
+  color: var(--color-danger, #c0392b);
+}
+
+.horario__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.horario__link {
+  background: none;
+  border: none;
+  color: var(--color-primary, #1d6fa5);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0;
+  text-decoration: underline;
+}

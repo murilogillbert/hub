@@ -302,7 +302,57 @@ model PartnerStore {
   category  String
   imageUrl  String   @default("") @map("image_url")
 
+  /// Horário de funcionamento: { "seg": [{ "de": "09:00", "ate": "18:00" }], ... }.
+  ///
+  /// JSONB e não tabela de intervalos: o dado é lido sempre inteiro, nunca por pedaço, e um
+  /// join por unidade entraria no caminho mais quente do hub. A forma é validada em
+  /// `domain/openingHours.ts`, com teste. `null` = não declarado = conta como ABERTA.
+  openingHours Json?  @map("opening_hours")
+
+  /// Fuso da unidade, explícito e não deduzido do estado.
+  ///
+  /// O servidor roda em UTC, e o Brasil tem quatro fusos — MT e MS são UTC−4, SP é UTC−3.
+  /// Deduzir erraria por uma hora em metade do país.
+  timezone  String   @default("America/Sao_Paulo") @db.VarChar(60)
+
+  /// Fechar temporariamente (reforma, férias) sem apagar. Apagar levaria o estoque por unidade
+  /// junto, pelo `onDelete: Cascade` de `ProductStoreStock`.
+  active    Boolean  @default(true)
+
+  stock     ProductStoreStock[]
+
   @@map("partner_stores")
+}
+
+/// Disponibilidade de um produto **numa unidade**.
+///
+/// Não substitui `Product.stock`, e a distinção é o ponto central desta tabela:
+///
+///   Product.stock        → "quanto a rede inteira tem". É o que autoriza a compra, e o único
+///                          número que `orderService.createOrder` e `partnerService.redeem`
+///                          consultam. Inalterado.
+///   ProductStoreStock    → "onde dá para retirar". Pergunta nova, que antes não tinha resposta.
+///
+/// Tornar o total derivado da soma daqui criaria duas fontes de verdade num caminho que mexe
+/// com dinheiro, e mudaria o significado de um campo que três aplicativos publicados leem.
+model ProductStoreStock {
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId String       @map("product_id") @db.Uuid
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  storeId   String       @map("store_id") @db.Uuid
+  store     PartnerStore @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  /// Contagem da própria unidade. Nada força a soma a fechar com `Product.stock`: forçar
+  /// exigiria tomar o total como derivado, que é o que a nota acima rejeita.
+  quantity  Int          @default(0)
+
+  /// Desligar sem zerar. "Não vendo este item aqui" é informação diferente de "acabou".
+  active    Boolean      @default(true)
+  updatedAt DateTime     @default(now()) @map("updated_at")
+
+  @@unique([productId, storeId], map: "product_store_stock_product_store_key")
+  @@index([storeId])
+  @@map("product_store_stock")
 }
 
 /// Categoria de produto ou de loja — definida e gerida pelo Admin.
@@ -347,11 +397,15 @@ model Product {
   imageUrl         String      @default("") @map("image_url")
   category         String      @default("")
   rating           Float       @default(0)
+  /// Estoque da **rede inteira**. É o que autoriza a compra, e o único número que
+  /// `orderService.createOrder` e `partnerService.redeem` consultam. Disponibilidade por
+  /// unidade é outra pergunta, respondida por `ProductStoreStock` — ver a nota naquele modelo.
   stock            Int         @default(0)
   active           Boolean     @default(true)
   createdAt        DateTime    @default(now()) @map("created_at")
   orderItems       OrderItem[]
   reviews          Review[]
+  storeStock       ProductStoreStock[]
 
   @@index([partnerId])
   @@map("products")
@@ -417,8 +471,17 @@ model OrderItem {
   cashbackEarned  Decimal   @db.Decimal(12, 2) @map("cashback_earned")
   redeemedAt      DateTime? @map("redeemed_at")
 
+  /// Em qual unidade o voucher foi apresentado. `partner_stores.id`, sem FK: é registro
+  /// histórico, e uma FK deixaria a unidade presa por um resgate antigo (ou apagaria a
+  /// informação de quem atendeu).
+  ///
+  /// Anulável porque os aplicativos publicados **não** enviam a unidade no resgate. Exigir o
+  /// campo quebraria o balcão que está em produção hoje.
+  redeemedStoreId String?   @map("redeemed_store_id") @db.Uuid
+
   @@index([orderId])
   @@index([partnerId])
+  @@index([redeemedStoreId])
   @@map("order_items")
 }
 

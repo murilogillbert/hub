@@ -34,6 +34,13 @@ catalogRouter.get('/catalog', async (req, res) => {
         sort: q.sort,
         page: q.page !== undefined ? Number(q.page) : 1,
         pageSize: q.pageSize !== undefined ? Number(q.pageSize) : 20,
+        storeId: q.storeId,
+        /**
+         * Só `'true'` liga o filtro. Comparar com a string, e não `Boolean(q.openNow)`, porque
+         * `?openNow=false` chega como a string `"false"`, que é verdadeira em JavaScript — o
+         * filtro ligaria justamente quando o cliente pediu para desligar.
+         */
+        openNow: q.openNow === 'true',
       }),
     ),
   );
@@ -49,7 +56,14 @@ catalogRouter.get('/categories', async (req, res) => {
 });
 
 catalogRouter.get('/stores', async (req, res) => {
-  res.json(envelope(await catalogService.getStores(req.query.partnerId as string | undefined)));
+  res.json(
+    envelope(
+      await catalogService.getStores(
+        req.query.partnerId as string | undefined,
+        req.query.openNow === 'true',
+      ),
+    ),
+  );
 });
 
 catalogRouter.get('/stores/nearby', async (req, res) => {
@@ -58,7 +72,11 @@ catalogRouter.get('/stores/nearby', async (req, res) => {
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) throw new AppError('Coordenadas inválidas.', 400);
   const radiusKm = Math.min(50, Math.max(0.5, req.query.radiusKm !== undefined ? Number(req.query.radiusKm) : 10));
   const limit = Math.min(50, Math.max(1, req.query.limit !== undefined ? Number(req.query.limit) : 20));
-  res.json(envelope(await catalogService.getNearbyStores(lat, lng, radiusKm, limit)));
+  res.json(
+    envelope(
+      await catalogService.getNearbyStores(lat, lng, radiusKm, limit, req.query.openNow === 'true'),
+    ),
+  );
 });
 
 catalogRouter.get('/partners', async (_req, res) => {

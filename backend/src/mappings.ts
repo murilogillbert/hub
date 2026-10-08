@@ -1,4 +1,11 @@
 import type { Prisma } from '@prisma/client';
+import {
+  estaAberta,
+  proximaAbertura,
+  semHorario,
+  validarHorario,
+  type HorarioSemanal,
+} from './domain/openingHours.js';
 import type { UserDto, NotificationDto } from './dtos/auth.dto.js';
 import type { ProductDto, PartnerDto, StoreDto, CategoryDto, CategorySuggestionDto } from './dtos/catalog.dto.js';
 import type { OrderDto, OrderItemDto, CashbackEntryDto } from './dtos/orders.dto.js';
@@ -32,7 +39,27 @@ export function toUserDto(u: UserRow): UserDto {
 }
 
 type ProductRow = Prisma.ProductGetPayload<{ include: { partner: true } }>;
-export function toProductDto(p: ProductRow, cities: string[] = [], states: string[] = []): ProductDto {
+
+/**
+ * Disponibilidade por unidade, quando o chamador a carregou.
+ *
+ * Parâmetro opcional em vez de `include` obrigatório: a maioria dos chamadores não precisa
+ * disto, e um `include` no modelo tornaria toda leitura de produto mais caro — inclusive a do
+ * catálogo público, que é o caminho mais quente do hub.
+ */
+export interface DisponibilidadePorUnidade {
+  /** Unidades com o produto disponível. */
+  stores: string[];
+  /** `false` quando o produto não tem nenhuma linha de estoque por unidade. */
+  declared: boolean;
+}
+
+export function toProductDto(
+  p: ProductRow,
+  cities: string[] = [],
+  states: string[] = [],
+  disponibilidade?: DisponibilidadePorUnidade
+): ProductDto {
   return {
     id: p.id,
     partnerId: p.partnerId,
@@ -49,6 +76,8 @@ export function toProductDto(p: ProductRow, cities: string[] = [], states: strin
     digital: p.kind === 'Digital',
     cities,
     states,
+    availableStores: disponibilidade?.stores ?? [],
+    storeStockDeclared: disponibilidade?.declared ?? false,
   };
 }
 
@@ -74,7 +103,21 @@ export function toPartnerDto(p: PartnerRow): PartnerDto {
 }
 
 type StoreRow = Prisma.PartnerStoreGetPayload<{}>;
-export function toStoreDto(s: StoreRow): StoreDto {
+export function toStoreDto(s: StoreRow, agora: Date = new Date()): StoreDto {
+  /**
+   * O horário vem do banco como JSON solto. `validarHorario` é a mesma função que valida na
+   * escrita, e passar por ela aqui também é o que impede uma linha gravada antes da validação
+   * (ou editada à mão no banco) de derrubar a listagem: na dúvida, trata como não declarado,
+   * que conta como aberta.
+   */
+  let horario: HorarioSemanal = {};
+  try {
+    horario = validarHorario(s.openingHours ?? null);
+  } catch {
+    horario = {};
+  }
+  const declarado = !semHorario(horario);
+
   return {
     id: s.id,
     partnerId: s.partnerId,
@@ -86,6 +129,15 @@ export function toStoreDto(s: StoreRow): StoreDto {
     lng: s.lng,
     category: s.category,
     imageUrl: s.imageUrl,
+    active: s.active,
+    timezone: s.timezone,
+    openingHours: declarado ? (horario as StoreDto['openingHours']) : null,
+    /**
+     * Unidade desativada nunca está aberta, independentemente do horário. A ordem importa:
+     * checar o horário primeiro e o `active` depois daria "aberta" para uma loja em reforma.
+     */
+    openNow: s.active && estaAberta(horario, s.timezone, agora),
+    nextOpening: declarado ? proximaAbertura(horario, s.timezone, agora) : null,
   };
 }
 

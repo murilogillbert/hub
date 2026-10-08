@@ -1,0 +1,54 @@
+.disp {
+  display: grid;
+  gap: 0.75rem;
+  min-width: min(560px, 80vw);
+}
+
+.disp__nota {
+  margin: 0;
+}
+
+/* Produto sem disponibilidade definida aparece em todas as unidades. Sem este aviso, o lojista
+   veria zeros e concluiria que está esgotado em todo lugar. */
+.disp__aviso {
+  background: var(--color-surface-muted, rgba(0, 0, 0, 0.04));
+  border-left: 3px solid var(--color-primary, #1d6fa5);
+  border-radius: var(--radius-sm, 6px);
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+}
+
+.disp__tabela {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.disp__tabela th,
+.disp__tabela td {
+  border-bottom: 1px solid var(--color-border, rgba(0, 0, 0, 0.08));
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+}
+
+.disp__tabela th {
+  color: var(--color-text-muted, #666);
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.disp__qtd {
+  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.12));
+  border-radius: var(--radius-sm, 6px);
+  font: inherit;
+  padding: 0.25rem 0.4rem;
+  width: 6rem;
+}
+
+.disp__rodape {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
