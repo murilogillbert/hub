@@ -42,6 +42,25 @@ import './CreditoDeAnuncio.css';
 /** Valores sugeridos, em centavos. Cobrem de um teste pequeno a um mês de veiculação. */
 const SUGESTOES = [5_000, 20_000, 50_000, 90_000, 200_000];
 
+/**
+ * Reais com **quatro** decimais, para valores menores que um centavo.
+ *
+ * `formatCurrency` arredonda para centavo, e aqui isso mente: o preço é R$ 0,003 por segundo
+ * de tela, e com dois decimais a tela dizia **"R$ 0,00 por segundo"** — ou seja, que veicular
+ * é de graça, logo acima de uma tabela que cobrava R$ 0,0300 por dez segundos. Visto no
+ * tablete em 2026-10-08.
+ *
+ * Não é arredondamento inofensivo porque o número é uma **taxa**, não um total: um total de
+ * R$ 0,004 arredondado para R$ 0,00 é "praticamente zero", mas uma taxa arredondada para zero
+ * diz que o serviço não cobra.
+ *
+ * Existe como função, e não repetido em cada lugar, porque antes havia dois
+ * `.toFixed(4).replace('.', ',')` soltos na mesma tela e o do título ficou de fora.
+ */
+function reaisDetalhado(valor: number): string {
+  return `R$ ${valor.toFixed(4).replace('.', ',')}`;
+}
+
 /** De quanto em quanto tempo a tela reconsulta enquanto espera o Pix. */
 const INTERVALO_DE_ESPERA_MS = 10_000;
 
@@ -258,7 +277,7 @@ export function CreditoDeAnuncioPage() {
                 <h3>Tabela de preço</h3>
                 <QueryState loading={tabela.isLoading} error={tabela.error}>
                   <p className="text-muted">
-                    {formatCurrency(tabela.data?.pricePerSecond ?? 0)} por segundo de tela. Imagem
+                    {reaisDetalhado(tabela.data?.pricePerSecond ?? 0)} por segundo de tela. Imagem
                     conta como 15 segundos.
                   </p>
                   <table className="credito__tabela">
@@ -277,7 +296,7 @@ export function CreditoDeAnuncioPage() {
                             arredondar para centavo mostraria R$ 0,05 — 11% a mais do que é
                             cobrado, sempre para cima.
                           */}
-                          <td>R$ {l.cost.toFixed(4).replace('.', ',')}</td>
+                          <td>{reaisDetalhado(l.cost)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -395,7 +414,7 @@ export function CreditoDeAnuncioPage() {
                             decimais mostrariam R$ 0,05 num extrato que precisa fechar com o
                             saldo.
                           */}
-                          R$ {l.amount.toFixed(4).replace('.', ',')}
+                          {reaisDetalhado(l.amount)}
                         </td>
                       </tr>
                     ))}
