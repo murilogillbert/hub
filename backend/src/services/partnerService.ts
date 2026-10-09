@@ -34,13 +34,36 @@ export async function updateMyProfile(partnerId: string, req: UpdateMyPartnerPro
   return toAffiliatePartnerDto(updated);
 }
 
+/**
+ * Produtos do próprio lojista, **com** a disponibilidade por unidade.
+ *
+ * O terceiro argumento de `toProductDto` não era passado aqui, e isso fazia
+ * `storeStockDeclared` sair `false` para todo produto. A tela de gestão lê exatamente esse
+ * campo para escolher entre "N unidade(s)" e "todas as unidades" — então ela mostrava
+ * **"todas as unidades"** para um produto declarado em uma só, dizendo ao lojista o oposto do
+ * que ele acabara de configurar.
+ *
+ * Dois efeitos, e o segundo é o pior:
+ *
+ * 1. a etiqueta mentia sobre onde dá para retirar;
+ * 2. o aviso de "declarado e esgotado em todas" depende de `declared === true`, e com o campo
+ *    sempre falso ele **nunca** aparecia. Produto que acabou em todas as lojas ficava com
+ *    aparência normal na tela de quem precisava repor.
+ *
+ * Visto no tablete em 2026-10-08. A tela estava certa desde o começo; faltava o dado.
+ */
 export async function myProducts(partnerId: string): Promise<ProductDto[]> {
   const rows = await prisma.product.findMany({
     where: { partnerId },
     include: { partner: true },
     orderBy: { title: 'asc' },
   });
-  return rows.map((p) => toProductDto(p));
+  // Uma consulta para todos os produtos, não uma por produto: é a mesma função que o catálogo
+  // usa, e aqui a lista do lojista costuma ser pequena mas não há razão para N consultas.
+  const disponibilidade = await productStoreStockService.disponibilidadePorProduto(
+    rows.map((p) => p.id)
+  );
+  return rows.map((p) => toProductDto(p, undefined, undefined, disponibilidade.get(p.id)));
 }
 
 export async function createProduct(partnerId: string, req: ProductUpsertRequest): Promise<ProductDto> {
@@ -81,7 +104,17 @@ export async function updateProduct(partnerId: string, productId: string, req: P
     },
     include: { partner: true },
   });
-  return toProductDto(p);
+  /**
+   * Com a disponibilidade, pelo mesmo motivo de `myProducts`: salvar preço não mexe nas
+   * declarações por unidade, e devolver `declared: false` faria a tela trocar a etiqueta para
+   * "todas as unidades" logo depois de salvar — um campo que o lojista não editou mudando de
+   * valor na frente dele.
+   *
+   * `createProduct` continua sem: produto recém-criado realmente não tem nenhuma linha, e
+   * `declared: false` é a resposta certa, não um valor omitido por descuido.
+   */
+  const disponibilidade = await productStoreStockService.disponibilidadePorProduto([p.id]);
+  return toProductDto(p, undefined, undefined, disponibilidade.get(p.id));
 }
 
 export async function deleteProduct(partnerId: string, productId: string): Promise<void> {

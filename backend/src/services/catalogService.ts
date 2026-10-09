@@ -19,6 +19,7 @@ import {
 } from '../mappings.js';
 import type { CategoryDto } from '../dtos/catalog.dto.js';
 import { toCategoryDto } from '../mappings.js';
+import * as productStoreStockService from './productStoreStockService.js';
 
 type StoreLocationMap = Map<string, { cities: string[]; states: string[] }>;
 
@@ -60,23 +61,10 @@ type DisponibilidadeMap = Map<string, DisponibilidadePorUnidade>;
  * passaria a "não disponível em unidade nenhuma".
  */
 async function disponibilidadeMap(productIds: string[]): Promise<DisponibilidadeMap> {
-  const map: DisponibilidadeMap = new Map();
-  if (productIds.length === 0) return map;
-
-  const linhas = await prisma.productStoreStock.findMany({
-    where: { productId: { in: productIds } },
-    select: { productId: true, storeId: true, active: true, quantity: true },
-  });
-
-  for (const l of linhas) {
-    const entry = map.get(l.productId) ?? { stores: [], declared: true };
-    entry.declared = true;
-    // Linha desativada ou zerada conta como declarada e indisponível — é exatamente o que o
-    // lojista quis dizer com "acabou aqui".
-    if (l.active && l.quantity > 0) entry.stores.push(l.storeId);
-    map.set(l.productId, entry);
-  }
-  return map;
+  // A regra mora em `productStoreStockService`, para a lista do catálogo e a lista do próprio
+  // lojista responderem a mesma coisa. Enquanto era privada daqui, `partnerService.myProducts`
+  // não tinha acesso e a tela de gestão dizia "todas as unidades" para produto restrito a uma.
+  return productStoreStockService.disponibilidadePorProduto(productIds);
 }
 
 /**

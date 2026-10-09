@@ -5,6 +5,7 @@ import { __setPrismaForTests } from '../src/infra/prisma.js';
 import { toStoreDto } from '../src/mappings.js';
 import * as catalogService from '../src/services/catalogService.js';
 import * as estoqueService from '../src/services/productStoreStockService.js';
+import * as partnerService from '../src/services/partnerService.js';
 
 /**
  * Importação **estática** dos serviços, e nenhum `vi.resetModules()`.
@@ -501,5 +502,93 @@ describe('Prisma.DbNull', () => {
      */
     expect(Prisma.DbNull).toBeDefined();
     expect(Prisma.DbNull).not.toBeNull();
+  });
+});
+
+/**
+ * A lista de produtos **do próprio lojista** precisa saber onde cada produto está declarado.
+ *
+ * Nenhum teste cobria isto, e o defeito só apareceu com o aplicativo na mão: um produto
+ * declarado em **uma** unidade aparecia com a etiqueta "todas as unidades". A causa era
+ * `myProducts` chamar `toProductDto(p)` sem a disponibilidade, o que faz
+ * `storeStockDeclared` sair `false` — e `false` significa, por desenho, "não declarado, logo
+ * disponível em todas".
+ *
+ * O caso de um produto só já falharia. Os três abaixo existem porque cada um corresponde a
+ * uma etiqueta diferente na tela, e a antiga implementação mostrava **a mesma** para os três.
+ */
+describe('produtos do lojista: disponibilidade por unidade na listagem', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('distingue declarado em uma unidade, nas duas, e não declarado', async () => {
+    const soNaLojaA = produto({ id: PRODUTO, title: 'So na A' });
+    const nasDuas = produto({ id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', title: 'Nas duas' });
+    const semDeclaracao = produto({
+      id: 'ffffffff-ffff-4fff-8fff-ffffffffffff',
+      title: 'Sem declaracao',
+    });
+
+    montar({
+      produtos: [soNaLojaA, nasDuas, semDeclaracao],
+      unidades: [unidade({ id: LOJA_A }), unidade({ id: LOJA_B, name: 'Bairro' })],
+      estoque: [
+        { productId: soNaLojaA.id, storeId: LOJA_A, quantity: 5, active: true },
+        { productId: nasDuas.id, storeId: LOJA_A, quantity: 5, active: true },
+        { productId: nasDuas.id, storeId: LOJA_B, quantity: 2, active: true },
+      ],
+    });
+
+    const lista = await partnerService.myProducts(PARCEIRO);
+    const por = new Map(lista.map((p) => [p.title, p]));
+
+    // Declarado em uma: a tela mostra "1 unidade(s)". Antes mostrava "todas as unidades".
+    expect(por.get('So na A')?.storeStockDeclared).toBe(true);
+    expect(por.get('So na A')?.availableStores).toEqual([LOJA_A]);
+
+    expect(por.get('Nas duas')?.storeStockDeclared).toBe(true);
+    expect(por.get('Nas duas')?.availableStores).toHaveLength(2);
+
+    // Sem nenhuma linha: `false`, que é o que significa "em todas as unidades". Este caso
+    // passava antes — e é justamente por isso que o defeito não aparecia em um teste que só
+    // olhasse produto sem declaração.
+    expect(por.get('Sem declaracao')?.storeStockDeclared).toBe(false);
+    expect(por.get('Sem declaracao')?.availableStores).toEqual([]);
+  });
+
+  it('declarado e esgotado em todas vem como declarado com lista vazia', async () => {
+    // É o caso que a tela desenha com tom de aviso. Com `declared` sempre falso, o aviso
+    // nunca aparecia: produto que acabou em todas as lojas ficava com aparência normal na
+    // tela de quem precisa repor.
+    const esgotado = produto({ id: PRODUTO, title: 'Esgotado' });
+    montar({
+      produtos: [esgotado],
+      unidades: [unidade({ id: LOJA_A }), unidade({ id: LOJA_B, name: 'Bairro' })],
+      estoque: [
+        { productId: esgotado.id, storeId: LOJA_A, quantity: 0, active: true },
+        { productId: esgotado.id, storeId: LOJA_B, quantity: 7, active: false },
+      ],
+    });
+
+    const [p] = await partnerService.myProducts(PARCEIRO);
+    expect(p.storeStockDeclared).toBe(true);
+    expect(p.availableStores).toEqual([]);
+  });
+
+  it('usa uma consulta para a lista inteira, nao uma por produto', async () => {
+    // A listagem do catálogo é o caminho mais quente do hub, e a regra agora é compartilhada:
+    // se alguém trocar por uma consulta por produto, a degradação aparece primeiro aqui.
+    const a = produto({ id: PRODUTO, title: 'A' });
+    const b = produto({ id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', title: 'B' });
+    const c = produto({ id: 'ffffffff-ffff-4fff-8fff-ffffffffffff', title: 'C' });
+    const { prisma } = montar({
+      produtos: [a, b, c],
+      unidades: [unidade({ id: LOJA_A })],
+      estoque: [{ productId: a.id, storeId: LOJA_A, quantity: 1, active: true }],
+    });
+
+    await partnerService.myProducts(PARCEIRO);
+    expect(prisma.productStoreStock.findMany).toHaveBeenCalledTimes(1);
   });
 });

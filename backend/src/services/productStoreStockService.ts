@@ -164,3 +164,58 @@ async function produtoDoParceiro(partnerId: string, productId: string): Promise<
   // confirmaria que o identificador é válido.
   if (!p) throw new AppError('Produto não encontrado.', 404);
 }
+
+/**
+ * Disponibilidade por unidade dos produtos informados, em **uma** consulta.
+ *
+ * Uma consulta e não uma por produto: este é o caminho mais quente do hub, e um `include` no
+ * modelo deixaria toda leitura de produto mais caro — inclusive as que não usam o dado.
+ *
+ * O resultado distingue dois casos que parecem iguais de fora:
+ *
+ *   sem nenhuma linha               →  `declared: false`. Disponível em todas as unidades do
+ *                                      parceiro. É o comportamento de hoje, e o acervo inteiro
+ *                                      está assim.
+ *   com linhas, nenhuma disponível  →  `declared: true`, `stores: []`. Esgotado em todas.
+ *
+ * Sem essa distinção, o deploy desta frente sumiria com o catálogo inteiro: todo produto
+ * passaria a "não disponível em unidade nenhuma".
+ *
+ * ============================================================================
+ * Por que mora aqui, e não no `catalogService`
+ * ============================================================================
+ *
+ * Era privada do `catalogService`, e por isso a lista de produtos **do próprio lojista** não
+ * tinha como usá-la: `partnerService.myProducts` chamava `toProductDto(p)` sem o terceiro
+ * argumento, então `storeStockDeclared` saía `false` para todo produto.
+ *
+ * O efeito na tela, visto no tablete em 2026-10-08: um produto declarado em **uma** unidade
+ * aparecia com a etiqueta "todas as unidades". Ou seja, a tela de gestão dizia ao lojista o
+ * oposto do que ele acabara de configurar — e o aviso de "declarado e esgotado em todas",
+ * que depende de `declared === true`, nunca disparava.
+ *
+ * A tela estava correta; faltava o dado. Mover para cá é o que permite as duas leituras
+ * usarem a **mesma** regra: duplicar a consulta criaria duas definições de "onde dá para
+ * retirar", e a divergência apareceria como o catálogo e o painel discordando.
+ */
+export async function disponibilidadePorProduto(
+  productIds: string[]
+): Promise<Map<string, { stores: string[]; declared: boolean }>> {
+  const map = new Map<string, { stores: string[]; declared: boolean }>();
+  if (productIds.length === 0) return map;
+
+  const linhas = await prisma.productStoreStock.findMany({
+    where: { productId: { in: productIds } },
+    select: { productId: true, storeId: true, active: true, quantity: true },
+  });
+
+  for (const l of linhas) {
+    const entry = map.get(l.productId) ?? { stores: [], declared: true };
+    entry.declared = true;
+    // Linha desativada ou zerada conta como declarada e indisponível — é exatamente o que o
+    // lojista quis dizer com "acabou aqui".
+    if (l.active && l.quantity > 0) entry.stores.push(l.storeId);
+    map.set(l.productId, entry);
+  }
+  return map;
+}
