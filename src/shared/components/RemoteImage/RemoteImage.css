@@ -1,0 +1,25 @@
+/*
+  A reserva precisa ocupar exatamente o mesmo espaço que a imagem ocuparia.
+
+  Por isso `width/height: 100%` e nada de tamanho próprio: quem posiciona é sempre o
+  contêiner da tela (`.product-card__image` tem `aspect-ratio`, `.product-page__media` tem
+  altura). Se este componente definisse medidas, a grade pularia entre produto com e sem foto
+  — e o salto é mais visível que a própria falta da imagem.
+*/
+.imagem-remota--vazia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: var(--color-surface-alt);
+  color: var(--color-text-soft, #94a3b8);
+}
+
+/*
+  `object-fit: cover` já é aplicado pelas classes de cada tela nos seus `img`. Aqui só o
+  mínimo para a reserva, para não disputar com o CSS de quem usa.
+*/
+.imagem-remota--vazia svg {
+  opacity: 0.55;
+}

@@ -11,6 +11,7 @@ import { coordinateError, formatMoneyInput, isValidCnpj, isValidPhone, maskCnpj,
 import { adminApi } from '@shared/api/endpoints';
 import { User, Partner } from '@shared/types';
 import './AdminPages.css';
+import { Avatar } from '@shared/components/Avatar/Avatar';
 
 type Role = 'client' | 'passenger' | 'driver' | 'partner' | 'admin' | 'financeiro';
 
@@ -228,9 +229,15 @@ export function AdminUsersPage() {
                 <tr key={u.id}>
                   <td>
                     <div className="admin-partners__cell">
-                      <div className="admin-users__avatar">
-                        {u.name.charAt(0).toUpperCase()}
-                      </div>
+                      {/*
+                        `Avatar` em vez da inicial desenhada à mão.
+                        
+                        O código anterior **nunca** lia `avatarUrl`: desenhava sempre a
+                        primeira letra, inclusive para quem tem foto. Então o administrador —
+                        a única pessoa que precisa reconhecer uma conta por foto, ao atender
+                        um pedido de suporte — era justamente quem não via nenhuma.
+                      */}
+                      <Avatar nome={u.name} url={u.avatarUrl} size={32} />
                       <strong>{u.name}</strong>
                     </div>
                   </td>

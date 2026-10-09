@@ -23,6 +23,7 @@ import { Product } from '@shared/types';
 import { Icon } from '@shared/components/Icon/Icon';
 import { DisponibilidadePorUnidade } from '../components/DisponibilidadePorUnidade';
 import './PartnerPages.css';
+import { RemoteImage } from '@shared/components/RemoteImage/RemoteImage';
 
 const EMPTY: ProductUpsert = {
   title: '',
@@ -343,7 +344,12 @@ export function PartnerCatalogPage() {
           {products.map((p) => (
             <Card key={p.id} className="partner-catalog__item">
               <div className="partner-catalog__media">
-                <img src={resolveImageUrl(p.imageUrl)} alt={p.title} />
+                {/*
+                  A grade do próprio lojista: é onde ele percebe quais produtos ainda não têm
+                  foto. Com `<img src="">` todos pareciam ter foto quebrada, o que esconde
+                  exatamente essa informação.
+                */}
+                <RemoteImage url={p.imageUrl} alt={p.title} />
               </div>
               <div className="partner-catalog__info">
                 <small className="text-soft">{p.category}</small>

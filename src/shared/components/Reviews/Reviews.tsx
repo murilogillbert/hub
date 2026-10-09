@@ -3,10 +3,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@shared/components/Button/Button';
 import { Card } from '@shared/components/Card/Card';
 import { reviewsApi } from '@shared/api/endpoints';
-import { resolveImageUrl } from '@shared/api/client';
 import { useToast } from '@shared/components/Toaster/ToastContext';
 import { formatDateTime } from '@shared/utils/formatters';
 import './Reviews.css';
+import { Avatar } from '@shared/components/Avatar/Avatar';
 
 export function Stars({
   value,
@@ -72,17 +72,21 @@ export function ProductReviewsSection({ productId }: { productId: string }) {
         {data.items.map((r) => (
           <li key={r.id} className="rv-list__item">
             <div className="rv-list__top">
-              {r.userAvatarUrl ? (
-                <img
-                  src={resolveImageUrl(r.userAvatarUrl) || r.userAvatarUrl}
-                  alt={r.userName}
-                  className="rv-list__avatar"
-                />
-              ) : (
-                <span className="rv-list__avatar rv-list__avatar--ph">
-                  {r.userName.charAt(0).toUpperCase()}
-                </span>
-              )}
+              {/*
+                `Avatar`, e não a reserva própria que havia aqui.
+                
+                A guarda funcionava (string vazia caía no `else`), então isto não estava
+                quebrado — estava **divergente**: desenhava só a primeira letra, num fundo
+                fixo do CSS, enquanto o resto do sistema desenha primeira e última palavra na
+                cor derivada do nome. O mesmo usuário aparecia "J" cinza na avaliação e "JS"
+                roxo no cabeçalho, o que dá a impressão de serem pessoas diferentes.
+              */}
+              <Avatar
+                nome={r.userName}
+                url={r.userAvatarUrl}
+                size={36}
+                className="rv-list__avatar"
+              />
               <div>
                 <strong>{r.userName}</strong>
                 <small className="text-muted">

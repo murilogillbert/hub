@@ -11,13 +11,13 @@ import {
   ProfileBasicsCard,
 } from '@shared/components/AccountSettings/AccountSettingsCards';
 import { coordinateError, isValidDocument, maskDocument, maskCoordinate, DocumentType } from '@shared/utils/masks';
-import { resolveImageUrl } from '@shared/api/client';
 import { affiliateApi, catalogApi, partnerApi, uploadsApi, PixKeyType } from '@shared/api/endpoints';
 import { Icon } from '@shared/components/Icon/Icon';
 import { useAuth } from '@shared/hooks/useAuth';
 import { formatCurrency } from '@shared/utils/formatters';
 import { SurveyLinkCard } from '@features/client/components/SurveyLinkCard';
 import './PartnerPages.css';
+import { Avatar } from '@shared/components/Avatar/Avatar';
 
 const PIX_KEY_TYPES: { value: PixKeyType; label: string }[] = [
   { value: 'CPF', label: 'CPF' },
@@ -112,9 +112,18 @@ function StoreProfileCard() {
     <Card>
       <h3>Dados da loja</h3>
       <div className="profile__top" style={{ marginBottom: 16 }}>
-        <img
-          src={resolveImageUrl(meQuery.data?.logoUrl) || meQuery.data?.logoUrl}
-          alt={meQuery.data?.name}
+        {/*
+          `Avatar` e não o `<img>` com `||`.
+          
+          O `||` parecia uma guarda e não era: `resolveImageUrl('')` devolve `''`, que é
+          falsy, então o operador caía no segundo termo — que é o **mesmo** `''`. O `src`
+          continuava vazio, e o lojista via um ícone de quebrado onde deveria estar a logo
+          dele, na tela em que ele vai justamente trocá-la.
+        */}
+        <Avatar
+          nome={meQuery.data?.name ?? ''}
+          url={meQuery.data?.logoUrl}
+          size={72}
           className="profile__avatar"
         />
         <label className="btn btn--secondary btn--sm" style={{ cursor: 'pointer', width: 'fit-content' }}>

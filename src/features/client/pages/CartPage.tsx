@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '@shared/components/Card/Card';
 import { Button } from '@shared/components/Button/Button';
 import { useCart } from '@shared/context/CartContext';
-import { resolveImageUrl } from '@shared/api/client';
+import { RemoteImage } from '@shared/components/RemoteImage/RemoteImage';
 import { formatCurrency } from '@shared/utils/formatters';
 import './ClientArea.css';
 
@@ -54,15 +54,14 @@ export function CartPage() {
                   <tr key={l.productId}>
                     <td>
                       <div className="admin-partners__cell">
-                        <img
-                          src={resolveImageUrl(l.imageUrl)}
+                        {/*
+                          A imagem do item vem copiada do produto no momento em que ele entra
+                          no carrinho, então herda o vazio e quebrava aqui também.
+                        */}
+                        <RemoteImage
+                          url={l.imageUrl}
                           alt={l.title}
-                          style={{
-                            width: 44,
-                            height: 44,
-                            objectFit: 'cover',
-                            borderRadius: 8,
-                          }}
+                          className="carrinho__miniatura"
                         />
                         <strong>{l.title}</strong>
                       </div>

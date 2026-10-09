@@ -5,7 +5,7 @@ import { Button } from '@shared/components/Button/Button';
 import { Input } from '@shared/components/Input/Input';
 import { QrCode } from '@shared/components/QrCode/QrCode';
 import { QueryState } from '@shared/components/QueryState/QueryState';
-import { resolveImageUrl } from '@shared/api/client';
+import { RemoteImage } from '@shared/components/RemoteImage/RemoteImage';
 import { useAuth } from '@shared/hooks/useAuth';
 import { useCart } from '@shared/context/CartContext';
 import { useToast } from '@shared/components/Toaster/ToastContext';
@@ -401,7 +401,7 @@ export function CheckoutPage() {
         <h3>Resumo</h3>
         {lines.map((l) => (
           <div className="checkout__item" key={l.productId}>
-            <img src={resolveImageUrl(l.imageUrl)} alt={l.title} />
+            <RemoteImage url={l.imageUrl} alt={l.title} />
             <div>
               <strong>
                 {l.quantity > 1 ? `${l.quantity}x ` : ''}

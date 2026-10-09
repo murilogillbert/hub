@@ -2,7 +2,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@shared/components/Button/Button';
 import { catalogApi } from '@shared/api/endpoints';
-import { resolveImageUrl } from '@shared/api/client';
+import { Avatar } from '@shared/components/Avatar/Avatar';
+import { RemoteImage } from '@shared/components/RemoteImage/RemoteImage';
 import { StoreMap } from '@shared/components/StoreMap/StoreMap';
 import { QueryState } from '@shared/components/QueryState/QueryState';
 import { ProductReviewsSection } from '@shared/components/Reviews/Reviews';
@@ -65,7 +66,8 @@ export function ProductPage() {
 
       <section className="product-page__main">
         <div className="product-page__media">
-          <img src={resolveImageUrl(product.imageUrl)} alt={product.title} />
+          {/* `eager`: é a imagem principal da página, não entra em grade. */}
+          <RemoteImage url={product.imageUrl} alt={product.title} loading="eager" />
         </div>
         <div className="product-page__info">
           <div className="row">
@@ -78,7 +80,19 @@ export function ProductPage() {
           <p className="text-muted">{product.description}</p>
 
           <div className="product-page__partner">
-            <img src={partner?.logoUrl} alt={partner?.name} />
+            {/*
+              `Avatar` e não `<img src={partner.logoUrl}>`.
+              
+              Era o defeito mais visível: esta linha jogava o valor cru do banco no `src`, sem
+              passar nem por `resolveImageUrl`. Depois da Frente C, `partners.logo_url` é
+              string vazia para quem não enviou logo — e `src=""` desenha o ícone de imagem
+              quebrada **ao lado do nome da loja**, na página em que o cliente decide comprar.
+              
+              `Avatar` resolve os dois casos com a decisão que já existe: com logo, mostra a
+              logo; sem logo, desenha as iniciais na cor determinística do nome, a mesma que o
+              aplicativo desenha para a mesma loja.
+            */}
+            <Avatar nome={partner?.name ?? ''} url={partner?.logoUrl} size={48} />
             <div>
               <small className="text-soft">Vendido por</small>
               <strong>{partner?.name}</strong>

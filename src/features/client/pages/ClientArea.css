@@ -278,3 +278,19 @@
   align-items: center;
   gap: var(--space-3);
 }
+
+/*
+  Miniatura de item no carrinho e na conferência do pedido.
+  
+  A medida vive aqui, e não num `style` inline no elemento, porque agora a imagem e a reserva
+  de "sem foto" são elementos diferentes (`<img>` e `<span>`) — e os dois precisam ocupar
+  exatamente o mesmo espaço, senão a linha da tabela muda de altura conforme o produto tenha
+  foto ou não.
+*/
+.carrinho__miniatura {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}

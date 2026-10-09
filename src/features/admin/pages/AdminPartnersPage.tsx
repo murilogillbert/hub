@@ -10,6 +10,7 @@ import { coordinateError, isValidDocument, maskDocument, maskCoordinate, Documen
 import { adminApi, catalogApi, PartnerUpsert } from '@shared/api/endpoints';
 import { Partner } from '@shared/types';
 import './AdminPages.css';
+import { Avatar } from '@shared/components/Avatar/Avatar';
 
 interface PartnerForm {
   name: string;
@@ -325,7 +326,13 @@ export function AdminPartnersPage() {
                 <tr key={p.id}>
                   <td>
                     <div className="admin-partners__cell">
-                      <img src={p.logoUrl} alt={p.name} />
+                      {/*
+                        `Avatar` e não `<img src={p.logoUrl}>`: a logo é string vazia para
+                        quem não enviou, e o valor cru produzia um ícone de imagem quebrada em
+                        cada linha da listagem. As iniciais saem na mesma cor que o cliente vê
+                        para a mesma loja.
+                      */}
+                      <Avatar nome={p.name} url={p.logoUrl} size={32} />
                       <strong>{p.name}</strong>
                     </div>
                   </td>
