@@ -5,50 +5,65 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#0a1726">
-  <title>Baixe o OpenDriver</title>
+  <title>Baixe o app — OpenDriver</title>
   <link rel="icon" href="/favicon-32.png">
   <style>
     :root { --navy:#0a1726; --lime:#b5dc2f; --muted:#5b6b7b; --bg:#f4f7fa; }
     * { box-sizing:border-box; }
     body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
            font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--navy); }
-    main { width:100%; max-width:420px; padding:28px 20px; text-align:center; }
-    img.logo { width:72px; height:72px; border-radius:16px; }
-    h1 { font-size:24px; margin:16px 0 8px; }
-    p { color:var(--muted); line-height:1.5; margin:0 0 20px; }
-    .btn { display:block; padding:16px; margin:10px 0; border-radius:14px; font-weight:700; font-size:17px;
+    main { width:100%; max-width:420px; padding:24px 20px; text-align:center; }
+    img.logo { width:64px; height:64px; border-radius:14px; }
+    h1 { font-size:22px; margin:14px 0 6px; }
+    p { color:var(--muted); line-height:1.45; margin:0 0 16px; font-size:15px; }
+    .opcao { margin:0 0 14px; }
+    .opcao p { margin:6px 4px 0; font-size:13.5px; }
+    .btn { display:block; padding:15px; border-radius:14px; font-weight:700; font-size:17px;
            text-decoration:none; color:var(--navy); background:var(--lime); }
-    .btn.outline { background:#fff; border:2px solid var(--navy); }
-    .qr { margin:22px auto 6px; width:180px; height:180px; }
-    .small { font-size:13px; }
+    .btn.outline { background:#fff; border:2px solid var(--navy); margin:10px 0; }
+    .voltar { display:inline-block; margin-top:6px; color:var(--muted); font-size:14px; }
+    .small { font-size:12.5px; margin-top:20px; }
     [hidden] { display:none !important; }
   </style>
 </head>
 <body>
   <main>
-    <img class="logo" src="/logo.png" alt="OpenDriver" width="72" height="72">
+    <img class="logo" src="/logo.png" alt="OpenDriver" width="64" height="64">
 
-    <!-- Computador ou aparelho não identificado: escolher a loja. -->
-    <section id="escolha">
-      <h1>Baixe o OpenDriver</h1>
-      <p>Abra esta página no celular, escaneie o código abaixo ou escolha a sua loja.</p>
-      <a class="btn" href="/qrcode-transfer?os=android">Google Play (Android)</a>
-      <a class="btn outline" href="/qrcode-transfer?os=ios">App Store (iPhone)</a>
-      <img class="qr" src="/qrcode-opendriver.svg" alt="QR Code para baixar o OpenDriver" width="180" height="180">
+    <!-- Menu: a pessoa escolhe o app. O toque leva ao servidor, que identifica o celular e
+         redireciona para a loja (App Store no iPhone, Google Play no Android). -->
+    <section id="menu">
+      <h1>Qual app você quer baixar?</h1>
+      <p>Toque numa opção e você é levado direto para a loja do seu celular.</p>
+
+      <div class="opcao">
+        <a class="btn" href="/qrcode-transfer?app=opendriver">OpenDriver</a>
+        <p>Peça corridas como passageiro ou dirija e ganhe como motorista.</p>
+      </div>
+      <div class="opcao">
+        <a class="btn" href="/qrcode-transfer?app=hub">OpenDriver Hub</a>
+        <p>Cashback, vouchers e ofertas em lojas parceiras. Parceiros também gerenciam suas vendas por aqui.</p>
+      </div>
+      <div class="opcao">
+        <a class="btn" href="/qrcode-transfer?app=ads">OpenDriver Ads</a>
+        <p>Para anunciantes: crie campanhas nos tablets dos carros, compre crédito e acompanhe os resultados.</p>
+      </div>
     </section>
 
-    <!-- Só chega aqui com ?os=ios quando a loja da Apple ainda não tem link configurado. -->
-    <section id="ios" hidden>
-      <h1>Em breve na App Store</h1>
-      <p>O OpenDriver para iPhone ainda não foi publicado. Avisaremos assim que estiver disponível.</p>
-      <a class="btn outline" href="/">Conhecer o OpenDriver</a>
+    <!-- Só chega aqui com ?app= quando o servidor não redirecionou: computador/aparelho não
+         identificado (escolher a loja) ou loja sem link configurado ("em breve"). -->
+    <section id="loja" hidden>
+      <h1 id="loja-titulo">Escolha a loja</h1>
+      <p>Abra esta página no celular ou escolha a loja abaixo.</p>
+      <a class="btn" id="b-android" href="#">Google Play (Android)</a>
+      <a class="btn outline" id="b-ios" href="#">App Store (iPhone)</a>
+      <a class="voltar" href="/qrcode-transfer">← Escolher outro app</a>
     </section>
 
-    <!-- Idem para ?os=android sem link do Google Play. -->
-    <section id="android" hidden>
-      <h1>Em breve no Google Play</h1>
-      <p>O OpenDriver para Android ainda não foi publicado. Avisaremos assim que estiver disponível.</p>
-      <a class="btn outline" href="/">Conhecer o OpenDriver</a>
+    <section id="breve" hidden>
+      <h1 id="breve-titulo">Em breve</h1>
+      <p id="breve-texto">Este app ainda não foi publicado nesta loja. Avisaremos assim que estiver disponível.</p>
+      <a class="btn outline" href="/qrcode-transfer">Escolher outro app</a>
     </section>
 
     <p class="small">OpenDriver · opendriver.com.br</p>
@@ -56,15 +71,32 @@
 
   <script>
     (function () {
-      var os = new URLSearchParams(location.search).get('os');
+      var params = new URLSearchParams(location.search);
+      var app = params.get('app');
+      var os = params.get('os');
+      var nomes = { opendriver: 'OpenDriver', hub: 'OpenDriver Hub', ads: 'OpenDriver Ads' };
+      if (!nomes[app]) return;                       // sem app válido: fica o menu
+
       // iPad moderno se apresenta como Mac no User-Agent; o toque é o que o denuncia.
       if (!os && navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) {
-        location.replace('/qrcode-transfer' + (location.search ? location.search + '&' : '?') + 'os=ios');
+        location.replace('/qrcode-transfer?app=' + app + '&os=ios');
         return;
       }
+
+      var nome = nomes[app];
+      document.getElementById('menu').hidden = true;
       if (os === 'ios' || os === 'android') {
-        document.getElementById('escolha').hidden = true;
-        document.getElementById(os).hidden = false;
+        // Chegou aqui com o sistema definido: a loja não tem link configurado ainda.
+        var loja = os === 'ios' ? 'App Store' : 'Google Play';
+        document.getElementById('breve-titulo').textContent = nome + ' em breve na ' + loja;
+        document.getElementById('breve-texto').textContent =
+          'O ' + nome + ' ainda não foi publicado na ' + loja + '. Avisaremos assim que estiver disponível.';
+        document.getElementById('breve').hidden = false;
+      } else {
+        document.getElementById('loja-titulo').textContent = 'Baixar o ' + nome;
+        document.getElementById('b-android').href = '/qrcode-transfer?app=' + app + '&os=android';
+        document.getElementById('b-ios').href = '/qrcode-transfer?app=' + app + '&os=ios';
+        document.getElementById('loja').hidden = false;
       }
     })();
   </script>

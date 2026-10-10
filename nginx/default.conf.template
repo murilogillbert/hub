@@ -5,25 +5,28 @@
 # são substituídas; as do próprio nginx ($uri, $arg_os…) ficam intactas.
 #
 # ============================================================================
-# /qrcode-transfer — um QR Code único que leva cada celular à loja certa
+# /qrcode-transfer — um QR Code único: a pessoa escolhe o app e vai para a loja certa
 # ============================================================================
 #
-# O QR impresso aponta sempre para https://opendriver.com.br/qrcode-transfer. O servidor olha o
-# User-Agent e responde com um redirecionamento 302:
+# O QR impresso aponta sempre para https://opendriver.com.br/qrcode-transfer, que abre um
+# menu com os três apps (OpenDriver, OpenDriver Hub, OpenDriver Ads), cada um com uma
+# descrição. Ao tocar numa opção o navegador pede /qrcode-transfer?app=<opcao> e o servidor
+# olha o User-Agent e responde 302:
 #
-#   iPhone / iPad / iPod  ->  App Store      (QR_IOS_URL)
-#   Android               ->  Google Play    (QR_ANDROID_URL)
-#   qualquer outro        ->  página /qrcode-transfer.html (computador, ou loja ainda sem link)
+#   iPhone / iPad / iPod  ->  App Store      (QR_IOS_*_URL)
+#   Android               ->  Google Play    (QR_ANDROID_*_URL)
+#   qualquer outro        ->  a própria página (computador: escolher a loja; ou loja ainda
+#                             sem link: "em breve")
 #
-# É feito no nginx, e não em JavaScript, de propósito: o celular recebe o redirecionamento
-# antes de baixar qualquer página ou script, então não há tela intermediária nem travamento.
+# Feito no nginx, e não em JavaScript, de propósito: depois do toque o celular é
+# redirecionado antes de baixar qualquer página ou script, sem tela intermediária.
 #
-# `?app=hub` e `?app=ads` escolhem os outros dois apps (padrão: OpenDriver). `?os=ios` e
-# `?os=android` forçam o sistema — usados pelos botões da página de reserva e para teste.
+# app = opendriver | hub | ads. `?os=ios` e `?os=android` forçam o sistema — usados pelos
+# botões da página de reserva e para teste. Sem `app`, mostra o menu.
 #
-# Para publicar o app no iPhone: defina QR_IOS_URL no Coolify (variável de ambiente do
-# hub-frontend) com o link da App Store e faça redeploy. Enquanto estiver vazia, o iPhone vê a
-# página "em breve" em vez de um link quebrado.
+# Para publicar o app no iPhone: defina QR_IOS_URL (e/ou QR_IOS_HUB_URL, QR_IOS_ADS_URL) no
+# Coolify (variáveis de ambiente do hub-frontend) com o link da App Store e faça redeploy.
+# Enquanto estiver vazia, o iPhone vê "em breve" em vez de um link quebrado.
 
 map "$arg_os:$http_user_agent" $qr_os {
     default                       other;
@@ -35,8 +38,8 @@ map "$arg_os:$http_user_agent" $qr_os {
 
 map "$qr_os:$arg_app" $qr_destino {
     default                       "";
-    "~^ios:(opendriver)?$"        "${QR_IOS_URL}";
-    "~^android:(opendriver)?$"    "${QR_ANDROID_URL}";
+    "ios:opendriver"               "${QR_IOS_URL}";
+    "android:opendriver"           "${QR_ANDROID_URL}";
     "ios:hub"                     "${QR_IOS_HUB_URL}";
     "android:hub"                 "${QR_ANDROID_HUB_URL}";
     "ios:ads"                     "${QR_IOS_ADS_URL}";
