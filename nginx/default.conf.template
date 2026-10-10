@@ -9,7 +9,7 @@
 # ============================================================================
 #
 # O QR impresso aponta sempre para https://opendriver.com.br/qrcode-transfer, que abre um
-# menu com os três apps (OpenDriver, OpenDriver Hub, OpenDriver Ads), cada um com uma
+# menu com os três apps (OpenDriver, OpenDriver Hub, OpenDriver AD), cada um com uma
 # descrição. Ao tocar numa opção o navegador pede /qrcode-transfer?app=<opcao> e o servidor
 # olha o User-Agent e responde 302:
 #

@@ -45,7 +45,7 @@
         <p>Cashback, vouchers e ofertas em lojas parceiras. Parceiros também gerenciam suas vendas por aqui.</p>
       </div>
       <div class="opcao">
-        <a class="btn" href="/qrcode-transfer?app=ads">OpenDriver Ads</a>
+        <a class="btn" href="/qrcode-transfer?app=ads">OpenDriver AD (Anúncios)</a>
         <p>Para anunciantes: crie campanhas nos tablets dos carros, compre crédito e acompanhe os resultados.</p>
       </div>
     </section>
@@ -74,7 +74,7 @@
       var params = new URLSearchParams(location.search);
       var app = params.get('app');
       var os = params.get('os');
-      var nomes = { opendriver: 'OpenDriver', hub: 'OpenDriver Hub', ads: 'OpenDriver Ads' };
+      var nomes = { opendriver: 'OpenDriver', hub: 'OpenDriver Hub', ads: 'OpenDriver AD (Anúncios)' };
       if (!nomes[app]) return;                       // sem app válido: fica o menu
 
       // iPad moderno se apresenta como Mac no User-Agent; o toque é o que o denuncia.
