@@ -1,0 +1,72 @@
+# Site do Hub (SPA) servido pelo nginx na porta 8080.
+#
+# Este arquivo é um *template*: a imagem oficial do nginx roda `envsubst` nele na partida do
+# contêiner e grava o resultado em /etc/nginx/conf.d/default.conf. Só as variáveis QR_* abaixo
+# são substituídas; as do próprio nginx ($uri, $arg_os…) ficam intactas.
+#
+# ============================================================================
+# /qrcode-transfer — um QR Code único que leva cada celular à loja certa
+# ============================================================================
+#
+# O QR impresso aponta sempre para https://opendriver.com.br/qrcode-transfer. O servidor olha o
+# User-Agent e responde com um redirecionamento 302:
+#
+#   iPhone / iPad / iPod  ->  App Store      (QR_IOS_URL)
+#   Android               ->  Google Play    (QR_ANDROID_URL)
+#   qualquer outro        ->  página /qrcode-transfer.html (computador, ou loja ainda sem link)
+#
+# É feito no nginx, e não em JavaScript, de propósito: o celular recebe o redirecionamento
+# antes de baixar qualquer página ou script, então não há tela intermediária nem travamento.
+#
+# `?app=hub` e `?app=ads` escolhem os outros dois apps (padrão: OpenDriver). `?os=ios` e
+# `?os=android` forçam o sistema — usados pelos botões da página de reserva e para teste.
+#
+# Para publicar o app no iPhone: defina QR_IOS_URL no Coolify (variável de ambiente do
+# hub-frontend) com o link da App Store e faça redeploy. Enquanto estiver vazia, o iPhone vê a
+# página "em breve" em vez de um link quebrado.
+
+map "$arg_os:$http_user_agent" $qr_os {
+    default                       other;
+    "~*^ios:"                     ios;
+    "~*^android:"                 android;
+    "~*^:.*(iphone|ipad|ipod)"    ios;
+    "~*^:.*android"               android;
+}
+
+map "$qr_os:$arg_app" $qr_destino {
+    default                       "";
+    "~^ios:(opendriver)?$"        "${QR_IOS_URL}";
+    "~^android:(opendriver)?$"    "${QR_ANDROID_URL}";
+    "ios:hub"                     "${QR_IOS_HUB_URL}";
+    "android:hub"                 "${QR_ANDROID_HUB_URL}";
+    "ios:ads"                     "${QR_IOS_ADS_URL}";
+    "android:ads"                 "${QR_ANDROID_ADS_URL}";
+}
+
+server {
+    listen 8080;
+    root /usr/share/nginx/html;
+
+    location = /qrcode-transfer {
+        # O destino depende do aparelho: nada disto pode ser guardado em cache (nem pela
+        # Cloudflare, que fica na frente do site).
+        add_header Cache-Control "no-store" always;
+        add_header Vary "User-Agent" always;
+        add_header X-Robots-Tag "noindex, nofollow" always;
+
+        if ($qr_destino != "") {
+            return 302 $qr_destino;
+        }
+        # `rewrite … break` (e não try_files) mantém os cabeçalhos acima na página de reserva.
+        rewrite ^ /qrcode-transfer.html break;
+    }
+
+    location = /qrcode-transfer/ {
+        return 301 /qrcode-transfer$is_args$args;
+    }
+
+    # SPA fallback (React Router)
+    location / {
+        try_files $uri /index.html;
+    }
+}

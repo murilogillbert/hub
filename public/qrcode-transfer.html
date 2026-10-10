@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0a1726">
+  <title>Baixe o OpenDriver</title>
+  <link rel="icon" href="/favicon-32.png">
+  <style>
+    :root { --navy:#0a1726; --lime:#b5dc2f; --muted:#5b6b7b; --bg:#f4f7fa; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+           font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--navy); }
+    main { width:100%; max-width:420px; padding:28px 20px; text-align:center; }
+    img.logo { width:72px; height:72px; border-radius:16px; }
+    h1 { font-size:24px; margin:16px 0 8px; }
+    p { color:var(--muted); line-height:1.5; margin:0 0 20px; }
+    .btn { display:block; padding:16px; margin:10px 0; border-radius:14px; font-weight:700; font-size:17px;
+           text-decoration:none; color:var(--navy); background:var(--lime); }
+    .btn.outline { background:#fff; border:2px solid var(--navy); }
+    .qr { margin:22px auto 6px; width:180px; height:180px; }
+    .small { font-size:13px; }
+    [hidden] { display:none !important; }
+  </style>
+</head>
+<body>
+  <main>
+    <img class="logo" src="/logo.png" alt="OpenDriver" width="72" height="72">
+
+    <!-- Computador ou aparelho não identificado: escolher a loja. -->
+    <section id="escolha">
+      <h1>Baixe o OpenDriver</h1>
+      <p>Abra esta página no celular, escaneie o código abaixo ou escolha a sua loja.</p>
+      <a class="btn" href="/qrcode-transfer?os=android">Google Play (Android)</a>
+      <a class="btn outline" href="/qrcode-transfer?os=ios">App Store (iPhone)</a>
+      <img class="qr" src="/qrcode-opendriver.svg" alt="QR Code para baixar o OpenDriver" width="180" height="180">
+    </section>
+
+    <!-- Só chega aqui com ?os=ios quando a loja da Apple ainda não tem link configurado. -->
+    <section id="ios" hidden>
+      <h1>Em breve na App Store</h1>
+      <p>O OpenDriver para iPhone ainda não foi publicado. Avisaremos assim que estiver disponível.</p>
+      <a class="btn outline" href="/">Conhecer o OpenDriver</a>
+    </section>
+
+    <!-- Idem para ?os=android sem link do Google Play. -->
+    <section id="android" hidden>
+      <h1>Em breve no Google Play</h1>
+      <p>O OpenDriver para Android ainda não foi publicado. Avisaremos assim que estiver disponível.</p>
+      <a class="btn outline" href="/">Conhecer o OpenDriver</a>
+    </section>
+
+    <p class="small">OpenDriver · opendriver.com.br</p>
+  </main>
+
+  <script>
+    (function () {
+      var os = new URLSearchParams(location.search).get('os');
+      // iPad moderno se apresenta como Mac no User-Agent; o toque é o que o denuncia.
+      if (!os && navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) {
+        location.replace('/qrcode-transfer' + (location.search ? location.search + '&' : '?') + 'os=ios');
+        return;
+      }
+      if (os === 'ios' || os === 'android') {
+        document.getElementById('escolha').hidden = true;
+        document.getElementById(os).hidden = false;
+      }
+    })();
+  </script>
+</body>
+</html>

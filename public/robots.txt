@@ -6,5 +6,6 @@ Disallow: /financeiro
 Disallow: /checkout
 Disallow: /carrinho
 Disallow: /conta
+Disallow: /qrcode-transfer
 
 Sitemap: https://opendriver.com.br/sitemap.xml
